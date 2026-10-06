@@ -490,3 +490,8 @@ $RECYCLE.BIN/
 *.db
 *.db-shm
 *.db-wal
+
+# AI agent customization and internal docs
+.skills/
+doc/
+AGENTS.md

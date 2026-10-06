@@ -8,4 +8,5 @@ public class FerramentaMetodo : BaseAuditableEntity
     public decimal Custos { get; set; }
     public string? Divulgacao { get; set; }
     public string? Utilizacao { get; set; }
+    public ICollection<AnaliseFerramentaAno> AnalisesAnuais { get; set; } = new List<AnaliseFerramentaAno>();
 }
