@@ -1,6 +1,6 @@
 namespace Innovera.Domain.Entities;
 
-public class Licao_Aprendida : Iniciativa
+public class Licao_Aprendida : BaseAuditableEntity
 {
     
 public string? Descricao { get; set; }
