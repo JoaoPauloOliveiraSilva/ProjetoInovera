@@ -1,4 +1,4 @@
-using Microsoft.Data.Sqlite;
+using Npgsql;
 using Respawn;
 using System.Data.Common;
 
@@ -17,10 +17,15 @@ internal sealed class DatabaseResetter : IAsyncDisposable
 
     public static async Task<DatabaseResetter> CreateAsync(string connectionString)
     {
-        var connection = new SqliteConnection(connectionString);
+        var connection = new NpgsqlConnection(connectionString);
 
         await connection.OpenAsync();
-        var respawner = await Respawner.CreateAsync(connection);
+        var respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
+        {
+            DbAdapter = DbAdapter.Postgres,
+            SchemasToInclude = ["public"],
+            TablesToIgnore = ["__EFMigrationsHistory"],
+        });
         await connection.CloseAsync();
         return new DatabaseResetter(connection, respawner);
     }

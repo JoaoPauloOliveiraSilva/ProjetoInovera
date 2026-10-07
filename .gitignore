@@ -490,3 +490,7 @@ $RECYCLE.BIN/
 *.db
 *.db-shm
 *.db-wal
+
+# Innovera
+# Anexos guardados localmente em desenvolvimento (Armazenamento:Pasta)
+src/Web/ficheiros/

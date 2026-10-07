@@ -14,7 +14,7 @@ public class FunctionalTestSetup
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         var cancellationToken = cts.Token;
 
         var builder = await DistributedApplicationTestingBuilder

@@ -9,7 +9,8 @@ public class Program
         var builder = DistributedApplication.CreateBuilder(args);
 
         builder
-            .AddSqlite(Services.Database);
+            .AddPostgres(Services.DatabaseServer)
+            .AddDatabase(Services.Database);
 
         builder.Build().Run();
     }

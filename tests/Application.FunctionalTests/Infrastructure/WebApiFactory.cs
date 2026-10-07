@@ -12,7 +12,9 @@ public class WebApiFactory(string connectionString) : WebApplicationFactory<Prog
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder
-            .UseSetting("ConnectionStrings:InnoveraDb", connectionString);
+            .UseSetting("ConnectionStrings:InnoveraDb", connectionString)
+            .UseSetting("DadosExemplo", "false")
+            .UseSetting("Tarefas:FecharDiscussoes", "false");
 
         builder.ConfigureTestServices(services =>
         {

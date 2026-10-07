@@ -27,4 +27,13 @@ public class ComentarioIdeia : BaseAuditableEntity
 
         Gostos.Add(new GostoComentario { UtilizadorId = utilizadorId, Data = agora });
     }
+
+    public void RemoverGosto(int utilizadorId)
+    {
+        var gosto = Gostos.FirstOrDefault(g => g.UtilizadorId == utilizadorId);
+        if (gosto is not null)
+        {
+            Gostos.Remove(gosto);
+        }
+    }
 }

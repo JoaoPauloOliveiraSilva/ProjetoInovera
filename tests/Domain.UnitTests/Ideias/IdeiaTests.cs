@@ -204,4 +204,34 @@ public class IdeiaTests
         ideia.DefinirClasse(ClasseIdeia.IdeiaDuplicada);
         ideia.Classe.ShouldBe(ClasseIdeia.IdeiaDuplicada);
     }
+
+    [Test]
+    public void AtribuirNumeroDeveGerarOCodigo()
+    {
+        var ideia = IdeiaSubmetida();
+
+        ideia.AtribuirNumero(100);
+
+        ideia.Numero.ShouldBe(100);
+        ideia.Codigo.ShouldBe("AB01");
+    }
+
+    [Test]
+    public void DeveRetirarOLikeDuranteADiscussao()
+    {
+        var ideia = IdeiaEmDiscussao();
+        ideia.AdicionarLike(7, Hoje);
+
+        ideia.RemoverLike(7);
+
+        ideia.Likes.ShouldBeEmpty();
+    }
+
+    [Test]
+    public void NaoDeveRetirarLikesForaDaDiscussao()
+    {
+        var ideia = IdeiaSubmetida();
+
+        Should.Throw<RegraDeNegocioException>(() => ideia.RemoverLike(7));
+    }
 }

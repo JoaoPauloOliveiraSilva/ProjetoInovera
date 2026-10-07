@@ -2,14 +2,16 @@ using Innovera.Shared;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddAzureContainerAppEnvironment("aca-env");
-
+// PostgreSQL num contentor Docker (precisa do Docker Desktop a correr). Os dados ficam num volume.
 var databaseServer = builder
-    .AddSqlite(Services.Database);
+    .AddPostgres(Services.DatabaseServer)
+    .WithDataVolume("innovera-postgres-dados");
+
+var database = databaseServer.AddDatabase(Services.Database);
 
 var web = builder.AddProject<Projects.Web>(Services.WebApi)
-    .WithReference(databaseServer)
-    .WaitFor(databaseServer)
+    .WithReference(database)
+    .WaitFor(database)
     .WithExternalHttpEndpoints()
     .WithAspNetCoreEnvironment()
     .WithUrlForEndpoint("http", url =>

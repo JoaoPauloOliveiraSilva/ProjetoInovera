@@ -72,6 +72,18 @@ public class IdentityService : IIdentityService
         return user != null ? await DeleteUserAsync(user) : Result.Success();
     }
 
+    public async Task<Result> AddToRoleAsync(string userId, string role)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Result.Failure(["Utilizador não encontrado."]);
+        }
+
+        var result = await _userManager.AddToRoleAsync(user, role);
+        return result.ToApplicationResult();
+    }
+
     public async Task<Result> DeleteUserAsync(ApplicationUser user)
     {
         var result = await _userManager.DeleteAsync(user);

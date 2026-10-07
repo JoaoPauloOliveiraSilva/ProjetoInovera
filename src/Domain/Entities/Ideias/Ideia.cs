@@ -9,8 +9,11 @@ public class Ideia : BaseAuditableEntity
 {
     public const int DiasDeDiscussao = 30;
 
-    /// <summary>Código interno sequencial (AA01 … ZZ99), ver GeradorCodigoIdeia.</summary>
-    public string Codigo { get; set; } = string.Empty;
+    /// <summary>Número sequencial (vem de uma SEQUENCE da base de dados).</summary>
+    public int Numero { get; private set; }
+
+    /// <summary>Código interno (AA01 … ZZ99), gerado a partir do número.</summary>
+    public string Codigo { get; private set; } = string.Empty;
 
     /// <summary>ID numérico da Caixa de Inovação (ex.: 3036), quando a ideia vem de lá.</summary>
     public int? IdCaixaInovacao { get; set; }
@@ -86,6 +89,13 @@ public class Ideia : BaseAuditableEntity
     public ICollection<ComentarioIdeia> Comentarios { get; set; } = new List<ComentarioIdeia>();
 
     public ICollection<LikeIdeia> Likes { get; set; } = new List<LikeIdeia>();
+
+    /// <summary>Atribui o número sequencial e o código AA01 correspondente.</summary>
+    public void AtribuirNumero(int numero)
+    {
+        Numero = numero;
+        Codigo = GeradorCodigoIdeia.Gerar(numero);
+    }
 
     /// <summary>Passo 4: aceitar os termos e condições.</summary>
     public void AceitarTermos(DateTimeOffset agora) => TermosAceitesEm = agora;
@@ -169,6 +179,17 @@ public class Ideia : BaseAuditableEntity
         }
 
         Likes.Add(new LikeIdeia { UtilizadorId = utilizadorId, Data = agora });
+    }
+
+    public void RemoverLike(int utilizadorId)
+    {
+        GarantirEstado(EstadoIdeia.EmDiscussao, "retirar o like");
+
+        var like = Likes.FirstOrDefault(l => l.UtilizadorId == utilizadorId);
+        if (like is not null)
+        {
+            Likes.Remove(like);
+        }
     }
 
     public void AdicionarComentario(int autorId, string texto, DateTimeOffset agora)

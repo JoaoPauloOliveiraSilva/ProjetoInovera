@@ -21,6 +21,13 @@ public class ProblemDetailsExceptionHandler : IExceptionHandler
                 Status = StatusCodes.Status400BadRequest,
                 Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1"
             }),
+            Innovera.Domain.Exceptions.RegraDeNegocioException re => (StatusCodes.Status400BadRequest, new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                Title = "Operação não permitida.",
+                Detail = re.Message
+            }),
             NotFoundException ne => (StatusCodes.Status404NotFound, new ProblemDetails
             {
                 Status = StatusCodes.Status404NotFound,

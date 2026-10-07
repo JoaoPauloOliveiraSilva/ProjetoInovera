@@ -31,6 +31,10 @@ public static class DependencyInjection
         });
 
         builder.Services.AddCors();
+
+        // Enums em texto no JSON (ex.: "EmDiscussao"), mais fácil de usar no frontend.
+        builder.Services.ConfigureHttpJsonOptions(options =>
+            options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
     }
 
     public static void AddKeyVaultIfConfigured(this IHostApplicationBuilder builder)
