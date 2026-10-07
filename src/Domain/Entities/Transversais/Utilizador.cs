@@ -17,6 +17,11 @@ public class Utilizador : BaseAuditableEntity
 
     public string? Departamento { get; set; }
 
+    /// <summary>Empresa do grupo (ex.: "fiber t, s.a."), mostrada nos comentários.</summary>
+    public string? Empresa { get; set; }
+
+    public string? FotoUrl { get; set; }
+
     public PerfilUtilizador Perfil { get; set; } = PerfilUtilizador.Trabalhador;
 
     public bool Ativo { get; set; } = true;

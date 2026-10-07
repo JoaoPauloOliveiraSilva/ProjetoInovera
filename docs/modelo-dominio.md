@@ -5,7 +5,7 @@ Todas as entidades estão em `src/Domain` (namespace `Innovera.Domain.Entities`)
 
 | Pasta | Entidades | Modelo Excel |
 |---|---|---|
-| `Ideias` | `Ideia`, `AvaliacaoIdeia`, `ComentarioIdeia`, `LikeIdeia` | Mod.246 (Ideias) |
+| `Ideias` | `Ideia` (formulário de 4 passos), `AutorIdeia`, `AnexoIdeia`, `AvaliacaoIdeia`, `ComentarioIdeia`, `GostoComentario`, `LikeIdeia` | Mod.246 (Ideias) |
 | `Iniciativas` | `Iniciativa` (base) → `Projeto`, `Desafio` (com Charter), `MelhoriaContinua`, `Oportunidade`, `Vigilancia` (+ `ExecucaoVigilancia`), `Mestrado`, `AcaoInovacao`; `MembroEquipa`, `AlocacaoMensal`, `NotaPontoSituacao` | Mod.246 |
 | `ProjectCharter` | `ProjectCharter`, `TarefaWbs`, `Entrega` (entregável/milestone), `Risco`, `LinhaOrcamento`, `RequisitoConformidade`, `LicaoAprendida` | Project Charter, Mod.252 |
 | `Registos` | `Parceiro`, `AcordoParceria`, `AtivoIntangivel`, `ConhecimentoCodificado`, `ConhecimentoTacito`, `FerramentaMetodo`, `LinhaEstrategia`, `AtividadePlanoAnual` | Mod.235, 236, 237, 238, 241, 52, 69 |
@@ -15,7 +15,7 @@ Todas as entidades estão em `src/Domain` (namespace `Innovera.Domain.Entities`)
 ## Regras de negócio já no domínio (com testes em `tests/Domain.UnitTests`)
 
 - Código das ideias AA01 … ZZ99 (`Services/GeradorCodigoIdeia`).
-- Ciclo da ideia: Submetida → Em discussão (30 dias) → Em avaliação → Aprovada / Não aprovada; destino Projeto, Desafio, Melhoria Contínua ou Arquivada; ideias duplicadas ou "dst" ficam sem avaliação.
+- Ciclo da ideia igual ao site atual: validação dos autores → validação da equipa → discussão pública (30 dias) → em avaliação pelo manager → aprovada / não aprovada. Classe: aprovada → Melhoria Contínua, Projeto, Desafio ou Arquivada; não aprovada → Ideia Duplicada ou N.A. Ideias "dst" só registam a decisão (sem notas).
 - Nota da CE com pesos configuráveis (`ValueObjects/PesosAvaliacao`: Mod.246 15/25/30/20/10 ou média simples) e aprovação com nota ≥ 2.
 - Risco: I × P, mitigação obrigatória quando I × P > 4, reavaliação.
 - Eventos de domínio: `IdeiaAvaliadaEvent`, `LicaoRegistadaEvent` (→ Mod.252), `RelatorioDeMilestoneRegistadoEvent` e `ResultadoVigilanciaRegistadoEvent` (→ Mod.237).
