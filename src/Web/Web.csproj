@@ -33,13 +33,13 @@
   </ItemGroup>
 
   <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
-    <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
+    <!-- Ao publicar, gera a versão de produção do frontend React (Vite) e copia-a para wwwroot -->
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --configuration production" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />
 
     <!-- Include the newly-built files in the publish output -->
     <ItemGroup>
-      <DistFiles Include="$(SpaRoot)dist\browser\**;" />
+      <DistFiles Include="$(SpaRoot)dist\**;" />
       <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
         <RelativePath>wwwroot\%(RecursiveDir)%(FileName)%(Extension)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
