@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Gaveta } from '../componentes/Gaveta';
 import { Balao, Coracao, SetaContinuar } from '../componentes/Icones';
 import { useIdeias } from '../dados/IdeiasContext';
-import { calcularNota, formatarData, haQuantoTempo, variaveis } from '../dados/regras';
+import { calcularNota, codigoIdeia, formatarData, haQuantoTempo, variaveis } from '../dados/regras';
 import { nomeClasse, nomeEstado, nomeTipo } from '../dados/tipos';
 import type { EstadoIdeia, Ideia } from '../dados/tipos';
 
@@ -66,6 +66,8 @@ function IdeiaDetalhe({ ideia }: { ideia: Ideia }) {
           </div>
           <dt>{ideia.autores.length > 1 ? 'autores' : 'autor'}</dt>
           <dd>{ideia.anonima ? 'Autor Anónimo' : ideia.autores.join(', ')}</dd>
+          <dt>código</dt>
+          <dd>{codigoIdeia(ideia.num)}</dd>
           <dt>data</dt>
           <dd>{formatarData(ideia.data)}</dd>
           <dt>estado</dt>

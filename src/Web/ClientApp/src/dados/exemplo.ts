@@ -10,7 +10,7 @@ export const utilizadorAtual = { nome: 'Nuno', nomeCompleto: 'Nuno Peixoto', emp
 
 export const ideiasExemplo: Ideia[] = [
   {
-    num: 3036,
+    num: 36,
     titulo: 'Informação de Recrutamento',
     tipo: 'melhoria',
     descricao:
@@ -36,7 +36,7 @@ export const ideiasExemplo: Ideia[] = [
     ],
   },
   {
-    num: 3035,
+    num: 35,
     titulo: 'Academia SAP',
     tipo: 'simples',
     descricao: 'Criar um percurso de formação interna em SAP para novos colaboradores das áreas administrativas.',
@@ -53,7 +53,7 @@ export const ideiasExemplo: Ideia[] = [
     ],
   },
   {
-    num: 3034,
+    num: 34,
     titulo: 'Gestão partilhada dos carregamentos de veículos elétricos',
     tipo: 'melhoria',
     descricao: 'Uma aplicação simples para reservar os postos de carregamento do parque e evitar carros parados depois de carregados.',
@@ -68,7 +68,7 @@ export const ideiasExemplo: Ideia[] = [
     comentarios: [],
   },
   {
-    num: 3031,
+    num: 31,
     titulo: 'Sugestão de melhoria de espaço - Copa',
     tipo: 'melhoria',
     descricao: 'Reorganizar a copa do piso 1 com mais lugares sentados e uma zona para refeições rápidas.',
@@ -83,7 +83,7 @@ export const ideiasExemplo: Ideia[] = [
     comentarios: [],
   },
   {
-    num: 3030,
+    num: 30,
     titulo: 'Oferta de bilhetes de museu no aniversário do colaborador',
     tipo: 'melhoria',
     descricao: 'Oferecer a cada colaborador um bilhete para um museu da cidade no dia do aniversário.',
@@ -101,7 +101,7 @@ export const ideiasExemplo: Ideia[] = [
     ],
   },
   {
-    num: 3029,
+    num: 29,
     titulo: 'Alteração das condições de pagamento especiais',
     tipo: 'detalhado',
     descricao: 'Rever as condições de pagamento especiais a fornecedores pequenos para reduzir o tempo médio de pagamento.',
@@ -118,7 +118,7 @@ export const ideiasExemplo: Ideia[] = [
     custos: 'Sem custos de implementação.',
   },
   {
-    num: 3021,
+    num: 21,
     titulo: 'Sensores de ocupação nas salas de reunião',
     tipo: 'detalhado',
     descricao: 'Sensores simples que mostram no calendário se a sala está mesmo ocupada.',
@@ -134,7 +134,7 @@ export const ideiasExemplo: Ideia[] = [
     responsabilidade: 'dstelecom',
   },
   {
-    num: 3018,
+    num: 18,
     titulo: 'Kit de boas-vindas digital',
     tipo: 'melhoria',
     descricao: 'Substituir o manual impresso de acolhimento por um kit digital com vídeos curtos.',
@@ -150,7 +150,7 @@ export const ideiasExemplo: Ideia[] = [
     responsabilidade: 'dst',
   },
   {
-    num: 3012,
+    num: 12,
     titulo: 'Manutenção preditiva das OLT com IA',
     tipo: 'detalhado',
     descricao: 'Usar os registos dos equipamentos para prever falhas antes de afetarem os clientes.',
@@ -168,7 +168,7 @@ export const ideiasExemplo: Ideia[] = [
     classe: 'projeto',
   },
   {
-    num: 3008,
+    num: 8,
     titulo: 'Bebedouros nas obras',
     tipo: 'melhoria',
     descricao: 'Instalar bebedouros portáteis nas frentes de obra no verão.',

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Cabecalho } from '../componentes/Layout';
 import { useIdeias } from '../dados/IdeiasContext';
-import { calcularNota, formatarData, limiarAprovacao, variaveis } from '../dados/regras';
+import { calcularNota, codigoIdeia, formatarData, limiarAprovacao, variaveis } from '../dados/regras';
 import { classesAprovada, classesNaoAprovada, nomeClasse } from '../dados/tipos';
 import type { ClasseIdeia, Ideia, Nota, Notas, Responsabilidade } from '../dados/tipos';
 
@@ -39,7 +39,7 @@ export function Avaliacao() {
       </p>
       <section className="tabela avaliacao">
         <div className="aval-linha tabela-cabecalho">
-          <span>Num</span>
+          <span>Código</span>
           <span>Título</span>
           <span>Resp.</span>
           {variaveis.map((v) => (
@@ -62,7 +62,7 @@ export function Avaliacao() {
 
           return (
             <div key={i.num} className="aval-linha">
-              <span className="num">{i.num}</span>
+              <span className="num">{codigoIdeia(i.num)}</span>
               <span className="forte" title={`${formatarData(i.data)} · ${i.likes} gostos`}>
                 {i.titulo}
               </span>

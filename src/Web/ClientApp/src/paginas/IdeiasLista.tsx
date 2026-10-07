@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Cabecalho } from '../componentes/Layout';
 import { Balao, Coracao, Mais, SetaDiagonal } from '../componentes/Icones';
 import { useIdeias } from '../dados/IdeiasContext';
-import { formatarData } from '../dados/regras';
+import { codigoIdeia, formatarData } from '../dados/regras';
 import { nomeEstado } from '../dados/tipos';
 import type { EstadoIdeia } from '../dados/tipos';
 import { NovaIdeiaGaveta } from './NovaIdeia';
@@ -47,7 +47,7 @@ export function IdeiasLista({ soEmDiscussao }: { soEmDiscussao: boolean }) {
       )}
       <section className="tabela">
         <div className={`tabela-linha tabela-cabecalho${soEmDiscussao ? '' : ' com-estado'}`}>
-          <span>Num</span>
+          <span>Código</span>
           <span>Título</span>
           <span>Autores</span>
           <span>Data</span>
@@ -58,7 +58,7 @@ export function IdeiasLista({ soEmDiscussao }: { soEmDiscussao: boolean }) {
         </div>
         {lista.map((i) => (
           <div key={i.num} className={`tabela-linha${soEmDiscussao ? '' : ' com-estado'}`} onClick={() => setAberta(i.num)}>
-            <span className="num">{i.num}</span>
+            <span className="num">{codigoIdeia(i.num)}</span>
             <span className="forte">{i.titulo}</span>
             <span className="forte">{i.anonima ? 'Autor Anónimo' : i.autores.join(', ')}</span>
             <span className="forte">{formatarData(i.data)}</span>

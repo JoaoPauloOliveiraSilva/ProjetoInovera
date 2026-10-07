@@ -46,3 +46,11 @@ export function haQuantoTempo(iso: string): string {
   const dias = Math.round(horas / 24);
   return `há ${dias} ${dias === 1 ? 'dia' : 'dias'}`;
 }
+
+/** Código da ideia (AA01 … ZZ99), igual ao GeradorCodigoIdeia do backend. */
+export function codigoIdeia(numero: number): string {
+  const indice = numero - 1;
+  const prefixo = Math.floor(indice / 99);
+  const letras = String.fromCharCode(65 + Math.floor(prefixo / 26)) + String.fromCharCode(65 + (prefixo % 26));
+  return letras + String((indice % 99) + 1).padStart(2, '0');
+}

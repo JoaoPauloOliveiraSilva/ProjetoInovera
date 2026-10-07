@@ -4,6 +4,7 @@ import { Gaveta } from '../componentes/Gaveta';
 import { Camara, SetaContinuar, Upload, Visto } from '../componentes/Icones';
 import { useIdeias } from '../dados/IdeiasContext';
 import { utilizadorAtual } from '../dados/exemplo';
+import { codigoIdeia } from '../dados/regras';
 import { nomeTipo } from '../dados/tipos';
 import type { TipoIdeia } from '../dados/tipos';
 
@@ -121,7 +122,7 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
         <span className="passo-numero grande">
           <Visto />
         </span>
-        <h3>Ideia {registada} registada</h3>
+        <h3>Ideia {codigoIdeia(registada)} registada</h3>
         <p>
           {autoria === 'outros'
             ? 'Os outros autores vão receber um pedido para confirmar a autoria. Depois a equipa de Inovação valida a ideia e abre a discussão pública durante 30 dias.'
