@@ -55,3 +55,15 @@ dotnet test
 
 ## Help
 To learn more about the template go to the [project website](https://cleanarchitecture.jasontaylor.dev). Here you can find additional guidance, request new features, report a bug, and discuss the template with other users.
+## Frontend
+
+The frontend is a React 19 + TypeScript SPA using Vite and Fluent UI React v9. To run it during development:
+
+```bash
+cd src/Web/ClientApp
+npm install
+npm run start
+```
+
+Open http://localhost:5173/. The current UI uses sample data.
+
