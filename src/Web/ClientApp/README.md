@@ -1,27 +1,22 @@
-# Innovera.Web
+# Innovera Web
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 21.1.5.
+Frontend: React 19, TypeScript, Vite, and Fluent UI React v9.
 
-## Development server
+## Development
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+From this directory, install dependencies once and start the Vite server:
 
-## Code scaffolding
+```bash
+npm install
+npm run start
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Open `http://localhost:5173/`. The current homepage and idea submission flow use local sample data.
 
-## Build
+## Production build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+npm run build
+```
 
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+The generated files are written to `dist/browser/` for publishing with the .NET web project.
