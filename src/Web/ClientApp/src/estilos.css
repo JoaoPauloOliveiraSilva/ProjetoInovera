@@ -225,8 +225,8 @@ a { color: inherit; }
 .introducao { max-width: 900px; line-height: 1.55; margin: -20px 0 28px; }
 .avaliacao { overflow-x: auto; }
 .aval-linha {
-  display: grid; grid-template-columns: 48px minmax(140px, 1fr) 100px repeat(5, 62px) 50px 118px 136px 78px;
-  gap: 8px; align-items: center; padding: 14px 16px; border-bottom: 1px solid #eee; min-width: 1060px;
+  display: grid; grid-template-columns: 44px minmax(120px, 1fr) 96px repeat(5, 60px) 48px 112px 124px 76px;
+  gap: 8px; align-items: center; padding: 14px 12px; border-bottom: 1px solid #eee; min-width: 1000px;
 }
 .aval-linha.tabela-cabecalho { font-size: 12px; }
 .aval-linha select { max-width: 100%; }
