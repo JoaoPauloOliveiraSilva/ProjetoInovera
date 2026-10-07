@@ -1,28 +1,34 @@
 import { useState } from 'react';
+import { ideias as apiIdeias } from '../api/servicos';
+import { nomeEstado, classeEstado } from '../api/tipos';
+import type { EstadoIdeia } from '../api/tipos';
+import { usePedido } from '../api/usePedido';
+import { EstadoPedido } from '../componentes/Estado';
 import { Cabecalho } from '../componentes/Layout';
 import { Balao, Coracao, Mais, SetaDiagonal } from '../componentes/Icones';
-import { useIdeias } from '../dados/IdeiasContext';
-import { codigoIdeia, formatarData } from '../dados/regras';
-import { nomeEstado } from '../dados/tipos';
-import type { EstadoIdeia } from '../dados/tipos';
+import { formatarData } from '../dados/regras';
 import { NovaIdeiaGaveta } from './NovaIdeia';
 import { IdeiaGaveta } from './IdeiaDetalhe';
 
-/** "ideias de inovação › em discussão" e "› todas as ideias". */
-export function IdeiasLista({ soEmDiscussao }: { soEmDiscussao: boolean }) {
-  const { ideias } = useIdeias();
+type Modo = 'discussao' | 'todas' | 'minhas';
+
+const titulos: Record<Modo, string> = { discussao: 'ideias', todas: 'ideias', minhas: 'as minhas ideias' };
+
+/** "ideias de inovação › em discussão", "› todas as ideias" e "a minha caixa › as minhas ideias". */
+export function IdeiasLista({ modo }: { modo: Modo }) {
   const [aberta, setAberta] = useState<number | null>(null);
   const [novaAberta, setNovaAberta] = useState(false);
   const [filtro, setFiltro] = useState<EstadoIdeia | 'todas'>('todas');
+  const comEstado = modo !== 'discussao';
 
-  const lista = ideias
-    .filter((i) => (soEmDiscussao ? i.estado === 'em-discussao' : filtro === 'todas' || i.estado === filtro))
-    .sort((a, b) => b.num - a.num);
+  const estado: EstadoIdeia | undefined = modo === 'discussao' ? 'EmDiscussao' : filtro === 'todas' ? undefined : filtro;
+  const { dados, erro, aCarregar } = usePedido(() => apiIdeias.listar({ estado, soMinhas: modo === 'minhas' }), [estado, modo]);
+  const lista = dados ?? [];
 
   return (
     <>
       <Cabecalho
-        titulo="ideias"
+        titulo={titulos[modo]}
         corLampada="#5bb8cc"
         acao={
           <button className="nova-ideia" onClick={() => setNovaAberta(true)}>
@@ -30,7 +36,7 @@ export function IdeiasLista({ soEmDiscussao }: { soEmDiscussao: boolean }) {
           </button>
         }
       />
-      {!soEmDiscussao && (
+      {comEstado && (
         <div className="filtros">
           <label>
             estado
@@ -46,37 +52,41 @@ export function IdeiasLista({ soEmDiscussao }: { soEmDiscussao: boolean }) {
         </div>
       )}
       <section className="tabela">
-        <div className={`tabela-linha tabela-cabecalho${soEmDiscussao ? '' : ' com-estado'}`}>
+        <div className={`tabela-linha tabela-cabecalho${comEstado ? ' com-estado' : ''}`}>
           <span>Código</span>
           <span>Título</span>
           <span>Autores</span>
           <span>Data</span>
-          {!soEmDiscussao && <span>Estado</span>}
+          {comEstado && <span>Estado</span>}
           <span />
           <span />
           <span />
         </div>
         {lista.map((i) => (
-          <div key={i.num} className={`tabela-linha${soEmDiscussao ? '' : ' com-estado'}`} onClick={() => setAberta(i.num)}>
-            <span className="num">{codigoIdeia(i.num)}</span>
-            <span className="forte">{i.titulo}</span>
-            <span className="forte">{i.anonima ? 'Autor Anónimo' : i.autores.join(', ')}</span>
+          <div key={i.id} className={`tabela-linha${comEstado ? ' com-estado' : ''}`} onClick={() => setAberta(i.id)}>
+            <span className="num">{i.codigo}</span>
+            <span className="forte">
+              {i.titulo}
+              {i.privada && <span className="privada"> · privada</span>}
+            </span>
+            <span className="forte">{i.autores}</span>
             <span className="forte">{formatarData(i.data)}</span>
-            {!soEmDiscussao && <span className={`etiqueta estado-${i.estado}`}>{nomeEstado[i.estado]}</span>}
+            {comEstado && <span className={`etiqueta ${classeEstado[i.estado]}`}>{nomeEstado[i.estado]}</span>}
             <span className="contador">
               <Coracao /> {i.likes}
             </span>
             <span className="contador">
-              <Balao /> {i.comentarios.length}
+              <Balao /> {i.comentarios}
             </span>
             <span className="abrir" aria-label="Abrir">
               <SetaDiagonal />
             </span>
           </div>
         ))}
-        {lista.length === 0 && <div className="vazio">Não há ideias para mostrar.</div>}
+        <EstadoPedido aCarregar={aCarregar} erro={erro} vazio={dados === undefined} />
+        {dados && lista.length === 0 && <div className="vazio">Não há ideias para mostrar.</div>}
       </section>
-      <IdeiaGaveta num={aberta} aoFechar={() => setAberta(null)} />
+      <IdeiaGaveta id={aberta} aoFechar={() => setAberta(null)} />
       <NovaIdeiaGaveta aberta={novaAberta} aoFechar={() => setNovaAberta(false)} />
     </>
   );

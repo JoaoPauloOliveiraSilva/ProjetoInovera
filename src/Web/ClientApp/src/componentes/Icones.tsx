@@ -145,3 +145,9 @@ export const IconeCarrinho = (p: P) => (
     <circle cx="48" cy="54" r="4" />
   </svg>
 );
+
+export const IconeSair = (p: P) => (
+  <svg viewBox="0 0 24 24" width="26" height="26" {...base} {...p}>
+    <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4" />
+  </svg>
+);

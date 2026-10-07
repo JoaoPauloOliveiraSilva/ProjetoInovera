@@ -2,19 +2,21 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Cabecalho } from '../componentes/Layout';
 import { Balao, Coracao, Direita, Esquerda, Mais } from '../componentes/Icones';
-import { useIdeias } from '../dados/IdeiasContext';
+import { ideias as apiIdeias } from '../api/servicos';
+import { usePedido } from '../api/usePedido';
+import { EstadoPedido } from '../componentes/Estado';
 import { NovaIdeiaGaveta } from './NovaIdeia';
 import { IdeiaGaveta } from './IdeiaDetalhe';
 
 const porPagina = 3;
 
 export function Homepage() {
-  const { ideias } = useIdeias();
+  const { dados, erro, aCarregar } = usePedido(() => apiIdeias.listar({ estado: 'EmDiscussao' }), []);
   const [inicio, setInicio] = useState(0);
   const [novaAberta, setNovaAberta] = useState(false);
   const [aberta, setAberta] = useState<number | null>(null);
 
-  const emDiscussao = ideias.filter((i) => i.estado === 'em-discussao' && !i.privada);
+  const emDiscussao = dados ?? [];
   const visiveis = emDiscussao.slice(inicio, inicio + porPagina);
 
   return (
@@ -47,16 +49,18 @@ export function Homepage() {
             <Direita />
           </button>
         </div>
+        <EstadoPedido aCarregar={aCarregar} erro={erro} vazio={dados === undefined} />
+        {dados && emDiscussao.length === 0 && <div className="vazio">Não há ideias em discussão.</div>}
         <div className="cartoes">
           {visiveis.map((i) => (
-            <button key={i.num} className="cartao-ideia" onClick={() => setAberta(i.num)}>
+            <button key={i.id} className="cartao-ideia" onClick={() => setAberta(i.id)}>
               <span className="cartao-titulo">{i.titulo}</span>
               <span className="cartao-contadores">
                 <span>
                   <Coracao /> {i.likes}
                 </span>
                 <span>
-                  <Balao /> {i.comentarios.length}
+                  <Balao /> {i.comentarios}
                 </span>
               </span>
             </button>
@@ -64,7 +68,7 @@ export function Homepage() {
         </div>
       </section>
       <NovaIdeiaGaveta aberta={novaAberta} aoFechar={() => setNovaAberta(false)} />
-      <IdeiaGaveta num={aberta} aoFechar={() => setAberta(null)} />
+      <IdeiaGaveta id={aberta} aoFechar={() => setAberta(null)} />
     </>
   );
 }

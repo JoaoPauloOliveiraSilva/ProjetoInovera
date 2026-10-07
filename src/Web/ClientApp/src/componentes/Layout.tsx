@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { utilizadorAtual } from '../dados/exemplo';
-import { Chevron, IconeAjuda, IconeInovacao, IconeLivros, IconeMinhaArea, Lampada } from './Icones';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { primeiroNome } from '../dados/regras';
+import { useSessao, useUtilizador } from '../sessao/Sessao';
+import { Chevron, IconeAjuda, IconeInovacao, IconeLivros, IconeMinhaArea, IconeSair, Lampada } from './Icones';
 
 interface ItemMenu {
   nome: string;
   para?: string;
-  filhos?: { nome: string; para: string }[];
+  filhos?: { nome: string; para: string; soAdministrador?: boolean }[];
 }
 
 // Menu igual ao do site atual de inovação.
@@ -16,7 +17,10 @@ const menu: ItemMenu[] = [
   { nome: 'a minha caixa', filhos: [{ nome: 'as minhas ideias', para: '/inovacao/minha-caixa' }] },
   {
     nome: 'sistema de gestão de inovação',
-    filhos: [{ nome: 'avaliação de ideias', para: '/inovacao/avaliacao' }],
+    filhos: [
+      { nome: 'validação de ideias', para: '/inovacao/validacao', soAdministrador: true },
+      { nome: 'avaliação de ideias', para: '/inovacao/avaliacao', soAdministrador: true },
+    ],
   },
   {
     nome: 'ideias de inovação',
@@ -79,7 +83,18 @@ function Grupo({ item }: { item: ItemMenu }) {
   );
 }
 
+/** Tira as opções só da equipa de Inovação (e os grupos que ficam vazios). */
+function menuPara(eAdministrador: boolean): ItemMenu[] {
+  return menu
+    .map((item) => (item.filhos ? { ...item, filhos: item.filhos.filter((f) => eAdministrador || !f.soAdministrador) } : item))
+    .filter((item) => !item.filhos || item.filhos.length > 0);
+}
+
 export function Layout() {
+  const utilizador = useUtilizador();
+  const { sair } = useSessao();
+  const navegar = useNavigate();
+
   return (
     <div className="app">
       <nav className="barra" aria-label="Aplicações">
@@ -87,7 +102,7 @@ export function Layout() {
           dstgroup
         </Link>
         <div className="barra-avatar" aria-hidden="true">
-          {utilizadorAtual.nome[0]}
+          {utilizador.nome[0]?.toUpperCase()}
         </div>
         <span className="barra-app desativada" title="Brevemente">
           <IconeLivros />
@@ -105,11 +120,21 @@ export function Layout() {
           <IconeAjuda />
           <span>ajuda</span>
         </span>
+        <button
+          className="barra-sair"
+          title="Terminar sessão"
+          onClick={() => {
+            void sair().then(() => navegar('/'));
+          }}
+        >
+          <IconeSair />
+          <span>sair</span>
+        </button>
       </nav>
       <aside className="menu">
-        <h2 className="menu-ola">olá, {utilizadorAtual.nome}</h2>
+        <h2 className="menu-ola">olá, {primeiroNome(utilizador.nome)}</h2>
         <ul>
-          {menu.map((item) => (
+          {menuPara(utilizador.eAdministrador).map((item) => (
             <Grupo key={item.nome} item={item} />
           ))}
         </ul>

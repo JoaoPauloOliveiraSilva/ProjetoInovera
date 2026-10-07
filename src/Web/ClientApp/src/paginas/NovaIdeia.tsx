@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { contas, ideias as apiIdeias } from '../api/servicos';
+import { nomeTipo } from '../api/tipos';
+import type { IdeiaCriada, TipoIdeia, UtilizadorResumo } from '../api/tipos';
+import { useAtualizar } from '../api/usePedido';
 import { Gaveta } from '../componentes/Gaveta';
-import { Camara, SetaContinuar, Upload, Visto } from '../componentes/Icones';
-import { useIdeias } from '../dados/IdeiasContext';
-import { utilizadorAtual } from '../dados/exemplo';
-import { codigoIdeia } from '../dados/regras';
-import { nomeTipo } from '../dados/tipos';
-import type { TipoIdeia } from '../dados/tipos';
+import { Camara, Fechar, SetaContinuar, Upload, Visto } from '../componentes/Icones';
+import { useUtilizador } from '../sessao/Sessao';
 
 type Autoria = 'eu' | 'anonimo' | 'outros';
 
@@ -51,6 +51,70 @@ function Campo({ nome, valor, mudar, linhas = 3 }: { nome: string; valor: string
   );
 }
 
+/** Pesquisa de colegas para coautores (GET /api/Utilizadores?texto=). */
+function EscolherCoautores({ escolhidos, mudar }: { escolhidos: UtilizadorResumo[]; mudar: (lista: UtilizadorResumo[]) => void }) {
+  const eu = useUtilizador();
+  const [texto, setTexto] = useState('');
+  const [resultados, setResultados] = useState<UtilizadorResumo[]>([]);
+
+  useEffect(() => {
+    const t = texto.trim();
+    if (t.length < 2) {
+      setResultados([]);
+      return;
+    }
+    let ativo = true;
+    const espera = setTimeout(() => {
+      contas
+        .pesquisar(t)
+        .then((lista) => ativo && setResultados(lista.filter((u) => u.id !== eu.id && !escolhidos.some((e) => e.id === u.id))))
+        .catch(() => ativo && setResultados([]));
+    }, 250);
+    return () => {
+      ativo = false;
+      clearTimeout(espera);
+    };
+  }, [texto, escolhidos, eu.id]);
+
+  return (
+    <div className="coautores">
+      <label className="campo">
+        <span>outros autores</span>
+        <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="escreva o nome de um colega" />
+      </label>
+      {resultados.length > 0 && (
+        <ul className="sugestoes">
+          {resultados.map((u) => (
+            <li key={u.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  mudar([...escolhidos, u]);
+                  setTexto('');
+                }}
+              >
+                <strong>{u.nome}</strong> {u.empresa && <span className="cinzento-escuro">{u.empresa}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {escolhidos.length > 0 && (
+        <div className="fichas">
+          {escolhidos.map((u) => (
+            <span key={u.id} className="ficha-autor-escolhido">
+              {u.nome}
+              <button type="button" aria-label={`Tirar ${u.nome}`} onClick={() => mudar(escolhidos.filter((e) => e.id !== u.id))}>
+                <Fechar width={12} height={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function NovaIdeiaGaveta({ aberta, aoFechar }: { aberta: boolean; aoFechar: () => void }) {
   return (
     <Gaveta aberta={aberta} aoFechar={aoFechar}>
@@ -60,14 +124,14 @@ export function NovaIdeiaGaveta({ aberta, aoFechar }: { aberta: boolean; aoFecha
 }
 
 function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
-  const { registar } = useIdeias();
+  const atualizarListas = useAtualizar();
   const [passo, setPasso] = useState(1);
   const [tipo, setTipo] = useState<TipoIdeia | null>(null);
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [visivel, setVisivel] = useState(true);
   const [autoria, setAutoria] = useState<Autoria>('eu');
-  const [outrosAutores, setOutrosAutores] = useState('');
+  const [coautores, setCoautores] = useState<UtilizadorResumo[]>([]);
   const [anexos, setAnexos] = useState<File[]>([]);
   const [erroAnexo, setErroAnexo] = useState('');
   const [vantagens, setVantagens] = useState('');
@@ -77,7 +141,10 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
   const [competidores, setCompetidores] = useState('');
   const [custos, setCustos] = useState('');
   const [aceito, setAceito] = useState(false);
-  const [registada, setRegistada] = useState<number | null>(null);
+  const [registada, setRegistada] = useState<IdeiaCriada | null>(null);
+  const [aEnviar, setAEnviar] = useState(false);
+  const [erro, setErro] = useState('');
+  const [avisoAnexos, setAvisoAnexos] = useState('');
 
   const estado = (n: number): 'feito' | 'atual' | 'futuro' => (n < passo ? 'feito' : n === passo ? 'atual' : 'futuro');
 
@@ -93,27 +160,48 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
     setAnexos(novos);
   };
 
-  const submeter = () => {
-    const outros = outrosAutores
-      .split(',')
-      .map((a) => a.trim())
-      .filter((a) => a.length > 0);
-    const num = registar({
-      titulo: titulo.trim(),
-      tipo: tipo ?? 'melhoria',
-      descricao: descricao.trim(),
-      autores: autoria === 'anonimo' ? [] : autoria === 'outros' ? [utilizadorAtual.nomeCompleto, ...outros] : [utilizadorAtual.nomeCompleto],
-      anonima: autoria === 'anonimo',
-      privada: !visivel,
-      anexos: anexos.map((f) => f.name),
-      vantagens: vantagens || undefined,
-      requisitos: requisitos || undefined,
-      comoEFeito: comoEFeito || undefined,
-      modeloNegocio: tipo === 'detalhado' ? modeloNegocio || undefined : undefined,
-      competidores: tipo === 'detalhado' ? competidores || undefined : undefined,
-      custos: tipo === 'detalhado' ? custos || undefined : undefined,
-    });
-    setRegistada(num);
+  const submeter = async () => {
+    setErro('');
+    setAEnviar(true);
+    try {
+      const vazioANull = (v: string) => (v.trim() ? v.trim() : null);
+      const detalhado = tipo === 'NovoProdutoServicoDetalhado';
+      const criada = await apiIdeias.criar({
+        tipo: tipo ?? 'Melhoria',
+        titulo: titulo.trim(),
+        descricao: descricao.trim(),
+        privada: !visivel,
+        anonima: autoria === 'anonimo',
+        coautoresIds: autoria === 'outros' ? coautores.map((c) => c.id) : [],
+        vantagens: vazioANull(vantagens),
+        requisitos: vazioANull(requisitos),
+        comoEFeitoAtualmente: vazioANull(comoEFeito),
+        modeloNegocio: detalhado ? vazioANull(modeloNegocio) : null,
+        competidores: detalhado ? vazioANull(competidores) : null,
+        custos: detalhado ? vazioANull(custos) : null,
+        termosAceites: aceito,
+      });
+
+      // Os anexos vão depois de a ideia existir (um pedido por ficheiro).
+      const falhados: string[] = [];
+      for (const f of anexos) {
+        try {
+          await apiIdeias.anexar(criada.id, f);
+        } catch {
+          falhados.push(f.name);
+        }
+      }
+      if (falhados.length > 0) {
+        setAvisoAnexos(`Não foi possível anexar: ${falhados.join(', ')}. Pode tentar outra vez a partir da ideia.`);
+      }
+
+      setRegistada(criada);
+      atualizarListas();
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAEnviar(false);
+    }
   };
 
   if (registada !== null) {
@@ -122,12 +210,13 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
         <span className="passo-numero grande">
           <Visto />
         </span>
-        <h3>Ideia {codigoIdeia(registada)} registada</h3>
+        <h3>Ideia {registada.codigo} registada</h3>
         <p>
           {autoria === 'outros'
             ? 'Os outros autores vão receber um pedido para confirmar a autoria. Depois a equipa de Inovação valida a ideia e abre a discussão pública durante 30 dias.'
             : 'A equipa de Inovação vai validar a ideia e depois abre a discussão pública durante 30 dias.'}
         </p>
+        {avisoAnexos && <p className="erro">{avisoAnexos}</p>}
         <button className="botao-largo" onClick={aoTerminar}>
           fechar
         </button>
@@ -172,7 +261,7 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
             Outro autor ou autores
           </Opcao>
         </div>
-        {autoria === 'outros' && <Campo nome="outros autores (separados por vírgulas)" valor={outrosAutores} mudar={setOutrosAutores} linhas={1} />}
+        {autoria === 'outros' && <EscolherCoautores escolhidos={coautores} mudar={setCoautores} />}
         <label
           className="anexos"
           onDragOver={(e) => e.preventDefault()}
@@ -194,7 +283,11 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
           <button className="botao-largo curto" onClick={() => setPasso(1)}>
             voltar
           </button>
-          <button className="botao-largo" disabled={!titulo.trim() || !descricao.trim()} onClick={() => setPasso(3)}>
+          <button
+            className="botao-largo"
+            disabled={!titulo.trim() || !descricao.trim() || (autoria === 'outros' && coautores.length === 0)}
+            onClick={() => setPasso(3)}
+          >
             continuar <SetaContinuar className="seta-vermelha" />
           </button>
         </div>
@@ -204,7 +297,7 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
         <Campo nome="vantagens" valor={vantagens} mudar={setVantagens} />
         <Campo nome="requisitos" valor={requisitos} mudar={setRequisitos} />
         <Campo nome="como é feito actualmente" valor={comoEFeito} mudar={setComoEFeito} />
-        {tipo === 'detalhado' && (
+        {tipo === 'NovoProdutoServicoDetalhado' && (
           <>
             <Campo nome="modelo de negocio" valor={modeloNegocio} mudar={setModeloNegocio} />
             <Campo nome="competitores" valor={competidores} mudar={setCompetidores} />
@@ -222,6 +315,7 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
       </Passo>
 
       <Passo n={4} titulo="termos e condições" estado={estado(4)}>
+        {erro && <div className="erro">{erro}</div>}
         <div className="rotulo">ler termos e condições</div>
         {termos.map((t) => (
           <p key={t.slice(0, 20)} className="termos">
@@ -237,8 +331,8 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
           <button className="botao-largo curto" onClick={() => setPasso(3)}>
             voltar
           </button>
-          <button className="botao-largo" disabled={!aceito} onClick={submeter}>
-            registar ideia <Upload className="seta-vermelha" />
+          <button className="botao-largo" disabled={!aceito || aEnviar} onClick={() => void submeter()}>
+            {aEnviar ? 'a registar…' : 'registar ideia'} <Upload className="seta-vermelha" />
           </button>
         </div>
       </Passo>

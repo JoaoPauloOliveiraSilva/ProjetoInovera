@@ -1,25 +1,33 @@
-import type { Notas } from './tipos';
+/** Notas de 0 a 4 de uma ideia da dstelecom; null = ainda não escolhida. */
+export interface Notas {
+  custo: number | null;
+  enquadramento: number | null;
+  beneficio: number | null;
+  adequacaoTecnica: number | null;
+  incerteza: number | null;
+}
 
-/** Pesos do Mod.246 (configuráveis no backend; a especificação fala em média simples). */
+/** Pesos do Mod.246 — iguais a PesosAvaliacao.Mod246 no backend (que é quem calcula a nota oficial). */
 export const pesosMod246: Record<keyof Notas, number> = {
   custo: 0.15,
   enquadramento: 0.25,
   beneficio: 0.3,
-  adequacao: 0.2,
+  adequacaoTecnica: 0.2,
   incerteza: 0.1,
 };
 
+/** Igual a AvaliacaoIdeia.LimiarAprovacao no backend. */
 export const limiarAprovacao = 2;
 
 export const variaveis: { chave: keyof Notas; nome: string; curto: string }[] = [
   { chave: 'custo', nome: 'Custo', curto: 'Custo' },
   { chave: 'enquadramento', nome: 'Enquadramento', curto: 'Enquadr.' },
   { chave: 'beneficio', nome: 'Benefício', curto: 'Benefício' },
-  { chave: 'adequacao', nome: 'Adeq. Técnica', curto: 'Adeq. Téc.' },
+  { chave: 'adequacaoTecnica', nome: 'Adeq. Técnica', curto: 'Adeq. Téc.' },
   { chave: 'incerteza', nome: 'Incerteza', curto: 'Incerteza' },
 ];
 
-/** Nota final ponderada; null se faltar alguma variável (N.A.). */
+/** Pré-visualização da nota final; null se faltar alguma variável. */
 export function calcularNota(notas: Notas): number | null {
   let total = 0;
   for (const { chave } of variaveis) {
@@ -47,10 +55,13 @@ export function haQuantoTempo(iso: string): string {
   return `há ${dias} ${dias === 1 ? 'dia' : 'dias'}`;
 }
 
-/** Código da ideia (AA01 … ZZ99), igual ao GeradorCodigoIdeia do backend. */
-export function codigoIdeia(numero: number): string {
-  const indice = numero - 1;
-  const prefixo = Math.floor(indice / 99);
-  const letras = String.fromCharCode(65 + Math.floor(prefixo / 26)) + String.fromCharCode(65 + (prefixo % 26));
-  return letras + String((indice % 99) + 1).padStart(2, '0');
+export function formatarTamanho(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** Primeiro nome, para o "olá, …" do menu. */
+export function primeiroNome(nome: string): string {
+  return nome.trim().split(/\s+/)[0] ?? nome;
 }
