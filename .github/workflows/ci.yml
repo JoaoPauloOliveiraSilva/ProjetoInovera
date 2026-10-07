@@ -1,0 +1,53 @@
+# Verificação automática em cada push e pull request: compila o backend, corre os testes
+# unitários e compila o frontend. (Sem publicação na AWS por agora.)
+name: CI
+
+on:
+  push:
+    branches: [main, versao2]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restaurar
+        run: dotnet restore Innovera.slnx
+
+      - name: Compilar
+        run: dotnet build Innovera.slnx --no-restore --configuration Release
+
+      - name: Testes do domínio
+        run: dotnet test tests/Domain.UnitTests/Domain.UnitTests.csproj --no-build --configuration Release
+
+      - name: Testes da camada Application
+        run: dotnet test tests/Application.UnitTests/Application.UnitTests.csproj --no-build --configuration Release
+
+      - name: Testes funcionais (PostgreSQL em Docker)
+        run: dotnet test tests/Application.FunctionalTests/Application.FunctionalTests.csproj --no-build --configuration Release
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/Web/ClientApp
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/Web/ClientApp/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Compilar (TypeScript + Vite)
+        run: npm run build

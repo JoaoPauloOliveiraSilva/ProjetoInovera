@@ -40,8 +40,24 @@ Todas as entidades estão em `src/Domain` (namespace `Innovera.Domain.Entities`)
 
 Nomes sem acentos nem underscores, um ficheiro por classe com o mesmo nome.
 
-## Próximos passos (depois da reunião com a dstelecom)
+## Base de dados (PostgreSQL)
 
-1. Fechar a base de dados (SQL Server/Azure SQL, como na proposta) e o login (Entra ID ou contas locais).
-2. Acrescentar os `DbSet` ao `IApplicationDbContext`, as configurações EF (`Infrastructure/Data/Configurations`: TPH para `Iniciativa`, `OwnsMany` para `AtividadeGestao` e `AnaliseAnual`, índice único em `LikeIdeia` (ideia + utilizador)) e a primeira migração.
-3. Casos de uso do Sprint 1 (ideias) na camada Application.
+- EF Core 10 + Npgsql. Configurações em `src/Infrastructure/Data/Configurations` (uma por pasta do domínio).
+- `Iniciativa` em TPH (uma tabela, coluna `Discriminador`); `AtividadeGestao` e `AnaliseAnual` com `OwnsMany`.
+- Número das ideias numa sequência do PostgreSQL (`ideia_numero_seq`) → código AA01 … ZZ99.
+- Like único por ideia + utilizador; gosto único por comentário + utilizador.
+- Apagar: filhos em cascata (anexos, comentários, likes…); referências a utilizadores ficam a `NULL` ou bloqueiam.
+- Migração inicial em `src/Infrastructure/Data/Migrations` (gerada com `dotnet ef`, ver README).
+
+## Casos de uso já feitos (Sprint 1 — ideias)
+
+`src/Application/Ideias` e `src/Application/Utilizadores`, expostos em `/api/Ideias` e `/api/Utilizadores`:
+registar ideia (4 passos, coautores, anexos até 25 MB), confirmar autoria, validar (equipa de Inovação),
+likes e comentários durante a discussão, fecho automático aos 30 dias (`Infrastructure/Jobs/FecharDiscussoesJob`),
+avaliação pela CE (notas ou decisão dst), classe e criação do Projeto/Desafio/Melhoria Contínua ligado à ideia.
+
+## Próximos passos
+
+1. Projetos e Project Charter (Sprint 2), desafios e vigilâncias.
+2. KPIs e relatórios (Mod.239).
+3. Na AWS: trocar `ArmazenamentoLocal` pelo bucket e enviar emails pelo SES.

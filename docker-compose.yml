@@ -1,0 +1,28 @@
+# Base de dados para desenvolvimento SEM o Aspire.
+# (Com o Aspire — dotnet run --project src/AppHost — não é preciso: o AppHost cria o PostgreSQL sozinho.)
+#
+#   docker compose up -d      -> arranca o PostgreSQL em localhost:5432
+#   docker compose down       -> pára (os dados ficam no volume)
+#   docker compose down -v    -> pára e APAGA os dados
+#
+# Os dados de acesso são os mesmos de src/Web/appsettings.Development.json.
+services:
+  postgres:
+    image: postgres:17
+    container_name: innovera-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: innovera
+    ports:
+      - "5432:5432"
+    volumes:
+      - innovera-postgres-dados:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d innovera"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  innovera-postgres-dados:
