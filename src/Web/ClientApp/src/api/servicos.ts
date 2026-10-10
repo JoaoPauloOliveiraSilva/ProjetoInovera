@@ -6,6 +6,14 @@ import type {
   IdeiaCriada,
   IdeiaDetalhe,
   IdeiaResumo,
+  DadosIniciativa,
+  IniciativaDetalhe,
+  IniciativaResumo,
+  Notificacoes,
+  Responsabilidade,
+  ResultadoImportacao,
+  TipoIniciativa,
+  EstadoIniciativa,
   NotasPedido,
   NovaIdeiaPedido,
   Perfis,
@@ -53,11 +61,26 @@ export const administracao = {
 
 const base = '/api/Ideias';
 
+export interface FiltroIdeias {
+  estado?: EstadoIdeia;
+  soMinhas?: boolean;
+  soDecididas?: boolean;
+  texto?: string;
+  classe?: ClasseIdeia;
+  responsabilidade?: Responsabilidade;
+  ano?: number;
+}
+
 export const ideias = {
-  listar: (filtro: { estado?: EstadoIdeia; soMinhas?: boolean } = {}) => {
+  listar: (filtro: FiltroIdeias = {}) => {
     const p = new URLSearchParams();
     if (filtro.estado) p.set('estado', filtro.estado);
     if (filtro.soMinhas) p.set('soMinhas', 'true');
+    if (filtro.soDecididas) p.set('soDecididas', 'true');
+    if (filtro.texto?.trim()) p.set('texto', filtro.texto.trim());
+    if (filtro.classe) p.set('classe', filtro.classe);
+    if (filtro.responsabilidade) p.set('responsabilidade', filtro.responsabilidade);
+    if (filtro.ano) p.set('ano', String(filtro.ano));
     const q = p.toString();
     return obter<IdeiaResumo[]>(q ? `${base}?${q}` : base);
   },
@@ -79,4 +102,32 @@ export const ideias = {
     return enviar<Anexo>(`${base}/${id}/anexos`, dados);
   },
   urlAnexo: (anexoId: number) => `${base}/anexos/${anexoId}`,
+};
+
+export const notificacoes = {
+  listar: () => obter<Notificacoes>('/api/Notificacoes'),
+  marcarLida: (id: number) => enviar(`/api/Notificacoes/${id}/lida`),
+  marcarTodas: () => enviar('/api/Notificacoes/lidas'),
+};
+
+const baseIniciativas = '/api/Iniciativas';
+
+export const iniciativas = {
+  listar: (filtro: { tipo?: TipoIniciativa; estado?: EstadoIniciativa; texto?: string } = {}) => {
+    const p = new URLSearchParams();
+    if (filtro.tipo) p.set('tipo', filtro.tipo);
+    if (filtro.estado) p.set('estado', filtro.estado);
+    if (filtro.texto?.trim()) p.set('texto', filtro.texto.trim());
+    const q = p.toString();
+    return obter<IniciativaResumo[]>(q ? `${baseIniciativas}?${q}` : baseIniciativas);
+  },
+  obter: (id: number) => obter<IniciativaDetalhe>(`${baseIniciativas}/${id}`),
+  criar: (tipo: TipoIniciativa, dados: DadosIniciativa) => enviar<number>(baseIniciativas, { tipo, dados }),
+  atualizar: (id: number, dados: DadosIniciativa) => pedido<void>('PUT', `${baseIniciativas}/${id}`, dados),
+  pontoSituacao: (id: number, texto: string) => enviar(`${baseIniciativas}/${id}/ponto-situacao`, { texto }),
+  importarMod246: (ficheiro: File) => {
+    const dados = new FormData();
+    dados.append('ficheiro', ficheiro);
+    return enviar<ResultadoImportacao>(`${baseIniciativas}/importar-mod246`, dados);
+  },
 };

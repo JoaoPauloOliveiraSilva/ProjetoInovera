@@ -79,8 +79,20 @@ constante em `src/Domain/Constants/Permissoes.cs` (e, se quiser, da permissão p
 | `ideias.ver-todas` — ver ideias privadas e por validar, anexar ficheiros | ✔ | |
 | `ideias.validar` — validar ideias e fechar discussões | ✔ | |
 | `ideias.avaliar` — avaliação da CE, decisão dst e classe | ✔ | |
+| `iniciativas.gerir` — criar/editar iniciativas e importar o Mod.246 | ✔ | |
 | `utilizadores.gerir` — adicionar e gerir utilizadores | | |
 | `perfis.gerir` — gerir perfis e permissões | | |
+
+## Portefólio (Mod.246) e avisos
+
+- **Importar o Excel Mod.246** em **administração › importar Mod.246**: entram as ideias da Caixa de Inovação (com o n.º
+  da Caixa, notas, decisão e classe) e as folhas Projetos, Melhorias Contínuas, Oportunidades, Vigilâncias, Mestrados e
+  Ações de Inovação. Pode repetir-se: o que já existe não se duplica. Os dados reais **não** vão para o git — cada um
+  importa o ficheiro na sua base de dados.
+- **Iniciativas** (menu projetos, desafios, vigilâncias, iniciativas, oportunidades): lista com filtros, ficha,
+  edição e histórico do ponto de situação.
+- **Avisos** (sino na barra da esquerda): coautoria por confirmar, ideia para validar, ideia publicada, discussão
+  terminada, decisão da CE e comentários. Os mais importantes também seguem por email.
 
 ## Email (SMTP)
 
@@ -145,6 +157,10 @@ docs/              modelo de domínio
 | `POST /api/Ideias/{id}/gosto` · `/comentarios` · `POST /api/Ideias/comentarios/{id}/gosto` | discussão pública |
 | `POST /api/Ideias/{id}/avaliacao` · `/decisao-dst` · `/classe` | avaliação pela CE |
 | `POST /api/Ideias/{id}/anexos` · `GET /api/Ideias/anexos/{id}` | anexos (até 25 MB) |
+| `GET /api/Ideias?texto=&classe=&responsabilidade=&ano=&soDecididas=` | portefólio de ideias com filtros |
+| `GET/POST /api/Iniciativas` · `GET/PUT /api/Iniciativas/{id}` · `POST …/{id}/ponto-situacao` | iniciativas |
+| `POST /api/Iniciativas/importar-mod246` | importar o Excel Mod.246 |
+| `GET /api/Notificacoes` · `POST …/{id}/lida` · `POST …/lidas` | avisos |
 
 A documentação completa da API fica em `/scalar` com a API a correr.
 

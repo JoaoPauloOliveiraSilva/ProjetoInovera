@@ -15,6 +15,8 @@ public class IdeiaConfiguration : IEntityTypeConfiguration<Ideia>
         builder.Property(i => i.Titulo).HasMaxLength(200).IsRequired();
         builder.Property(i => i.Origem).HasMaxLength(100);
         builder.Property(i => i.Status).HasMaxLength(500);
+        builder.Property(i => i.AutorNome).HasMaxLength(200);
+        builder.HasIndex(i => i.IdCaixaInovacao);
 
         builder.HasOne(i => i.Autor).WithMany().HasForeignKey(i => i.AutorId).OnDelete(DeleteBehavior.SetNull);
 

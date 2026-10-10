@@ -125,6 +125,46 @@ public class ApplicationDbContextInitialiser
             await _roleManager.CreateAsync(perfil);
             await DarPermissoesPorOmissaoAsync(perfil);
         }
+
+        await DarPermissoesNovasAsync();
+    }
+
+    /// <summary>
+    /// Permissões que apareceram numa versão nova da aplicação: os perfis do sistema recebem as que lhes cabem
+    /// por omissão, uma única vez (fica registado no perfil Administrador).
+    /// </summary>
+    private async Task DarPermissoesNovasAsync()
+    {
+        var administrador = await _roleManager.FindByNameAsync(Roles.Administrador);
+        if (administrador is null)
+        {
+            return;
+        }
+
+        var conhecidas = (await _roleManager.GetClaimsAsync(administrador))
+            .Where(c => c.Type == Permissoes.TipoClaimConhecida)
+            .Select(c => c.Value)
+            .ToHashSet();
+
+        foreach (var permissao in Permissoes.Todas.Select(p => p.Codigo).Where(p => !conhecidas.Contains(p)))
+        {
+            foreach (var (nomePerfil, porOmissao) in Permissoes.PorOmissao)
+            {
+                var perfil = await _roleManager.FindByNameAsync(nomePerfil);
+                if (perfil is null || !porOmissao.Contains(permissao))
+                {
+                    continue;
+                }
+
+                var atuais = await _roleManager.GetClaimsAsync(perfil);
+                if (!atuais.Any(c => c.Type == Permissoes.TipoClaim && c.Value == permissao))
+                {
+                    await _roleManager.AddClaimAsync(perfil, new System.Security.Claims.Claim(Permissoes.TipoClaim, permissao));
+                }
+            }
+
+            await _roleManager.AddClaimAsync(administrador, new System.Security.Claims.Claim(Permissoes.TipoClaimConhecida, permissao));
+        }
     }
 
     private async Task DarPermissoesPorOmissaoAsync(IdentityRole perfil)

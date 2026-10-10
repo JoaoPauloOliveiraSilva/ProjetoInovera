@@ -17,6 +17,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     // Transversais
     public DbSet<Utilizador> Utilizadores => Set<Utilizador>();
     public DbSet<Alerta> Alertas => Set<Alerta>();
+
+    public DbSet<Notificacao> Notificacoes => Set<Notificacao>();
     public DbSet<OutputGerado> OutputsGerados => Set<OutputGerado>();
     public DbSet<RegistoAuditoria> RegistosAuditoria => Set<RegistoAuditoria>();
 

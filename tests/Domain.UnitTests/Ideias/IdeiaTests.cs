@@ -234,4 +234,39 @@ public class IdeiaTests
 
         Should.Throw<RegraDeNegocioException>(() => ideia.RemoverLike(7));
     }
+
+    [Test]
+    public void IdeiaImportadaFicaComADecisaoDoExcel()
+    {
+        var avaliacao = new AvaliacaoIdeia
+        {
+            Custo = EscalaDeAvaliacao.Nivel3,
+            Enquadramento = EscalaDeAvaliacao.Nivel4,
+            Beneficio = EscalaDeAvaliacao.Nivel3,
+            AdequacaoTecnica = EscalaDeAvaliacao.Nivel3,
+            Incerteza = EscalaDeAvaliacao.Nivel1,
+        };
+
+        var ideia = Ideia.Importar(2764, "Criar mecanismo seguro", "Pedro Monteiro", Hoje, "Caixa de Inovação",
+            Responsabilidade.Dstelecom, avaliacao, aprovada: true, ClasseIdeia.MelhoriaContinua, status: null);
+
+        ideia.Estado.ShouldBe(EstadoIdeia.Aprovada);
+        ideia.Classificacao.ShouldBe(ClassificacaoIdeia.Aprovada);
+        ideia.Classe.ShouldBe(ClasseIdeia.MelhoriaContinua);
+        ideia.Avaliacao!.Nota.ShouldBe(3.05m);
+        ideia.AutorNome.ShouldBe("Pedro Monteiro");
+        ideia.IdCaixaInovacao.ShouldBe(2764);
+    }
+
+    [Test]
+    public void IdeiaImportadaSemDecisaoFicaEmAvaliacaoEAnonimaSemNome()
+    {
+        var ideia = Ideia.Importar(3004, "Memorial sobre o tempo", "Autor Anónimo", Hoje, null,
+            Responsabilidade.Dst, avaliacao: null, aprovada: null, classe: null, status: null);
+
+        ideia.Estado.ShouldBe(EstadoIdeia.EmAvaliacao);
+        ideia.Anonima.ShouldBeTrue();
+        ideia.AutorNome.ShouldBeNull();
+        ideia.Origem.ShouldBe("Caixa de inovação");
+    }
 }

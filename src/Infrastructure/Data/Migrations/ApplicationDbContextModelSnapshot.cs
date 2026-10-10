@@ -869,6 +869,10 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.Property<int?>("AutorId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AutorNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<int?>("Classe")
                         .HasColumnType("integer");
 
@@ -961,6 +965,8 @@ namespace Innovera.Infrastructure.Data.Migrations
 
                     b.HasIndex("Estado");
 
+                    b.HasIndex("IdCaixaInovacao");
+
                     b.HasIndex("Numero")
                         .IsUnique();
 
@@ -1025,8 +1031,16 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.Property<string>("PontoSituacao")
                         .HasColumnType("text");
 
+                    b.Property<string>("ReferenciaImportacao")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int?>("ResponsavelId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ResponsavelNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
@@ -1039,6 +1053,8 @@ namespace Innovera.Infrastructure.Data.Migrations
 
                     b.HasIndex("IdeiaOrigemId")
                         .IsUnique();
+
+                    b.HasIndex("ReferenciaImportacao");
 
                     b.HasIndex("ResponsavelId");
 
@@ -1404,6 +1420,59 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.HasIndex("IniciativaId");
 
                     b.ToTable("NotaPontoSituacao");
+                });
+
+            modelBuilder.Entity("Innovera.Domain.Entities.Notificacao", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("Data")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DestinatarioId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("EmailEnviado")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Lida")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Mensagem")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinatarioId", "Lida");
+
+                    b.ToTable("Notificacoes");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.OutputGerado", b =>
@@ -2762,6 +2831,17 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.Navigation("Autor");
 
                     b.Navigation("Iniciativa");
+                });
+
+            modelBuilder.Entity("Innovera.Domain.Entities.Notificacao", b =>
+                {
+                    b.HasOne("Innovera.Domain.Entities.Utilizador", "Destinatario")
+                        .WithMany()
+                        .HasForeignKey("DestinatarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Destinatario");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.OutputGerado", b =>

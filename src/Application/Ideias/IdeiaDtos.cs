@@ -14,7 +14,9 @@ public record IdeiaResumoDto(
     Responsabilidade Responsabilidade,
     ClassificacaoIdeia? Classificacao,
     ClasseIdeia? Classe,
-    decimal? Nota);
+    decimal? Nota,
+    int? IdCaixaInovacao,
+    bool PorConfirmar);
 
 public record CoautorDto(int UtilizadorId, string Nome, bool Confirmado);
 
@@ -55,6 +57,9 @@ public record IdeiaDetalheDto(
     AvaliacaoDto? Avaliacao,
     bool PodeConfirmarAutoria,
     bool PodeAnexar,
-    int? IniciativaId);
+    int? IniciativaId,
+    string? IniciativaCodigo,
+    int? IdCaixaInovacao,
+    string? Origem);
 
 public record IdeiaCriadaDto(int Id, string Codigo, EstadoIdeia Estado);

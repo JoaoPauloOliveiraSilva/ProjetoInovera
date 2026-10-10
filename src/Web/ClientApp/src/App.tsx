@@ -11,6 +11,8 @@ import { EmConstrucao } from './paginas/EmConstrucao';
 import { Entrar } from './paginas/Entrar';
 import { Homepage } from './paginas/Homepage';
 import { IdeiasLista } from './paginas/IdeiasLista';
+import { ImportarMod246 } from './paginas/ImportarMod246';
+import { IniciativasLista } from './paginas/IniciativasLista';
 import { Landing } from './paginas/Landing';
 import { Validacao } from './paginas/Validacao';
 import { Protegido, SessaoProvider } from './sessao/Sessao';
@@ -19,12 +21,7 @@ const emConstrucao: [string, string][] = [
   ['i9talks', 'i9talks'],
   ['i9news', 'i9news'],
   ['premios', 'prémios'],
-  ['desafios', 'desafios'],
-  ['vigilancias', 'vigilâncias'],
-  ['projetos', 'projetos'],
   ['sifide', 'sifide'],
-  ['iniciativas', 'iniciativas'],
-  ['oportunidades', 'oportunidades'],
   ['conhecimento', 'conhecimento'],
   ['indicadores', 'indicadores'],
 ];
@@ -53,6 +50,21 @@ export function App() {
               <Route path="minha-caixa" element={<IdeiasLista modo="minhas" />} />
               <Route path="ideias" element={<IdeiasLista modo="todas" />} />
               <Route path="ideias/discussao" element={<IdeiasLista modo="discussao" />} />
+              <Route path="ideias/:id" element={<IdeiasLista modo="todas" />} />
+              <Route path="iniciativas" element={<IniciativasLista titulo="iniciativas" />} />
+              <Route path="iniciativas/:id" element={<IniciativasLista titulo="iniciativas" />} />
+              <Route path="projetos" element={<IniciativasLista titulo="projetos" tipo="Projeto" />} />
+              <Route path="desafios" element={<IniciativasLista titulo="desafios" tipo="Desafio" />} />
+              <Route path="vigilancias" element={<IniciativasLista titulo="vigilâncias" tipo="Vigilancia" />} />
+              <Route path="oportunidades" element={<IniciativasLista titulo="oportunidades" tipo="Oportunidade" />} />
+              <Route
+                path="admin/importar"
+                element={
+                  <Protegido permissao={Permissoes.iniciativasGerir}>
+                    <ImportarMod246 />
+                  </Protegido>
+                }
+              />
               <Route
                 path="validacao"
                 element={

@@ -44,13 +44,16 @@ public class CriarIdeiaCommandHandler : IRequestHandler<CriarIdeiaCommand, Ideia
     private readonly IUtilizadores _utilizadores;
     private readonly IGeradorNumeroIdeia _gerador;
     private readonly TimeProvider _relogio;
+    private readonly INotificacoes _notificacoes;
 
-    public CriarIdeiaCommandHandler(IApplicationDbContext context, IUtilizadores utilizadores, IGeradorNumeroIdeia gerador, TimeProvider relogio)
+    public CriarIdeiaCommandHandler(IApplicationDbContext context, IUtilizadores utilizadores, IGeradorNumeroIdeia gerador, TimeProvider relogio,
+        INotificacoes notificacoes)
     {
         _context = context;
         _utilizadores = utilizadores;
         _gerador = gerador;
         _relogio = relogio;
+        _notificacoes = notificacoes;
     }
 
     public async Task<IdeiaCriadaDto> Handle(CriarIdeiaCommand request, CancellationToken cancellationToken)
@@ -89,6 +92,15 @@ public class CriarIdeiaCommandHandler : IRequestHandler<CriarIdeiaCommand, Ideia
 
         _context.Ideias.Add(ideia);
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (ideia.Estado == EstadoIdeia.ValidacaoAutores)
+        {
+            await AvisosIdeias.CoautoresIndicadosAsync(_notificacoes, ideia, existentes, cancellationToken);
+        }
+        else
+        {
+            await AvisosIdeias.ParaValidarAsync(_notificacoes, ideia, cancellationToken);
+        }
 
         return new IdeiaCriadaDto(ideia.Id, ideia.Codigo, ideia.Estado);
     }

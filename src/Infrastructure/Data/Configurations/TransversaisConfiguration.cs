@@ -20,6 +20,18 @@ public class UtilizadorConfiguration : IEntityTypeConfiguration<Utilizador>
     }
 }
 
+public class NotificacaoConfiguration : IEntityTypeConfiguration<Notificacao>
+{
+    public void Configure(EntityTypeBuilder<Notificacao> builder)
+    {
+        builder.Property(n => n.Titulo).HasMaxLength(200).IsRequired();
+        builder.Property(n => n.Mensagem).HasMaxLength(1000).IsRequired();
+        builder.Property(n => n.Link).HasMaxLength(300);
+        builder.HasIndex(n => new { n.DestinatarioId, n.Lida });
+        builder.HasOne(n => n.Destinatario).WithMany().HasForeignKey(n => n.DestinatarioId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public class AlertaConfiguration : IEntityTypeConfiguration<Alerta>
 {
     public void Configure(EntityTypeBuilder<Alerta> builder)

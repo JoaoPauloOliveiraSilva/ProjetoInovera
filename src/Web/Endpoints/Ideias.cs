@@ -28,8 +28,18 @@ public class Ideias : IEndpointGroup
         groupBuilder.MapGet(ObterAnexo, "anexos/{anexoId:int}");
     }
 
-    public static async Task<Ok<IReadOnlyList<IdeiaResumoDto>>> ListarIdeias(ISender sender, EstadoIdeia? estado, bool? soMinhas)
-        => TypedResults.Ok(await sender.Send(new ListarIdeiasQuery { Estado = estado, SoMinhas = soMinhas ?? false }));
+    public static async Task<Ok<IReadOnlyList<IdeiaResumoDto>>> ListarIdeias(ISender sender, EstadoIdeia? estado, bool? soMinhas,
+        bool? soDecididas, string? texto, ClasseIdeia? classe, Responsabilidade? responsabilidade, int? ano)
+        => TypedResults.Ok(await sender.Send(new ListarIdeiasQuery
+        {
+            Estado = estado,
+            SoMinhas = soMinhas ?? false,
+            SoDecididas = soDecididas ?? false,
+            Texto = texto,
+            Classe = classe,
+            Responsabilidade = responsabilidade,
+            Ano = ano,
+        }));
 
     public static async Task<Ok<IdeiaDetalheDto>> ObterIdeia(ISender sender, int id)
         => TypedResults.Ok(await sender.Send(new ObterIdeiaQuery(id)));

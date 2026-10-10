@@ -28,6 +28,9 @@ public class IniciativaConfiguration : IEntityTypeConfiguration<Iniciativa>
         builder.Property(i => i.Titulo).HasMaxLength(300).IsRequired();
         builder.Property(i => i.Origem).HasMaxLength(200);
         builder.HasIndex(i => i.Codigo);
+        builder.Property(i => i.ResponsavelNome).HasMaxLength(200);
+        builder.Property(i => i.ReferenciaImportacao).HasMaxLength(100);
+        builder.HasIndex(i => i.ReferenciaImportacao);
 
         builder.HasOne(i => i.Responsavel).WithMany().HasForeignKey(i => i.ResponsavelId).OnDelete(DeleteBehavior.SetNull);
 

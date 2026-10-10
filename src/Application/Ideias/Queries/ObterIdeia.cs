@@ -46,7 +46,7 @@ public class ObterIdeiaQueryHandler : IRequestHandler<ObterIdeiaQuery, IdeiaDeta
                 (int?)ideia.Avaliacao.AdequacaoTecnica, (int?)ideia.Avaliacao.Incerteza, ideia.Avaliacao.Nota, ideia.Avaliacao.Aprovada,
                 ideia.Avaliacao.Observacoes);
 
-        var nomeAutor = ideia.Anonima ? null : ideia.Autor?.Nome;
+        var nomeAutor = ideia.Anonima ? null : ideia.Autor?.Nome ?? ideia.AutorNome;
 
         return new IdeiaDetalheDto(
             ideia.Id, ideia.Codigo, ideia.Titulo, ideia.Tipo, ideia.Descricao, ideia.Vantagens, ideia.Requisitos,
@@ -65,6 +65,9 @@ public class ObterIdeiaQueryHandler : IRequestHandler<ObterIdeiaQuery, IdeiaDeta
             avaliacao,
             ideia.Estado == EstadoIdeia.ValidacaoAutores && ideia.Coautores.Any(c => c.UtilizadorId == eu.Id && !c.Confirmado),
             admin || eAutor,
-            ideia.IniciativaResultante?.Id);
+            ideia.IniciativaResultante?.Id,
+            ideia.IniciativaResultante?.Codigo,
+            ideia.IdCaixaInovacao,
+            ideia.Origem);
     }
 }

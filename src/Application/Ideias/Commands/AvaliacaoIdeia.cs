@@ -76,7 +76,7 @@ public class RegistarDecisaoDstCommandHandler(IApplicationDbContext context) : I
 [Authorize(Permissao = Permissoes.Ideias.Avaliar)]
 public record DefinirClasseCommand(int IdeiaId, ClasseIdeia Classe, string? Status) : IRequest<int?>;
 
-public class DefinirClasseCommandHandler(IApplicationDbContext context) : IRequestHandler<DefinirClasseCommand, int?>
+public class DefinirClasseCommandHandler(IApplicationDbContext context, INotificacoes notificacoes) : IRequestHandler<DefinirClasseCommand, int?>
 {
     public async Task<int?> Handle(DefinirClasseCommand request, CancellationToken cancellationToken)
     {
@@ -112,6 +112,8 @@ public class DefinirClasseCommandHandler(IApplicationDbContext context) : IReque
         }
 
         await context.SaveChangesAsync(cancellationToken);
+
+        await AvisosIdeias.DecisaoAsync(context, notificacoes, ideia, cancellationToken);
         return iniciativa?.Id;
     }
 }

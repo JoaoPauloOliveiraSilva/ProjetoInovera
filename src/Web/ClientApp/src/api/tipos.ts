@@ -85,6 +85,10 @@ export interface IdeiaResumo {
   classificacao: ClassificacaoIdeia | null;
   classe: ClasseIdeia | null;
   nota: number | null;
+  /** N.º da Caixa de Inovação (ideias importadas do Mod.246). */
+  idCaixaInovacao: number | null;
+  /** O utilizador atual é coautor e ainda não confirmou. */
+  porConfirmar: boolean;
 }
 
 export interface Coautor {
@@ -152,7 +156,104 @@ export interface IdeiaDetalhe {
   podeConfirmarAutoria: boolean;
   podeAnexar: boolean;
   iniciativaId: number | null;
+  iniciativaCodigo: string | null;
+  idCaixaInovacao: number | null;
+  origem: string | null;
 }
+
+// Notificações (sino)
+
+export interface Notificacao {
+  id: number;
+  titulo: string;
+  mensagem: string;
+  link: string | null;
+  data: string;
+  lida: boolean;
+}
+
+export interface Notificacoes {
+  naoLidas: number;
+  itens: Notificacao[];
+}
+
+// Iniciativas (portefólio, Mod.246)
+
+export type TipoIniciativa = 'Projeto' | 'Desafio' | 'MelhoriaContinua' | 'Oportunidade' | 'Vigilancia' | 'Mestrado' | 'AcaoInovacao';
+
+export type EstadoIniciativa = 'Pendente' | 'EmAnalise' | 'EmCurso' | 'EmImplementacao' | 'Concluida' | 'Rejeitada' | 'Cancelada';
+
+export type Horizonte = 'H1' | 'H2' | 'H3';
+
+export interface IniciativaResumo {
+  id: number;
+  codigo: string;
+  tipo: TipoIniciativa;
+  titulo: string;
+  estado: EstadoIniciativa;
+  responsavel: string | null;
+  dataInicio: string | null;
+  dataFim: string | null;
+  origem: string | null;
+  pontoSituacao: string | null;
+  ideiaOrigemId: number | null;
+  ideiaOrigemCodigo: string | null;
+}
+
+export interface IniciativaDetalhe {
+  resumo: IniciativaResumo;
+  descricao: string | null;
+  horizonte: Horizonte | null;
+  detalhes: { nome: string; valor: string }[];
+  historico: { data: string; texto: string; autor: string | null }[];
+  podeEditar: boolean;
+}
+
+export interface DadosIniciativa {
+  titulo: string;
+  descricao: string | null;
+  estado: EstadoIniciativa;
+  responsavel: string | null;
+  dataInicio: string | null;
+  dataFim: string | null;
+  origem: string | null;
+  horizonte: Horizonte | null;
+}
+
+export interface ResultadoImportacao {
+  folhas: { folha: string; importadas: number; jaExistiam: number; ignoradas: number }[];
+  avisos: string[];
+}
+
+export const nomeTipoIniciativa: Record<TipoIniciativa, string> = {
+  Projeto: 'projeto',
+  Desafio: 'desafio',
+  MelhoriaContinua: 'melhoria contínua',
+  Oportunidade: 'oportunidade',
+  Vigilancia: 'vigilância',
+  Mestrado: 'mestrado',
+  AcaoInovacao: 'ação de inovação',
+};
+
+export const nomeEstadoIniciativa: Record<EstadoIniciativa, string> = {
+  Pendente: 'pendente',
+  EmAnalise: 'em análise',
+  EmCurso: 'em curso',
+  EmImplementacao: 'em implementação',
+  Concluida: 'concluída',
+  Rejeitada: 'rejeitada',
+  Cancelada: 'cancelada',
+};
+
+export const classeEstadoIniciativa: Record<EstadoIniciativa, string> = {
+  Pendente: 'estado-validacao-equipa',
+  EmAnalise: 'estado-em-avaliacao',
+  EmCurso: 'estado-em-discussao',
+  EmImplementacao: 'estado-em-discussao',
+  Concluida: 'estado-aprovada',
+  Rejeitada: 'estado-nao-aprovada',
+  Cancelada: 'estado-nao-aprovada',
+};
 
 export interface NovaIdeiaPedido {
   tipo: TipoIdeia;

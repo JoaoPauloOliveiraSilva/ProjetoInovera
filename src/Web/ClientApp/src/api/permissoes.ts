@@ -3,6 +3,7 @@ export const Permissoes = {
   ideiasVerTodas: 'ideias.ver-todas',
   ideiasValidar: 'ideias.validar',
   ideiasAvaliar: 'ideias.avaliar',
+  iniciativasGerir: 'iniciativas.gerir',
   gerirUtilizadores: 'utilizadores.gerir',
   gerirPerfis: 'perfis.gerir',
 } as const;

@@ -151,3 +151,9 @@ export const IconeSair = (p: P) => (
     <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4" />
   </svg>
 );
+
+export const IconeSino = (p: P) => (
+  <svg viewBox="0 0 24 24" width="26" height="26" {...base} {...p}>
+    <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16zM10 20a2 2 0 0 0 4 0" />
+  </svg>
+);

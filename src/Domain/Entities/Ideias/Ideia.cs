@@ -34,6 +34,9 @@ public class Ideia : BaseAuditableEntity
 
     public Utilizador? Autor { get; set; }
 
+    /// <summary>Nome do autor quando não é utilizador da plataforma (ideias importadas do Mod.246).</summary>
+    public string? AutorNome { get; set; }
+
     /// <summary>"Autor é anónimo".</summary>
     public bool Anonima { get; set; }
 
@@ -89,6 +92,55 @@ public class Ideia : BaseAuditableEntity
     public ICollection<ComentarioIdeia> Comentarios { get; set; } = new List<ComentarioIdeia>();
 
     public ICollection<LikeIdeia> Likes { get; set; } = new List<LikeIdeia>();
+
+    /// <summary>
+    /// Ideia que já existia no Mod.246 (Caixa de Inovação): entra com a decisão que já tinha, sem passar
+    /// pelas validações nem pela discussão. <paramref name="aprovada"/> nulo = ainda em avaliação.
+    /// </summary>
+    public static Ideia Importar(int idCaixaInovacao, string titulo, string? autorNome, DateTimeOffset data, string? origem,
+        Responsabilidade responsabilidade, AvaliacaoIdeia? avaliacao, bool? aprovada, ClasseIdeia? classe, string? status)
+    {
+        if (string.IsNullOrWhiteSpace(titulo))
+        {
+            throw new RegraDeNegocioException("A ideia precisa de um título.");
+        }
+
+        var anonima = string.IsNullOrWhiteSpace(autorNome)
+            || autorNome.Trim().Equals("Autor Anónimo", StringComparison.OrdinalIgnoreCase);
+
+        var ideia = new Ideia
+        {
+            IdCaixaInovacao = idCaixaInovacao,
+            Titulo = titulo.Trim(),
+            Anonima = anonima,
+            AutorNome = anonima ? null : autorNome!.Trim(),
+            DataSubmissao = data,
+            Origem = string.IsNullOrWhiteSpace(origem) ? "Caixa de inovação" : origem.Trim(),
+            Responsabilidade = responsabilidade,
+            Status = string.IsNullOrWhiteSpace(status) ? null : status.Trim(),
+        };
+
+        if (avaliacao is not null)
+        {
+            avaliacao.CalcularNota(PesosAvaliacao.Mod246);
+            ideia.Avaliacao = avaliacao;
+        }
+
+        if (aprovada is null)
+        {
+            ideia.Estado = EstadoIdeia.EmAvaliacao;
+            ideia.Classificacao = ClassificacaoIdeia.EmAvaliacaoPeloManager;
+        }
+        else
+        {
+            // O histórico fica como estava no Excel (a classe não é validada contra a decisão).
+            ideia.Estado = aprovada.Value ? EstadoIdeia.Aprovada : EstadoIdeia.NaoAprovada;
+            ideia.Classificacao = aprovada.Value ? ClassificacaoIdeia.Aprovada : ClassificacaoIdeia.NaoAprovada;
+            ideia.Classe = classe;
+        }
+
+        return ideia;
+    }
 
     /// <summary>Atribui o número sequencial e o código AA01 correspondente.</summary>
     public void AtribuirNumero(int numero)

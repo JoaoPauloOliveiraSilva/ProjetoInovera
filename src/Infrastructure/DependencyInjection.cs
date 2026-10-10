@@ -91,6 +91,8 @@ public static class DependencyInjection
         builder.Services.AddScoped<IUtilizadores, UtilizadoresService>();
         builder.Services.AddScoped<IContas, ServicoContas>();
         builder.Services.AddTransient<IEmail, EmailSmtp>();
+        builder.Services.AddScoped<INotificacoes, ServicoNotificacoes>();
+        builder.Services.AddSingleton<ILeitorFolhas, LeitorXlsx>();
         builder.Services.AddScoped<IGeradorNumeroIdeia, GeradorNumeroIdeia>();
         builder.Services.AddSingleton<IArmazenamentoFicheiros, ArmazenamentoLocal>();
 

@@ -1,3 +1,5 @@
+using Innovera.Application.Common.Interfaces;
+using Innovera.Application.Ideias;
 using Innovera.Domain.Enums;
 using Innovera.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -54,9 +56,11 @@ public class FecharDiscussoesJob : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var notificacoes = scope.ServiceProvider.GetRequiredService<INotificacoes>();
         var agora = _relogio.GetUtcNow();
 
         var terminadas = await context.Ideias
+            .Include(i => i.Coautores)
             .Where(i => i.Estado == EstadoIdeia.EmDiscussao && i.FimDiscussao <= agora)
             .ToListAsync(cancellationToken);
 
@@ -69,6 +73,11 @@ public class FecharDiscussoesJob : BackgroundService
         {
             await context.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("Discussão fechada em {Quantidade} ideia(s).", terminadas.Count);
+
+            foreach (var ideia in terminadas)
+            {
+                await AvisosIdeias.DiscussaoFechadaAsync(context, notificacoes, ideia, cancellationToken);
+            }
         }
 
         return terminadas.Count;

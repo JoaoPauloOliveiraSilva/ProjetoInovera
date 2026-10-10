@@ -6,6 +6,8 @@ public interface IApplicationDbContext
 {
     DbSet<Utilizador> Utilizadores { get; }
     DbSet<Alerta> Alertas { get; }
+
+    DbSet<Notificacao> Notificacoes { get; }
     DbSet<OutputGerado> OutputsGerados { get; }
     DbSet<RegistoAuditoria> RegistosAuditoria { get; }
 

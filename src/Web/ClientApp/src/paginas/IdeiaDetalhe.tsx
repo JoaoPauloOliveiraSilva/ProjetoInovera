@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ideias as apiIdeias } from '../api/servicos';
 import { nomeClasse, nomeEstado, nomeTipo } from '../api/tipos';
 import type { EstadoIdeia, IdeiaDetalhe as Ideia } from '../api/tipos';
@@ -148,7 +149,16 @@ function IdeiaDetalhe({ ideia, recarregar }: { ideia: Ideia; recarregar: () => v
             {pendentes.length > 0 && <div className="cinzento-escuro">por confirmar: {pendentes.map((c) => c.nome).join(', ')}</div>}
           </dd>
           <dt>código</dt>
-          <dd>{ideia.codigo}</dd>
+          <dd>
+            {ideia.codigo}
+            {ideia.idCaixaInovacao && <span className="cinzento-escuro"> · Caixa de Inovação n.º {ideia.idCaixaInovacao}</span>}
+          </dd>
+          {ideia.origem && (
+            <>
+              <dt>origem</dt>
+              <dd>{ideia.origem}</dd>
+            </>
+          )}
           <dt>data</dt>
           <dd>{formatarData(ideia.data)}</dd>
           <dt>estado</dt>
@@ -218,6 +228,14 @@ function IdeiaDetalhe({ ideia, recarregar }: { ideia: Ideia; recarregar: () => v
             {ideia.status && (
               <span>
                 Status: <strong>{ideia.status}</strong>
+              </span>
+            )}
+            {ideia.iniciativaId && (
+              <span>
+                Deu origem a:{' '}
+                <Link to={`/inovacao/iniciativas/${ideia.iniciativaId}`} className="ligacao">
+                  {ideia.iniciativaCodigo}
+                </Link>
               </span>
             )}
           </div>

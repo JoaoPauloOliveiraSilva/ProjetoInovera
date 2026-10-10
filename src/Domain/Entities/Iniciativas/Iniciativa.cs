@@ -24,6 +24,12 @@ public abstract class Iniciativa : BaseAuditableEntity
 
     public Utilizador? Responsavel { get; set; }
 
+    /// <summary>Nome do responsável quando não é utilizador da plataforma (ex.: importado do Mod.246).</summary>
+    public string? ResponsavelNome { get; set; }
+
+    /// <summary>De onde veio na importação (ex.: "Mod.246/Projetos/12"), para não importar duas vezes.</summary>
+    public string? ReferenciaImportacao { get; set; }
+
     public DateOnly? DataInicio { get; set; }
 
     public DateOnly? DataFim { get; set; }
@@ -47,6 +53,32 @@ public abstract class Iniciativa : BaseAuditableEntity
     public ICollection<MembroEquipa> MembrosEquipa { get; set; } = new List<MembroEquipa>();
 
     public ICollection<Parceiro> Parceiros { get; set; } = new List<Parceiro>();
+
+    /// <summary>Prefixo do código (ex.: PRJ-012) de cada tipo.</summary>
+    public static string PrefixoCodigo(TipoIniciativa tipo) => tipo switch
+    {
+        TipoIniciativa.Projeto => "PRJ",
+        TipoIniciativa.Desafio => "DES",
+        TipoIniciativa.MelhoriaContinua => "MC",
+        TipoIniciativa.Oportunidade => "OPO",
+        TipoIniciativa.Vigilancia => "VIG",
+        TipoIniciativa.Mestrado => "MES",
+        TipoIniciativa.AcaoInovacao => "ACA",
+        _ => "INI",
+    };
+
+    /// <summary>Cria uma iniciativa vazia do tipo pedido.</summary>
+    public static Iniciativa Nova(TipoIniciativa tipo) => tipo switch
+    {
+        TipoIniciativa.Projeto => new Projeto(),
+        TipoIniciativa.Desafio => new Desafio(),
+        TipoIniciativa.MelhoriaContinua => new MelhoriaContinua(),
+        TipoIniciativa.Oportunidade => new Oportunidade(),
+        TipoIniciativa.Vigilancia => new Vigilancia(),
+        TipoIniciativa.Mestrado => new Mestrado(),
+        TipoIniciativa.AcaoInovacao => new AcaoInovacao(),
+        _ => throw new ArgumentOutOfRangeException(nameof(tipo)),
+    };
 
     /// <summary>Acrescenta uma nota ao histórico (RF03) e atualiza o ponto de situação atual.</summary>
     public void RegistarPontoSituacao(string texto, int? autorId, DateTimeOffset data)

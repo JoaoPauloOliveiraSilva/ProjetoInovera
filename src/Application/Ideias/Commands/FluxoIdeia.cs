@@ -4,7 +4,7 @@ namespace Innovera.Application.Ideias.Commands;
 [Authorize]
 public record ConfirmarAutoriaCommand(int IdeiaId) : IRequest;
 
-public class ConfirmarAutoriaCommandHandler(IApplicationDbContext context, IUtilizadores utilizadores, TimeProvider relogio)
+public class ConfirmarAutoriaCommandHandler(IApplicationDbContext context, IUtilizadores utilizadores, TimeProvider relogio, INotificacoes notificacoes)
     : IRequestHandler<ConfirmarAutoriaCommand>
 {
     public async Task Handle(ConfirmarAutoriaCommand request, CancellationToken cancellationToken)
@@ -14,6 +14,11 @@ public class ConfirmarAutoriaCommandHandler(IApplicationDbContext context, IUtil
 
         ideia.ConfirmarAutoria(eu.Id, relogio.GetUtcNow());
         await context.SaveChangesAsync(cancellationToken);
+
+        if (ideia.Estado == EstadoIdeia.ValidacaoEquipa)
+        {
+            await AvisosIdeias.ParaValidarAsync(notificacoes, ideia, cancellationToken);
+        }
     }
 }
 
@@ -21,7 +26,7 @@ public class ConfirmarAutoriaCommandHandler(IApplicationDbContext context, IUtil
 [Authorize(Permissao = Permissoes.Ideias.Validar)]
 public record ValidarIdeiaCommand(int IdeiaId) : IRequest;
 
-public class ValidarIdeiaCommandHandler(IApplicationDbContext context, TimeProvider relogio) : IRequestHandler<ValidarIdeiaCommand>
+public class ValidarIdeiaCommandHandler(IApplicationDbContext context, TimeProvider relogio, INotificacoes notificacoes) : IRequestHandler<ValidarIdeiaCommand>
 {
     public async Task Handle(ValidarIdeiaCommand request, CancellationToken cancellationToken)
     {
@@ -29,6 +34,8 @@ public class ValidarIdeiaCommandHandler(IApplicationDbContext context, TimeProvi
 
         ideia.IniciarDiscussao(relogio.GetUtcNow());
         await context.SaveChangesAsync(cancellationToken);
+
+        await AvisosIdeias.PublicadaAsync(context, notificacoes, ideia, cancellationToken);
     }
 }
 
@@ -36,7 +43,7 @@ public class ValidarIdeiaCommandHandler(IApplicationDbContext context, TimeProvi
 [Authorize(Permissao = Permissoes.Ideias.Validar)]
 public record FecharDiscussaoCommand(int IdeiaId) : IRequest;
 
-public class FecharDiscussaoCommandHandler(IApplicationDbContext context) : IRequestHandler<FecharDiscussaoCommand>
+public class FecharDiscussaoCommandHandler(IApplicationDbContext context, INotificacoes notificacoes) : IRequestHandler<FecharDiscussaoCommand>
 {
     public async Task Handle(FecharDiscussaoCommand request, CancellationToken cancellationToken)
     {
@@ -44,6 +51,8 @@ public class FecharDiscussaoCommandHandler(IApplicationDbContext context) : IReq
 
         ideia.FecharDiscussao();
         await context.SaveChangesAsync(cancellationToken);
+
+        await AvisosIdeias.DiscussaoFechadaAsync(context, notificacoes, ideia, cancellationToken);
     }
 }
 
@@ -85,7 +94,7 @@ public class ComentarIdeiaCommandValidator : AbstractValidator<ComentarIdeiaComm
     }
 }
 
-public class ComentarIdeiaCommandHandler(IApplicationDbContext context, IUtilizadores utilizadores, TimeProvider relogio)
+public class ComentarIdeiaCommandHandler(IApplicationDbContext context, IUtilizadores utilizadores, TimeProvider relogio, INotificacoes notificacoes)
     : IRequestHandler<ComentarIdeiaCommand>
 {
     public async Task Handle(ComentarIdeiaCommand request, CancellationToken cancellationToken)
@@ -95,6 +104,8 @@ public class ComentarIdeiaCommandHandler(IApplicationDbContext context, IUtiliza
 
         ideia.AdicionarComentario(eu.Id, request.Texto, relogio.GetUtcNow());
         await context.SaveChangesAsync(cancellationToken);
+
+        await AvisosIdeias.ComentarioAsync(context, notificacoes, ideia, eu, cancellationToken);
     }
 }
 

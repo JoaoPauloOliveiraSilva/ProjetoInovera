@@ -5,6 +5,7 @@ import { Permissoes } from '../api/permissoes';
 import type { Permissao } from '../api/permissoes';
 import { primeiroNome } from '../dados/regras';
 import { usePermissao, useSessao, useUtilizador } from '../sessao/Sessao';
+import { Avisos } from './Avisos';
 import { Chevron, IconeAjuda, IconeInovacao, IconeLivros, IconeMinhaArea, IconeSair, Lampada } from './Icones';
 
 interface ItemMenu {
@@ -47,6 +48,7 @@ const menu: ItemMenu[] = [
     filhos: [
       { nome: 'utilizadores', para: '/inovacao/admin/utilizadores', permissao: Permissoes.gerirUtilizadores },
       { nome: 'perfis e permissões', para: '/inovacao/admin/perfis', permissao: Permissoes.gerirPerfis },
+      { nome: 'importar Mod.246', para: '/inovacao/admin/importar', permissao: Permissoes.iniciativasGerir },
     ],
   },
 ];
@@ -114,6 +116,7 @@ export function Layout() {
         <div className="barra-avatar" aria-hidden="true">
           {utilizador.nome[0]?.toUpperCase()}
         </div>
+        <Avisos />
         <span className="barra-app desativada" title="Brevemente">
           <IconeLivros />
           <span>ócionegócio</span>

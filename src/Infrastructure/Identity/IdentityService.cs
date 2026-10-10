@@ -34,6 +34,21 @@ public class IdentityService : IIdentityService
                   orderby r.Name
                   select r.Name!).ToListAsync();
 
+    public async Task<IReadOnlyList<string>> ContasComPermissaoAsync(string permissao)
+    {
+        var perfis = await _context.Roles
+            .Where(r => r.Name == Roles.Administrador
+                || _context.RoleClaims.Any(c => c.RoleId == r.Id && c.ClaimType == Permissoes.TipoClaim && c.ClaimValue == permissao))
+            .Select(r => r.Id)
+            .ToListAsync();
+
+        return await _context.UserRoles
+            .Where(ur => perfis.Contains(ur.RoleId))
+            .Select(ur => ur.UserId)
+            .Distinct()
+            .ToListAsync();
+    }
+
     public async Task<bool> TemPermissaoAsync(string userId, string permissao)
         => (await PermissoesAsync(userId)).Contains(permissao);
 

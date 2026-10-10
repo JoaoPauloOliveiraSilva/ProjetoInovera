@@ -23,4 +23,7 @@ public interface IIdentityService
     Task<IReadOnlyList<string>> PermissoesAsync(string userId);
 
     Task<IReadOnlyList<string>> PerfisAsync(string userId);
+
+    /// <summary>Contas (ids do Identity) com a permissão, por algum dos seus perfis.</summary>
+    Task<IReadOnlyList<string>> ContasComPermissaoAsync(string permissao);
 }
