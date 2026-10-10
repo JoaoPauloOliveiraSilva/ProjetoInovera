@@ -79,13 +79,7 @@ public class ApplicationDbContextInitialiser
 
     public async Task TrySeedAsync()
     {
-        foreach (var role in new[] { Roles.Administrador, Roles.GestorProjeto, Roles.Trabalhador })
-        {
-            if (!await _roleManager.RoleExistsAsync(role))
-            {
-                await _roleManager.CreateAsync(new IdentityRole(role));
-            }
-        }
+        await GarantirPerfisAsync();
 
         // Conta inicial da equipa de Inovação. Fora do desenvolvimento, a password tem de vir da configuração.
         var emailAdmin = _configuration["ContaAdministrador:Email"] ?? "admin@innovera.local";
@@ -97,11 +91,53 @@ public class ApplicationDbContextInitialiser
             return;
         }
 
-        await GarantirContaAsync(emailAdmin, "Equipa de Inovação", "dstelecom, s.a.", Roles.Administrador, passwordAdmin);
+        await GarantirContaAsync(emailAdmin, "Administrador", "dstelecom, s.a.", Roles.Administrador, passwordAdmin);
 
         if (_configuration.GetValue("DadosExemplo", false) && !await _context.Ideias.AnyAsync())
         {
             await CriarDadosExemploAsync();
+        }
+    }
+
+    /// <summary>
+    /// Cria os perfis do sistema com as permissões por omissão. As permissões só se põem quando o perfil é criado:
+    /// depois quem manda é o backoffice.
+    /// </summary>
+    private async Task GarantirPerfisAsync()
+    {
+        // Bases de dados da primeira versão: o perfil "GestorProjeto" era a equipa de Inovação.
+        var antigo = await _roleManager.FindByNameAsync("GestorProjeto");
+        if (antigo is not null && !await _roleManager.RoleExistsAsync(Roles.EquipaInovacao))
+        {
+            await _roleManager.SetRoleNameAsync(antigo, Roles.EquipaInovacao);
+            await _roleManager.UpdateAsync(antigo);
+            await DarPermissoesPorOmissaoAsync(antigo);
+        }
+
+        foreach (var nome in Roles.DoSistema)
+        {
+            if (await _roleManager.RoleExistsAsync(nome))
+            {
+                continue;
+            }
+
+            var perfil = new IdentityRole(nome);
+            await _roleManager.CreateAsync(perfil);
+            await DarPermissoesPorOmissaoAsync(perfil);
+        }
+    }
+
+    private async Task DarPermissoesPorOmissaoAsync(IdentityRole perfil)
+    {
+        if (!Permissoes.PorOmissao.TryGetValue(perfil.Name!, out var permissoes))
+        {
+            return;
+        }
+
+        var atuais = (await _roleManager.GetClaimsAsync(perfil)).Select(c => c.Value).ToHashSet();
+        foreach (var permissao in permissoes.Where(p => !atuais.Contains(p)))
+        {
+            await _roleManager.AddClaimAsync(perfil, new System.Security.Claims.Claim(Permissoes.TipoClaim, permissao));
         }
     }
 
@@ -132,7 +168,6 @@ public class ApplicationDbContextInitialiser
                 Email = email,
                 Nome = nome,
                 Empresa = empresa,
-                Perfil = role == Roles.Administrador ? PerfilUtilizador.Administrador : PerfilUtilizador.Trabalhador,
             };
             _context.Utilizadores.Add(utilizador);
             await _context.SaveChangesAsync();
@@ -153,6 +188,7 @@ public class ApplicationDbContextInitialiser
         var tiago = await GarantirContaAsync("tiago.araujo@exemplo.pt", "Tiago Araújo", "dstelecom, s.a.", Roles.Trabalhador);
         var beatriz = await GarantirContaAsync("beatriz.pinto@exemplo.pt", "Beatriz Pinto", "dstgroup", Roles.Trabalhador);
         var andre = await GarantirContaAsync("andre.costa@exemplo.pt", "André Costa", "dstelecom, s.a.", Roles.Trabalhador);
+        await GarantirContaAsync("sofia.martins@exemplo.pt", "Sofia Martins", "dstelecom, s.a.", Roles.EquipaInovacao);
         var todos = new[] { ricardo, marta, carla, ines, joana, tiago, beatriz, andre };
 
         Ideia Nova(Utilizador? autor, TipoIdeia tipo, string titulo, string descricao, int diasAtras)

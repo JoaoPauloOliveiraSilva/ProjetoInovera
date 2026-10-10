@@ -1,7 +1,7 @@
 # Base de dados para desenvolvimento SEM o Aspire.
 # (Com o Aspire — dotnet run --project src/AppHost — não é preciso: o AppHost cria o PostgreSQL sozinho.)
 #
-#   docker compose up -d      -> arranca o PostgreSQL em localhost:5432
+#   docker compose up -d      -> arranca o PostgreSQL em localhost:5432 e o Mailpit (emails) em http://localhost:8025
 #   docker compose down       -> pára (os dados ficam no volume)
 #   docker compose down -v    -> pára e APAGA os dados
 #
@@ -23,6 +23,14 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # Servidor de email de testes: os emails da plataforma ficam em http://localhost:8025 (não saem para a Internet).
+  mailpit:
+    image: axllent/mailpit
+    container_name: innovera-mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   innovera-postgres-dados:

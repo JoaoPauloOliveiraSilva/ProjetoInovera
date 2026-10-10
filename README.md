@@ -5,7 +5,10 @@ Plataforma de gestão da inovação da **dstelecom** (Projeto de Informática, U
 - **Backend:** .NET 10, Clean Architecture (Domain / Application / Infrastructure / Web), MediatR, FluentValidation, EF Core 10
 - **Base de dados:** PostgreSQL (Npgsql)
 - **Frontend:** React 19 + TypeScript + Vite (`src/Web/ClientApp`), com o aspeto do site de inovação atual da intranet
-- **Contas:** ASP.NET Core Identity com cookie (contas próprias, sem ligação aos sistemas da dst)
+- **Contas:** ASP.NET Core Identity com cookie (contas próprias, sem ligação aos sistemas da dst); o Administrador
+  adiciona as pessoas e elas recebem um email para definir a password
+- **Perfis e permissões:** Administrador, Equipa de Inovação e Trabalhador, configuráveis no backoffice
+- **Email:** SMTP (Mailpit em desenvolvimento, Amazon SES na AWS)
 - **Orquestração em desenvolvimento:** .NET Aspire (`src/AppHost`)
 - **Alojamento previsto:** AWS (Lightsail + PostgreSQL gerido), ainda por configurar
 
@@ -34,13 +37,13 @@ Com o Docker Desktop aberto:
 dotnet run --project src/AppHost
 ```
 
-O Aspire cria o PostgreSQL num contentor, arranca a API e o frontend e abre o painel com os endereços
-(o frontend é o recurso `webfrontend`). Na primeira vez a base de dados é criada e preenchida com dados de exemplo.
+O Aspire cria o PostgreSQL e o Mailpit (emails de teste) em contentores, arranca a API e o frontend e abre o painel
+com os endereços (o frontend é o recurso `webfrontend`; os emails veem-se no recurso `mailpit`). Na primeira vez a base de dados é criada e preenchida com dados de exemplo.
 
 ### Opção B — sem o Aspire
 
 ```bash
-docker compose up -d                      # PostgreSQL em localhost:5432 (postgres/postgres, base innovera)
+docker compose up -d                      # PostgreSQL em localhost:5432 e Mailpit (emails) em http://localhost:8025
 dotnet run --project src/Web --launch-profile https   # API em https://localhost:7240 (Scalar em /scalar)
 cd src/Web/ClientApp && npm run dev       # frontend em http://localhost:5173 (encaminha /api para a API)
 ```
@@ -53,12 +56,44 @@ Criadas automaticamente em desenvolvimento (`"DadosExemplo": true` em `src/Web/a
 
 | Conta | Password | Perfil |
 |---|---|---|
-| `admin@innovera.local` | `Innovera2026!` | Administrador (equipa de Inovação: valida e avalia ideias) |
+| `admin@innovera.local` | `Innovera2026!` | Administrador (tudo o que a Equipa de Inovação faz + gerir a plataforma) |
+| `sofia.martins@exemplo.pt` | `Innovera2026!` | Equipa de Inovação (valida e avalia ideias) |
 | `ricardo.lopes@exemplo.pt`, `marta.sousa@exemplo.pt`, … | `Innovera2026!` | Trabalhador |
 
-Também se pode criar uma conta nova no ecrã "entrar" (fica com o perfil Trabalhador).
+Não há registo livre: o Administrador adiciona as pessoas em **administração › utilizadores** e elas recebem um
+email com o link para definir a password (válido 3 dias). Em desenvolvimento os emails não saem para a Internet:
+ficam no Mailpit (http://localhost:8025). "Esqueci-me da password" funciona da mesma forma.
+
 Em produção a conta de administrador vem da configuração `ContaAdministrador:Email` / `ContaAdministrador:Password`
 e não há dados de exemplo.
+
+## Perfis e permissões
+
+Os casos de uso pedem **permissões** (`[Authorize(Permissao = Permissoes.Ideias.Validar)]`), nunca perfis.
+Cada perfil tem uma lista de permissões guardada na base de dados e editável em **administração › perfis e permissões**,
+onde também se criam perfis novos. O Administrador tem sempre todas. Uma funcionalidade nova só precisa de uma
+constante em `src/Domain/Constants/Permissoes.cs` (e, se quiser, da permissão por omissão de cada perfil).
+
+| Permissão | Equipa de Inovação | Trabalhador |
+|---|:-:|:-:|
+| `ideias.ver-todas` — ver ideias privadas e por validar, anexar ficheiros | ✔ | |
+| `ideias.validar` — validar ideias e fechar discussões | ✔ | |
+| `ideias.avaliar` — avaliação da CE, decisão dst e classe | ✔ | |
+| `utilizadores.gerir` — adicionar e gerir utilizadores | | |
+| `perfis.gerir` — gerir perfis e permissões | | |
+
+## Email (SMTP)
+
+Configuração (`appsettings` ou variáveis de ambiente, ex.: `Smtp__Host`):
+
+| Chave | Exemplo (AWS) |
+|---|---|
+| `Email:Remetente` / `Email:NomeRemetente` | `inovacao@innovera.dstelecom.pt` / `Inovação dstelecom` |
+| `Email:UrlSite` | endereço do site (usado nos links dos emails) |
+| `Smtp:Host` / `Smtp:Porta` / `Smtp:Ssl` | `email-smtp.eu-west-3.amazonaws.com` / `587` / `true` |
+| `Smtp:Utilizador` / `Smtp:Password` | credenciais SMTP criadas na consola do SES (nunca no git) |
+
+Sem `Smtp:Host` os emails só são escritos no log da API.
 
 ## Base de dados e migrações
 
@@ -88,8 +123,8 @@ O GitHub Actions (`.github/workflows/ci.yml`) corre o mesmo em cada push para `m
 ```
 src/
   Domain/          entidades e regras de negócio (Ideias, Iniciativas, ProjectCharter, Registos, Kpis, Transversais)
-  Application/     casos de uso (comandos e consultas MediatR) — Ideias/, Utilizadores/
-  Infrastructure/  EF Core + PostgreSQL, Identity, ficheiros (anexos), tarefa que fecha as discussões aos 30 dias
+  Application/     casos de uso (comandos e consultas MediatR) — Ideias/, Utilizadores/, Administracao/, Contas/
+  Infrastructure/  EF Core + PostgreSQL, Identity (contas, perfis, permissões), email SMTP, ficheiros, tarefa dos 30 dias
   Web/             API (Endpoints/), arranque, e o frontend em ClientApp/
   AppHost/         Aspire (PostgreSQL + API + frontend)
 tests/             testes do domínio, da Application e funcionais
@@ -100,8 +135,11 @@ docs/              modelo de domínio
 
 | Método e caminho | O quê |
 |---|---|
-| `POST /api/Users/login?useCookies=true` · `POST /api/Users/logout` | entrar / sair |
-| `POST /api/Utilizadores/registo` · `GET /api/Utilizadores/eu` · `GET /api/Utilizadores?texto=` | criar conta, utilizador atual, pesquisar colegas |
+| `POST /api/Conta/entrar` · `/sair` | entrar / sair |
+| `POST /api/Conta/aceitar-convite` · `/recuperar-password` · `/redefinir-password` | links enviados por email |
+| `GET /api/Utilizadores/eu` · `GET /api/Utilizadores?texto=` | utilizador atual (com permissões), pesquisar colegas |
+| `GET/POST /api/Administracao/utilizadores` · `PUT …/{id}` · `POST …/{id}/reenviar-convite` · `/desativar` · `/ativar` | backoffice de utilizadores |
+| `GET/POST /api/Administracao/perfis` · `PUT …/{nome}/permissoes` · `DELETE …/{nome}` | perfis e permissões |
 | `GET /api/Ideias?estado=&soMinhas=` · `GET /api/Ideias/{id}` · `POST /api/Ideias` | listar, ver e registar ideias |
 | `POST /api/Ideias/{id}/confirmar-autoria` · `/validar` · `/fechar-discussao` | fluxo da ideia |
 | `POST /api/Ideias/{id}/gosto` · `/comentarios` · `POST /api/Ideias/comentarios/{id}/gosto` | discussão pública |

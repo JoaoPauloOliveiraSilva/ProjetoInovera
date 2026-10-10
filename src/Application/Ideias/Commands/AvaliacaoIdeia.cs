@@ -3,7 +3,7 @@ using Innovera.Domain.ValueObjects;
 namespace Innovera.Application.Ideias.Commands;
 
 /// <summary>Regista as 5 notas de uma ideia da dstelecom; a nota e a decisão são calculadas pelo domínio.</summary>
-[Authorize(Roles = Roles.Administrador)]
+[Authorize(Permissao = Permissoes.Ideias.Avaliar)]
 public record RegistarAvaliacaoCommand : IRequest<IdeiaResumoNotaDto>
 {
     public int IdeiaId { get; init; }
@@ -55,7 +55,7 @@ public class RegistarAvaliacaoCommandHandler(IApplicationDbContext context) : IR
 }
 
 /// <summary>Ideias da dst (grupo): só se regista se foram aprovadas.</summary>
-[Authorize(Roles = Roles.Administrador)]
+[Authorize(Permissao = Permissoes.Ideias.Avaliar)]
 public record RegistarDecisaoDstCommand(int IdeiaId, bool Aprovada) : IRequest;
 
 public class RegistarDecisaoDstCommandHandler(IApplicationDbContext context) : IRequestHandler<RegistarDecisaoDstCommand>
@@ -73,7 +73,7 @@ public class RegistarDecisaoDstCommandHandler(IApplicationDbContext context) : I
 /// <summary>
 /// Define a classe. Projeto, Desafio e Melhoria Contínua criam a iniciativa ligada à ideia (devolve o id dela).
 /// </summary>
-[Authorize(Roles = Roles.Administrador)]
+[Authorize(Permissao = Permissoes.Ideias.Avaliar)]
 public record DefinirClasseCommand(int IdeiaId, ClasseIdeia Classe, string? Status) : IRequest<int?>;
 
 public class DefinirClasseCommandHandler(IApplicationDbContext context) : IRequestHandler<DefinirClasseCommand, int?>

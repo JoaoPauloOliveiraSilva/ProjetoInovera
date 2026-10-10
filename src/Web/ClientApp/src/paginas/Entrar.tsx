@@ -1,22 +1,25 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { contas } from '../api/servicos';
 import { SetaContinuar } from '../componentes/Icones';
 import { useSessao } from '../sessao/Sessao';
 
-/** Entrar / criar conta. As contas são da própria plataforma (sem ligação aos sistemas da dst). */
+/**
+ * Entrar. As contas são criadas pelo Administrador no backoffice; a pessoa recebe um email com o link
+ * para definir a password. Aqui também se pede o link para recuperar a password.
+ */
 export function Entrar() {
-  const { utilizador, entrar, registar } = useSessao();
+  const { utilizador, entrar } = useSessao();
   const [parametros] = useSearchParams();
   const voltar = parametros.get('voltar') ?? '/inovacao';
   const destino = voltar.startsWith('/') && !voltar.startsWith('//') ? voltar : '/inovacao';
 
-  const [modo, setModo] = useState<'entrar' | 'registar'>('entrar');
-  const [nome, setNome] = useState('');
-  const [empresa, setEmpresa] = useState('dstelecom');
+  const [modo, setModo] = useState<'entrar' | 'recuperar'>('entrar');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [erro, setErro] = useState('');
+  const [aviso, setAviso] = useState('');
   const [aEnviar, setAEnviar] = useState(false);
 
   if (utilizador) {
@@ -26,18 +29,26 @@ export function Entrar() {
   const submeter = async (e: FormEvent) => {
     e.preventDefault();
     setErro('');
+    setAviso('');
     setAEnviar(true);
     try {
       if (modo === 'entrar') {
         await entrar(email, password);
       } else {
-        await registar({ nome: nome.trim(), email: email.trim(), password, empresa: empresa.trim() || null });
+        await contas.recuperarPassword(email.trim());
+        setAviso(`Se existir uma conta com ${email.trim()}, vai receber um email com o link para escolher uma password nova.`);
       }
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : 'Não foi possível continuar.');
     } finally {
       setAEnviar(false);
     }
+  };
+
+  const trocar = (novo: 'entrar' | 'recuperar') => {
+    setModo(novo);
+    setErro('');
+    setAviso('');
   };
 
   return (
@@ -47,53 +58,36 @@ export function Entrar() {
       </Link>
       <form className="entrar-cartao" onSubmit={(e) => void submeter(e)}>
         <div className="sobretitulo">INOVAÇÃO</div>
-        <h1>{modo === 'entrar' ? 'entrar' : 'criar conta'}</h1>
+        <h1>{modo === 'entrar' ? 'entrar' : 'recuperar password'}</h1>
 
-        {modo === 'registar' && (
-          <>
-            <label className="campo">
-              <span>nome</span>
-              <input value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="name" required />
-            </label>
-            <label className="campo">
-              <span>empresa</span>
-              <input value={empresa} onChange={(e) => setEmpresa(e.target.value)} autoComplete="organization" />
-            </label>
-          </>
-        )}
         <label className="campo">
           <span>email</span>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
         </label>
-        <label className="campo">
-          <span>palavra-passe</span>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={modo === 'entrar' ? 'current-password' : 'new-password'}
-            minLength={modo === 'registar' ? 8 : undefined}
-            required
-          />
-          {modo === 'registar' && <small className="ajuda">Pelo menos 8 caracteres, com maiúscula, minúscula e número.</small>}
-        </label>
+        {modo === 'entrar' && (
+          <label className="campo">
+            <span>password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </label>
+        )}
 
         {erro && <div className="erro">{erro}</div>}
+        {aviso && <div className="aviso-ok">{aviso}</div>}
 
         <button type="submit" className="botao-largo" disabled={aEnviar}>
-          {aEnviar ? 'a enviar…' : modo === 'entrar' ? 'entrar' : 'criar conta'} <SetaContinuar className="seta-vermelha" />
+          {aEnviar ? 'a enviar…' : modo === 'entrar' ? 'entrar' : 'enviar link'} <SetaContinuar className="seta-vermelha" />
         </button>
 
-        <button
-          type="button"
-          className="ligacao entrar-trocar"
-          onClick={() => {
-            setModo(modo === 'entrar' ? 'registar' : 'entrar');
-            setErro('');
-          }}
-        >
-          {modo === 'entrar' ? 'ainda não tenho conta' : 'já tenho conta'}
+        <button type="button" className="ligacao entrar-trocar" onClick={() => trocar(modo === 'entrar' ? 'recuperar' : 'entrar')}>
+          {modo === 'entrar' ? 'esqueci-me da password' : 'voltar a entrar'}
         </button>
+        {modo === 'entrar' && <p className="ajuda centro">Não tem conta? Peça à equipa de Inovação para o adicionar.</p>}
       </form>
     </div>
   );

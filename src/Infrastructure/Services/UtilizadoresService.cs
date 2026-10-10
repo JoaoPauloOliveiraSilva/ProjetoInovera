@@ -1,7 +1,5 @@
 using Innovera.Application.Common.Interfaces;
-using Innovera.Domain.Constants;
 using Innovera.Domain.Entities;
-using Innovera.Domain.Enums;
 using Innovera.Infrastructure.Data;
 using Innovera.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -14,16 +12,29 @@ public class UtilizadoresService : IUtilizadores
     private readonly ApplicationDbContext _context;
     private readonly IUser _user;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IIdentityService _identityService;
     private Utilizador? _atual;
+    private IReadOnlyList<string>? _permissoes;
 
-    public UtilizadoresService(ApplicationDbContext context, IUser user, UserManager<ApplicationUser> userManager)
+    public UtilizadoresService(ApplicationDbContext context, IUser user, UserManager<ApplicationUser> userManager, IIdentityService identityService)
     {
         _context = context;
         _user = user;
         _userManager = userManager;
+        _identityService = identityService;
     }
 
-    public bool EAdministrador => _user.Roles?.Contains(Roles.Administrador) ?? false;
+    public async Task<bool> TemPermissaoAsync(string permissao, CancellationToken cancellationToken)
+    {
+        if (_user.Id is null)
+        {
+            return false;
+        }
+
+        // Uma vez por pedido HTTP (o serviço é scoped).
+        _permissoes ??= await _identityService.PermissoesAsync(_user.Id);
+        return _permissoes.Contains(permissao);
+    }
 
     public async Task<Utilizador> AtualAsync(CancellationToken cancellationToken)
     {
@@ -40,7 +51,7 @@ public class UtilizadoresService : IUtilizadores
             return _atual;
         }
 
-        // Primeira vez que esta conta usa a plataforma: cria o perfil.
+        // Conta sem registo de Utilizador (ex.: criada fora do backoffice): cria-o agora.
         var conta = await _userManager.FindByIdAsync(identityId) ?? throw new UnauthorizedAccessException();
         var email = conta.Email ?? conta.UserName ?? identityId;
         _atual = new Utilizador
@@ -48,7 +59,6 @@ public class UtilizadoresService : IUtilizadores
             IdentityId = identityId,
             Email = email,
             Nome = email.Split('@')[0],
-            Perfil = EAdministrador ? PerfilUtilizador.Administrador : PerfilUtilizador.Trabalhador,
         };
         _context.Utilizadores.Add(_atual);
         await _context.SaveChangesAsync(cancellationToken);

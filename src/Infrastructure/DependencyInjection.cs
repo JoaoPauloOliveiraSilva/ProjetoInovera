@@ -67,16 +67,30 @@ public static class DependencyInjection
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequiredLength = 8;
                 options.Password.RequireNonAlphanumeric = false;
+                // Só entra quem aceitou o convite (o email fica confirmado ao definir a password).
+                options.SignIn.RequireConfirmedEmail = true;
+                // 5 tentativas erradas bloqueiam a conta durante 15 minutos.
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders()
-            .AddApiEndpoints();
+            .AddErrorDescriber<IdentityErrorDescriberPt>();
+
+        // Validade dos links de convite e de recuperação da password.
+        builder.Services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = ServicoContas.ValidadeLinks);
+
+        // Contas desativadas perdem a sessão em poucos minutos (o cookie é revalidado).
+        builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(5));
 
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddTransient<IIdentityService, IdentityService>();
         builder.Services.AddScoped<IUtilizadores, UtilizadoresService>();
+        builder.Services.AddScoped<IContas, ServicoContas>();
+        builder.Services.AddTransient<IEmail, EmailSmtp>();
         builder.Services.AddScoped<IGeradorNumeroIdeia, GeradorNumeroIdeia>();
         builder.Services.AddSingleton<IArmazenamentoFicheiros, ArmazenamentoLocal>();
 

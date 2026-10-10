@@ -1,6 +1,6 @@
 namespace Innovera.Application.Ideias.Commands;
 
-/// <summary>Anexa um ficheiro (até 25 MB) a uma ideia. Só os autores e a equipa de Inovação.</summary>
+/// <summary>Anexa um ficheiro (até 25 MB) a uma ideia. Só os autores e quem tem a permissão ideias.ver-todas.</summary>
 [Authorize]
 public record AdicionarAnexoCommand(int IdeiaId, string NomeFicheiro, string TipoConteudo, long TamanhoBytes, Stream Conteudo) : IRequest<AnexoDto>;
 
@@ -23,7 +23,7 @@ public class AdicionarAnexoCommandHandler(IApplicationDbContext context, IUtiliz
         var ideia = await CarregarIdeia.ComTudoAsync(context, request.IdeiaId, cancellationToken);
 
         var eAutor = ideia.AutorId == eu.Id || ideia.CreatedBy == eu.IdentityId || ideia.Coautores.Any(c => c.UtilizadorId == eu.Id);
-        if (!eAutor && !utilizadores.EAdministrador)
+        if (!eAutor && !await utilizadores.TemPermissaoAsync(Permissoes.Ideias.VerTodas, cancellationToken))
         {
             throw new Common.Exceptions.ForbiddenAccessException();
         }

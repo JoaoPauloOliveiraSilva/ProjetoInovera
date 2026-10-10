@@ -1,19 +1,39 @@
-# For more info on HTTP files go to https://aka.ms/vs/httpfile
+# Pedidos de exemplo (Visual Studio / Rider / extensão REST Client do VS Code).
 @Web_HostAddress = https://localhost:7240
 
-# POST Users Login (cookie)
-# Utilizador de desenvolvimento criado no arranque (ApplicationDbContextInitialiser).
-POST {{Web_HostAddress}}/api/Users/login?useCookies=true
+# Entrar com a conta de desenvolvimento (cookie de sessão)
+POST {{Web_HostAddress}}/api/Conta/entrar
 Content-Type: application/json
 
 {
-  "email": "administrator@localhost",
-  "password": "Administrator1!"
+  "email": "admin@innovera.local",
+  "password": "Innovera2026!"
 }
 
 ###
 
-# GET Users Info (utilizador autenticado)
-GET {{Web_HostAddress}}/api/Users/manage/info
+# Utilizador atual, com perfis e permissões
+GET {{Web_HostAddress}}/api/Utilizadores/eu
 
 ###
+
+# Ideias em discussão
+GET {{Web_HostAddress}}/api/Ideias?estado=EmDiscussao
+
+###
+
+# Backoffice: perfis e permissões
+GET {{Web_HostAddress}}/api/Administracao/perfis
+
+###
+
+# Backoffice: adicionar um utilizador (recebe o convite no Mailpit, http://localhost:8025)
+POST {{Web_HostAddress}}/api/Administracao/utilizadores
+Content-Type: application/json
+
+{
+  "nome": "Rita Gomes",
+  "email": "rita.gomes@exemplo.pt",
+  "empresa": "dstelecom, s.a.",
+  "perfis": ["Trabalhador"]
+}

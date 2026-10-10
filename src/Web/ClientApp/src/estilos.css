@@ -289,3 +289,26 @@ a { color: inherit; }
 .aval-bloco .aval-linha { border-bottom: 0; }
 .aval-erro { padding: 0 12px 12px; }
 .ligacao-simples { background: none; border: 0; padding: 0; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Conta e backoffice ---------- */
+.aviso-ok { background: #e3f4e3; color: #1d6b1d; padding: 10px 12px; line-height: 1.5; }
+.centro { text-align: center; margin: 0; }
+.barra-mensagem { margin: -8px 0 16px; }
+.filtro-texto { background: #fff; border: 1px solid var(--linha); padding: 5px 10px; font-weight: 400; min-width: 240px; }
+.admin-linha { grid-template-columns: minmax(180px, 1.2fr) minmax(180px, 1fr) minmax(160px, 1fr) 140px 220px; }
+.admin-linha .fichas { gap: 6px; }
+.acoes { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.botao-pequeno.claro { background: #fff; color: var(--texto); border: 1px solid #ccc; }
+.form-gaveta { display: flex; flex-direction: column; gap: 18px; }
+.form-gaveta input { background: #fff; border: 1px solid var(--linha); padding: 10px 12px; font-weight: 400; }
+.form-gaveta input:disabled { background: #eee; color: #777; }
+.perfis { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; align-items: start; }
+.perfil-cartao { background: #fff; padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; }
+.perfil-cartao h3 { margin: 0; font-size: 20px; }
+.perfil-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.perfil-grupo { display: flex; flex-direction: column; gap: 10px; }
+.perfil-grupo .caixa { align-items: flex-start; line-height: 1.4; }
+.perfil-grupo .caixa-quadrado { flex-shrink: 0; }
+.caixa.bloqueada { cursor: default; opacity: 0.7; }
+.perfil-novo input { background: #fff; border: 1px solid var(--linha); padding: 8px 10px; font-weight: 400; }
+.perfil-novo .botao-pequeno { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; }

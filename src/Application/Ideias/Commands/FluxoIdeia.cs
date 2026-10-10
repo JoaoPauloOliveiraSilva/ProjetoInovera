@@ -18,7 +18,7 @@ public class ConfirmarAutoriaCommandHandler(IApplicationDbContext context, IUtil
 }
 
 /// <summary>A equipa de Inovação valida a ideia e abre a discussão pública (30 dias).</summary>
-[Authorize(Roles = Roles.Administrador)]
+[Authorize(Permissao = Permissoes.Ideias.Validar)]
 public record ValidarIdeiaCommand(int IdeiaId) : IRequest;
 
 public class ValidarIdeiaCommandHandler(IApplicationDbContext context, TimeProvider relogio) : IRequestHandler<ValidarIdeiaCommand>
@@ -33,7 +33,7 @@ public class ValidarIdeiaCommandHandler(IApplicationDbContext context, TimeProvi
 }
 
 /// <summary>Fecha já a discussão (normalmente é automático aos 30 dias).</summary>
-[Authorize(Roles = Roles.Administrador)]
+[Authorize(Permissao = Permissoes.Ideias.Validar)]
 public record FecharDiscussaoCommand(int IdeiaId) : IRequest;
 
 public class FecharDiscussaoCommandHandler(IApplicationDbContext context) : IRequestHandler<FecharDiscussaoCommand>

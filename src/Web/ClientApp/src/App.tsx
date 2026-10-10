@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { VersaoDados } from './api/usePedido';
 import { Layout } from './componentes/Layout';
+import { Permissoes } from './api/permissoes';
+import { AdminPerfis } from './paginas/AdminPerfis';
+import { AdminUtilizadores } from './paginas/AdminUtilizadores';
 import { Avaliacao } from './paginas/Avaliacao';
+import { DefinirPassword } from './paginas/DefinirPassword';
 import { EmConstrucao } from './paginas/EmConstrucao';
 import { Entrar } from './paginas/Entrar';
 import { Homepage } from './paginas/Homepage';
@@ -36,6 +40,7 @@ export function App() {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/entrar" element={<Entrar />} />
+            <Route path="/definir-password" element={<DefinirPassword />} />
             <Route
               path="/inovacao"
               element={
@@ -51,7 +56,7 @@ export function App() {
               <Route
                 path="validacao"
                 element={
-                  <Protegido soAdministrador>
+                  <Protegido permissao={Permissoes.ideiasValidar}>
                     <Validacao />
                   </Protegido>
                 }
@@ -59,8 +64,24 @@ export function App() {
               <Route
                 path="avaliacao"
                 element={
-                  <Protegido soAdministrador>
+                  <Protegido permissao={Permissoes.ideiasAvaliar}>
                     <Avaliacao />
+                  </Protegido>
+                }
+              />
+              <Route
+                path="admin/utilizadores"
+                element={
+                  <Protegido permissao={Permissoes.gerirUtilizadores}>
+                    <AdminUtilizadores />
+                  </Protegido>
+                }
+              />
+              <Route
+                path="admin/perfis"
+                element={
+                  <Protegido permissao={Permissoes.gerirPerfis}>
+                    <AdminPerfis />
                   </Protegido>
                 }
               />

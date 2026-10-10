@@ -1,4 +1,4 @@
-import { enviar, obter } from './cliente';
+import { enviar, obter, pedido } from './cliente';
 import type {
   Anexo,
   ClasseIdeia,
@@ -8,20 +8,47 @@ import type {
   IdeiaResumo,
   NotasPedido,
   NovaIdeiaPedido,
+  Perfis,
   ResultadoAvaliacao,
+  UtilizadorAdmin,
   UtilizadorAtual,
   UtilizadorResumo,
 } from './tipos';
 
-// Contas (ASP.NET Core Identity com cookie).
+// Contas (ASP.NET Core Identity com cookie). As contas são criadas pelo Administrador (convite por email).
 export const contas = {
   eu: () => obter<UtilizadorAtual>('/api/Utilizadores/eu'),
-  entrar: (email: string, password: string) =>
-    enviar('/api/Users/login?useCookies=true', { email, password }),
-  sair: () => enviar('/api/Users/logout', {}),
-  registar: (dados: { nome: string; email: string; password: string; empresa: string | null }) =>
-    enviar<number>('/api/Utilizadores/registo', dados),
+  entrar: (email: string, password: string) => enviar('/api/Conta/entrar', { email, password }),
+  sair: () => enviar('/api/Conta/sair'),
+  aceitarConvite: (utilizadorId: string, token: string, password: string) =>
+    enviar('/api/Conta/aceitar-convite', { utilizadorId, token, password }),
+  recuperarPassword: (email: string) => enviar('/api/Conta/recuperar-password', { email }),
+  redefinirPassword: (utilizadorId: string, token: string, password: string) =>
+    enviar('/api/Conta/redefinir-password', { utilizadorId, token, password }),
   pesquisar: (texto: string) => obter<UtilizadorResumo[]>(`/api/Utilizadores?texto=${encodeURIComponent(texto)}`),
+};
+
+// Backoffice (permissões utilizadores.gerir e perfis.gerir).
+const admin = '/api/Administracao';
+
+export interface DadosUtilizador {
+  nome: string;
+  empresa: string | null;
+  perfis: string[];
+}
+
+export const administracao = {
+  utilizadores: () => obter<UtilizadorAdmin[]>(`${admin}/utilizadores`),
+  adicionar: (dados: DadosUtilizador & { email: string }) => enviar<number>(`${admin}/utilizadores`, dados),
+  editar: (id: number, dados: DadosUtilizador) => pedido<void>('PUT', `${admin}/utilizadores/${id}`, dados),
+  reenviarConvite: (id: number) => enviar(`${admin}/utilizadores/${id}/reenviar-convite`),
+  desativar: (id: number) => enviar(`${admin}/utilizadores/${id}/desativar`),
+  ativar: (id: number) => enviar(`${admin}/utilizadores/${id}/ativar`),
+  perfis: () => obter<Perfis>(`${admin}/perfis`),
+  criarPerfil: (nome: string) => enviar(`${admin}/perfis`, { nome }),
+  definirPermissoes: (perfil: string, permissoes: string[]) =>
+    pedido<void>('PUT', `${admin}/perfis/${encodeURIComponent(perfil)}/permissoes`, { permissoes }),
+  apagarPerfil: (perfil: string) => pedido<void>('DELETE', `${admin}/perfis/${encodeURIComponent(perfil)}`),
 };
 
 const base = '/api/Ideias';

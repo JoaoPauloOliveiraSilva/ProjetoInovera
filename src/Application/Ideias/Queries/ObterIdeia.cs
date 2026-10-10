@@ -17,7 +17,7 @@ public class ObterIdeiaQueryHandler : IRequestHandler<ObterIdeiaQuery, IdeiaDeta
     public async Task<IdeiaDetalheDto> Handle(ObterIdeiaQuery request, CancellationToken cancellationToken)
     {
         var eu = await _utilizadores.AtualAsync(cancellationToken);
-        var admin = _utilizadores.EAdministrador;
+        var admin = await _utilizadores.TemPermissaoAsync(Permissoes.Ideias.VerTodas, cancellationToken);
 
         var ideia = await _context.Ideias
             .AsNoTracking()

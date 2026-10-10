@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { ErroApi } from '../api/cliente';
+import type { Permissao } from '../api/permissoes';
 import { contas } from '../api/servicos';
 import type { UtilizadorAtual } from '../api/tipos';
 
@@ -10,7 +11,8 @@ interface Sessao {
   utilizador: UtilizadorAtual | null | undefined;
   entrar: (email: string, password: string) => Promise<void>;
   sair: () => Promise<void>;
-  registar: (dados: { nome: string; email: string; password: string; empresa: string | null }) => Promise<void>;
+  /** Volta a ler o utilizador (ex.: depois de definir a password, que já inicia sessão). */
+  recarregar: () => Promise<void>;
 }
 
 const Contexto = createContext<Sessao | null>(null);
@@ -39,14 +41,7 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
     () => ({
       utilizador,
       entrar: async (email, password) => {
-        try {
-          await contas.entrar(email.trim(), password);
-        } catch (e) {
-          if (e instanceof ErroApi && e.estado === 401) {
-            throw new ErroApi(401, 'Email ou palavra-passe errados.');
-          }
-          throw e;
-        }
+        await contas.entrar(email.trim(), password);
         await carregar();
       },
       sair: async () => {
@@ -56,11 +51,7 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
           setUtilizador(null);
         }
       },
-      registar: async (dados) => {
-        await contas.registar(dados);
-        await contas.entrar(dados.email.trim(), dados.password);
-        await carregar();
-      },
+      recarregar: carregar,
     }),
     [utilizador, carregar],
   );
@@ -85,8 +76,14 @@ export function useUtilizador(): UtilizadorAtual {
   return utilizador;
 }
 
-/** Só mostra o conteúdo com sessão iniciada; senão manda para /entrar e volta depois. */
-export function Protegido({ children, soAdministrador = false }: { children: ReactNode; soAdministrador?: boolean }) {
+/** Diz se o utilizador com sessão tem a permissão (para mostrar menus e botões). */
+export function usePermissao(): (permissao: Permissao) => boolean {
+  const { utilizador } = useSessao();
+  return (permissao) => utilizador?.permissoes.includes(permissao) ?? false;
+}
+
+/** Só mostra o conteúdo com sessão iniciada (e com a permissão, se indicada); senão manda para /entrar e volta depois. */
+export function Protegido({ children, permissao }: { children: ReactNode; permissao?: Permissao }) {
   const { utilizador } = useSessao();
   const { pathname } = useLocation();
 
@@ -96,7 +93,7 @@ export function Protegido({ children, soAdministrador = false }: { children: Rea
   if (utilizador === null) {
     return <Navigate to={`/entrar?voltar=${encodeURIComponent(pathname)}`} replace />;
   }
-  if (soAdministrador && !utilizador.eAdministrador) {
+  if (permissao && !utilizador.permissoes.includes(permissao)) {
     return <Navigate to="/inovacao" replace />;
   }
   return <>{children}</>;

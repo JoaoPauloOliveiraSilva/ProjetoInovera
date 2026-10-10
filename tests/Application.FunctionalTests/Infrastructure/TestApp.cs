@@ -45,13 +45,27 @@ public static class TestApp
         return await RunAsUserAsync("administrator@local", "Administrator1234!", [Roles.Administrador]);
     }
 
+    public static async Task<string> RunAsEquipaInovacaoAsync()
+    {
+        return await RunAsUserAsync("equipa@local", "Equipa1234!", [Roles.EquipaInovacao]);
+    }
+
     public static async Task<string> RunAsUserAsync(string userName, string password, string[] roles)
     {
         using var scope = FunctionalTestSetup.ScopeFactory.CreateScope();
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        var user = new ApplicationUser { UserName = userName, Email = userName };
+        // O mesmo teste pode "voltar" a ser um utilizador que já usou antes.
+        var existente = await userManager.FindByNameAsync(userName);
+        if (existente is not null)
+        {
+            _userId = existente.Id;
+            _roles = [.. await userManager.GetRolesAsync(existente)];
+            return _userId;
+        }
+
+        var user = new ApplicationUser { UserName = userName, Email = userName, EmailConfirmed = true };
 
         var result = await userManager.CreateAsync(user, password);
 
@@ -88,6 +102,26 @@ public static class TestApp
 
         _userId = null;
         _roles = null;
+        EmailFalso.Enviados.Clear();
+
+        await GarantirPerfisDoSistemaAsync();
+    }
+
+    /// <summary>Como na aplicação: os 3 perfis do sistema com as permissões por omissão.</summary>
+    private static async Task GarantirPerfisDoSistemaAsync()
+    {
+        using var scope = FunctionalTestSetup.ScopeFactory.CreateScope();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+        foreach (var nome in Roles.DoSistema)
+        {
+            var perfil = new IdentityRole(nome);
+            await roleManager.CreateAsync(perfil);
+            foreach (var permissao in Permissoes.PorOmissao.GetValueOrDefault(nome) ?? [])
+            {
+                await roleManager.AddClaimAsync(perfil, new System.Security.Claims.Claim(Permissoes.TipoClaim, permissao));
+            }
+        }
     }
 
     public static async Task<TEntity?> FindAsync<TEntity>(params object[] keyValues)

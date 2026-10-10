@@ -19,6 +19,10 @@ public class WebApiFactory(string connectionString) : WebApplicationFactory<Prog
         builder.ConfigureTestServices(services =>
         {
             services
+                .RemoveAll<IEmail>()
+                .AddSingleton<IEmail, EmailFalso>();
+
+            services
                 .RemoveAll<IUser>()
                 .AddTransient(provider =>
                 {

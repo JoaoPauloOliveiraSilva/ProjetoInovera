@@ -11,15 +11,57 @@ export type ClassificacaoIdeia = 'EmAvaliacaoPeloManager' | 'Aprovada' | 'NaoApr
 
 export type ClasseIdeia = 'MelhoriaContinua' | 'Projeto' | 'Desafio' | 'IdeiaDuplicada' | 'Arquivada' | 'NaoAplicavel';
 
-export type PerfilUtilizador = 'Trabalhador' | 'GestorProjeto' | 'Administrador';
-
 export interface UtilizadorAtual {
   id: number;
   nome: string;
   email: string;
   empresa: string | null;
-  perfil: PerfilUtilizador;
-  eAdministrador: boolean;
+  perfis: string[];
+  /** Códigos das permissões (ver Permissoes em api/permissoes.ts). */
+  permissoes: string[];
+}
+
+// Backoffice
+
+export type EstadoConta = 'ConvitePendente' | 'Ativa' | 'Desativada';
+
+export interface UtilizadorAdmin {
+  id: number;
+  nome: string;
+  email: string;
+  empresa: string | null;
+  perfis: string[];
+  estado: EstadoConta;
+}
+
+export interface Perfil {
+  nome: string;
+  doSistema: boolean;
+  todasAsPermissoes: boolean;
+  permissoes: string[];
+  utilizadores: number;
+}
+
+export interface PermissaoInfo {
+  codigo: string;
+  nome: string;
+  grupo: string;
+}
+
+export interface Perfis {
+  perfis: Perfil[];
+  permissoes: PermissaoInfo[];
+}
+
+export const nomeEstadoConta: Record<EstadoConta, string> = {
+  ConvitePendente: 'convite enviado',
+  Ativa: 'ativa',
+  Desativada: 'desativada',
+};
+
+/** Nome do perfil no ecrã (os perfis novos aparecem com o nome que lhes foi dado). */
+export function nomePerfil(nome: string): string {
+  return { Administrador: 'Administrador', EquipaInovacao: 'Equipa de Inovação', Trabalhador: 'Trabalhador' }[nome] ?? nome;
 }
 
 export interface UtilizadorResumo {

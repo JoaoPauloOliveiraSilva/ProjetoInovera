@@ -7,7 +7,8 @@ import { EstadoPedido } from '../componentes/Estado';
 import { Gaveta } from '../componentes/Gaveta';
 import { Balao, Camara, Coracao, SetaContinuar } from '../componentes/Icones';
 import { formatarData, formatarTamanho, haQuantoTempo, variaveis } from '../dados/regras';
-import { useUtilizador } from '../sessao/Sessao';
+import { Permissoes } from '../api/permissoes';
+import { usePermissao } from '../sessao/Sessao';
 
 const tamanhoMaximo = 25 * 1024 * 1024;
 
@@ -38,7 +39,7 @@ function IdeiaCarregada({ id }: { id: number }) {
 }
 
 function IdeiaDetalhe({ ideia, recarregar }: { ideia: Ideia; recarregar: () => void }) {
-  const eu = useUtilizador();
+  const tem = usePermissao();
   const atualizarListas = useAtualizar();
   const [texto, setTexto] = useState('');
   const [erro, setErro] = useState('');
@@ -115,7 +116,7 @@ function IdeiaDetalhe({ ideia, recarregar }: { ideia: Ideia; recarregar: () => v
         </div>
       )}
 
-      {eu.eAdministrador && ideia.estado === 'ValidacaoEquipa' && (
+      {tem(Permissoes.ideiasValidar) && ideia.estado === 'ValidacaoEquipa' && (
         <div className="aviso">
           A ideia está à espera da validação da equipa de Inovação. Ao validar, abre a discussão pública durante 30 dias.
           <button className="botao-pequeno" disabled={aEnviar} onClick={() => void acao(() => apiIdeias.validar(ideia.id))}>
@@ -124,7 +125,7 @@ function IdeiaDetalhe({ ideia, recarregar }: { ideia: Ideia; recarregar: () => v
         </div>
       )}
 
-      {eu.eAdministrador && ideia.estado === 'EmDiscussao' && (
+      {tem(Permissoes.ideiasValidar) && ideia.estado === 'EmDiscussao' && (
         <div className="aviso">
           Discussão aberta{ideia.fimDiscussao ? ` até ${formatarData(ideia.fimDiscussao)}` : ''}. Fecha sozinha ao fim de 30 dias; pode
           fechá-la já para a ideia seguir para avaliação.

@@ -1,12 +1,12 @@
 namespace Innovera.Domain.Entities;
 
 /// <summary>
-/// Trabalhador da dstelecom com acesso à plataforma.
-/// A conta (login) fica na camada de Infrastructure: Entra ID ou conta local (ASP.NET Core Identity).
+/// Pessoa com acesso à plataforma. A conta (email, password, perfis) fica no ASP.NET Core Identity,
+/// na camada de Infrastructure; os perfis e permissões vêm de lá.
 /// </summary>
 public class Utilizador : BaseAuditableEntity
 {
-    /// <summary>Id da conta: object id do Entra ID ou id da conta local.</summary>
+    /// <summary>Id da conta no ASP.NET Core Identity.</summary>
     public string IdentityId { get; set; } = string.Empty;
 
     public string Nome { get; set; } = string.Empty;
@@ -22,7 +22,6 @@ public class Utilizador : BaseAuditableEntity
 
     public string? FotoUrl { get; set; }
 
-    public PerfilUtilizador Perfil { get; set; } = PerfilUtilizador.Trabalhador;
-
+    /// <summary>Falso quando o Administrador desativa a conta (deixa de poder entrar e de aparecer como coautor).</summary>
     public bool Ativo { get; set; } = true;
 }

@@ -25,7 +25,7 @@ public class ListarIdeiasQueryHandler : IRequestHandler<ListarIdeiasQuery, IRead
     public async Task<IReadOnlyList<IdeiaResumoDto>> Handle(ListarIdeiasQuery request, CancellationToken cancellationToken)
     {
         var eu = await _utilizadores.AtualAsync(cancellationToken);
-        var admin = _utilizadores.EAdministrador;
+        var admin = await _utilizadores.TemPermissaoAsync(Permissoes.Ideias.VerTodas, cancellationToken);
 
         var consulta = _context.Ideias.AsNoTracking();
         if (request.Estado is not null)

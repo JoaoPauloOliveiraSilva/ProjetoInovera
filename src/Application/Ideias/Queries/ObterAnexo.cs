@@ -18,7 +18,8 @@ public class ObterAnexoQueryHandler(IApplicationDbContext context, IUtilizadores
         Guard.Against.NotFound(request.AnexoId, anexo);
 
         var ideia = anexo.Ideia;
-        if (!RegrasVisibilidade.PodeVer(utilizadores.EAdministrador, eu.Id, eu.IdentityId, ideia.AutorId, ideia.CreatedBy,
+        var veTodas = await utilizadores.TemPermissaoAsync(Permissoes.Ideias.VerTodas, cancellationToken);
+        if (!RegrasVisibilidade.PodeVer(veTodas, eu.Id, eu.IdentityId, ideia.AutorId, ideia.CreatedBy,
                 ideia.Coautores.Select(c => c.UtilizadorId), ideia.Privada, ideia.Estado))
         {
             throw new Common.Exceptions.ForbiddenAccessException();

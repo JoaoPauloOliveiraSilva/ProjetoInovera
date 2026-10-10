@@ -3,13 +3,13 @@ namespace Innovera.Application.Ideias;
 internal static class RegrasVisibilidade
 {
     /// <summary>
-    /// A equipa de Inovação vê tudo. Os autores veem as suas ideias. Os restantes veem as ideias publicadas
+    /// Quem tem a permissão ideias.ver-todas (equipa de Inovação) vê tudo. Os autores veem as suas ideias. Os restantes veem as ideias publicadas
     /// (em discussão, em avaliação ou decididas) que não sejam privadas.
     /// </summary>
-    public static bool PodeVer(bool eAdministrador, int utilizadorId, string? identityId, int? autorId, string? criadaPor,
+    public static bool PodeVer(bool veTodas, int utilizadorId, string? identityId, int? autorId, string? criadaPor,
         IEnumerable<int> coautores, bool privada, EstadoIdeia estado)
     {
-        if (eAdministrador || autorId == utilizadorId || (identityId is not null && criadaPor == identityId) || coautores.Contains(utilizadorId))
+        if (veTodas || autorId == utilizadorId || (identityId is not null && criadaPor == identityId) || coautores.Contains(utilizadorId))
         {
             return true;
         }

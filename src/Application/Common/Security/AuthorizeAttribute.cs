@@ -1,4 +1,4 @@
-﻿namespace Innovera.Application.Common.Security;
+namespace Innovera.Application.Common.Security;
 
 /// <summary>
 /// Specifies the class this attribute is applied to requires authorization.
@@ -20,4 +20,10 @@ public class AuthorizeAttribute : Attribute
     /// Gets or sets the policy name that determines access to the resource.
     /// </summary>
     public string Policy { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Permissão necessária (ver <c>Domain.Constants.Permissoes</c>). É a forma a usar nesta aplicação:
+    /// as permissões de cada perfil são configuráveis no backoffice.
+    /// </summary>
+    public string Permissao { get; set; } = string.Empty;
 }

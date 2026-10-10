@@ -56,6 +56,16 @@ registar ideia (4 passos, coautores, anexos até 25 MB), confirmar autoria, vali
 likes e comentários durante a discussão, fecho automático aos 30 dias (`Infrastructure/Jobs/FecharDiscussoesJob`),
 avaliação pela CE (notas ou decisão dst), classe e criação do Projeto/Desafio/Melhoria Contínua ligado à ideia.
 
+## Contas, perfis e permissões (reunião de 09/10)
+
+- Perfis do sistema: `Administrador` (tem sempre todas as permissões), `EquipaInovacao` e `Trabalhador`
+  (`Domain/Constants/Roles.cs`); o Administrador pode criar outros no backoffice.
+- Permissões em `Domain/Constants/Permissoes.cs`; os casos de uso usam `[Authorize(Permissao = ...)]`.
+  As permissões de cada perfil ficam em `AspNetRoleClaims` (tipo `permissao`) e são lidas da base de dados a cada pedido.
+- `Utilizador` deixou de ter o campo `Perfil` (os perfis vêm do Identity); `Ativo` acompanha a conta desativada.
+- Contas criadas pelo Administrador com convite por email (`Application/Administracao`, `Application/Contas`,
+  `Infrastructure/Services/ServicoContas` e `EmailSmtp`).
+
 ## Próximos passos
 
 1. Projetos e Project Charter (Sprint 2), desafios e vigilâncias.

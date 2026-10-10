@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Permissoes } from '../api/permissoes';
+import type { Permissao } from '../api/permissoes';
 import { primeiroNome } from '../dados/regras';
-import { useSessao, useUtilizador } from '../sessao/Sessao';
+import { usePermissao, useSessao, useUtilizador } from '../sessao/Sessao';
 import { Chevron, IconeAjuda, IconeInovacao, IconeLivros, IconeMinhaArea, IconeSair, Lampada } from './Icones';
 
 interface ItemMenu {
   nome: string;
   para?: string;
-  filhos?: { nome: string; para: string; soAdministrador?: boolean }[];
+  filhos?: { nome: string; para: string; permissao?: Permissao }[];
 }
 
 // Menu igual ao do site atual de inovação.
@@ -18,8 +20,8 @@ const menu: ItemMenu[] = [
   {
     nome: 'sistema de gestão de inovação',
     filhos: [
-      { nome: 'validação de ideias', para: '/inovacao/validacao', soAdministrador: true },
-      { nome: 'avaliação de ideias', para: '/inovacao/avaliacao', soAdministrador: true },
+      { nome: 'validação de ideias', para: '/inovacao/validacao', permissao: Permissoes.ideiasValidar },
+      { nome: 'avaliação de ideias', para: '/inovacao/avaliacao', permissao: Permissoes.ideiasAvaliar },
     ],
   },
   {
@@ -40,6 +42,13 @@ const menu: ItemMenu[] = [
   { nome: 'oportunidades de inovação', para: '/inovacao/oportunidades' },
   { nome: 'repositório do conhecimento', filhos: [{ nome: 'conhecimento codificado', para: '/inovacao/conhecimento' }] },
   { nome: 'indicadores de desempenho', filhos: [{ nome: 'KPIs', para: '/inovacao/indicadores' }] },
+  {
+    nome: 'administração',
+    filhos: [
+      { nome: 'utilizadores', para: '/inovacao/admin/utilizadores', permissao: Permissoes.gerirUtilizadores },
+      { nome: 'perfis e permissões', para: '/inovacao/admin/perfis', permissao: Permissoes.gerirPerfis },
+    ],
+  },
 ];
 
 function Grupo({ item }: { item: ItemMenu }) {
@@ -83,16 +92,17 @@ function Grupo({ item }: { item: ItemMenu }) {
   );
 }
 
-/** Tira as opções só da equipa de Inovação (e os grupos que ficam vazios). */
-function menuPara(eAdministrador: boolean): ItemMenu[] {
+/** Tira as opções para as quais o utilizador não tem permissão (e os grupos que ficam vazios). */
+function menuPara(tem: (p: Permissao) => boolean): ItemMenu[] {
   return menu
-    .map((item) => (item.filhos ? { ...item, filhos: item.filhos.filter((f) => eAdministrador || !f.soAdministrador) } : item))
+    .map((item) => (item.filhos ? { ...item, filhos: item.filhos.filter((f) => !f.permissao || tem(f.permissao)) } : item))
     .filter((item) => !item.filhos || item.filhos.length > 0);
 }
 
 export function Layout() {
   const utilizador = useUtilizador();
   const { sair } = useSessao();
+  const tem = usePermissao();
   const navegar = useNavigate();
 
   return (
@@ -134,7 +144,7 @@ export function Layout() {
       <aside className="menu">
         <h2 className="menu-ola">olá, {primeiroNome(utilizador.nome)}</h2>
         <ul>
-          {menuPara(utilizador.eAdministrador).map((item) => (
+          {menuPara(tem).map((item) => (
             <Grupo key={item.nome} item={item} />
           ))}
         </ul>

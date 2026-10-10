@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Innovera.Application.Common.Exceptions;
 using Innovera.Application.Common.Interfaces;
 using Innovera.Application.Common.Security;
@@ -70,6 +70,15 @@ public class AuthorizationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRe
                     {
                         throw new ForbiddenAccessException();
                     }
+                }
+            }
+
+            // Autorização por permissão (configurável por perfil no backoffice)
+            foreach (var permissao in authorizeAttributes.Select(a => a.Permissao).Where(p => !string.IsNullOrWhiteSpace(p)))
+            {
+                if (!await _identityService.TemPermissaoAsync(_user.Id, permissao))
+                {
+                    throw new ForbiddenAccessException();
                 }
             }
         }
