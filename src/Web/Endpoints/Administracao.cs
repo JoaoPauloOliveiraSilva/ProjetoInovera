@@ -21,7 +21,12 @@ public class Administracao : IEndpointGroup
         groupBuilder.MapPost(CriarPerfil, "perfis");
         groupBuilder.MapPut(DefinirPermissoes, "perfis/{nome}/permissoes");
         groupBuilder.MapDelete(ApagarPerfil, "perfis/{nome}");
+
+        groupBuilder.MapGet(ListarAuditoria, "auditoria");
     }
+
+    public static async Task<Ok<IReadOnlyList<RegistoAuditoriaDto>>> ListarAuditoria(ISender sender, string? entidade, string? entidadeId, string? texto)
+        => TypedResults.Ok(await sender.Send(new ListarAuditoriaQuery(entidade, entidadeId, texto)));
 
     public static async Task<Ok<IReadOnlyList<UtilizadorAdminDto>>> ListarUtilizadores(ISender sender, string? texto)
         => TypedResults.Ok(await sender.Send(new ListarUtilizadoresQuery(texto)));

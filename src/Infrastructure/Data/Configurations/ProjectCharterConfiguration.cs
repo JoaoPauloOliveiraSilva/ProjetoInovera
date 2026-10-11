@@ -10,6 +10,7 @@ public class ProjectCharterConfiguration : IEntityTypeConfiguration<ProjectChart
     {
         builder.HasIndex(c => c.IniciativaId).IsUnique();
         builder.Property(c => c.Fase).HasMaxLength(150);
+        builder.Property(c => c.SupervisorNome).HasMaxLength(200);
         builder.Property(c => c.Classe).HasMaxLength(150);
         builder.HasOne(c => c.Supervisor).WithMany().HasForeignKey(c => c.SupervisorId).OnDelete(DeleteBehavior.SetNull);
 
@@ -28,6 +29,7 @@ public class TarefaWbsConfiguration : IEntityTypeConfiguration<TarefaWbs>
     {
         builder.Property(t => t.CodigoWbs).HasMaxLength(20);
         builder.Property(t => t.Nome).HasMaxLength(300).IsRequired();
+        builder.Property(t => t.ResponsavelNome).HasMaxLength(200);
         builder.HasOne(t => t.DependeDe).WithMany().HasForeignKey(t => t.DependeDeId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne(t => t.Milestone).WithMany().HasForeignKey(t => t.MilestoneId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne(t => t.Responsavel).WithMany().HasForeignKey(t => t.ResponsavelId).OnDelete(DeleteBehavior.SetNull);
@@ -47,6 +49,7 @@ public class RiscoConfiguration : IEntityTypeConfiguration<Risco>
 {
     public void Configure(EntityTypeBuilder<Risco> builder)
     {
+        builder.Property(r => r.ResponsavelNome).HasMaxLength(200);
         builder.HasOne(r => r.Responsavel).WithMany().HasForeignKey(r => r.ResponsavelId).OnDelete(DeleteBehavior.SetNull);
     }
 }
@@ -67,6 +70,7 @@ public class RequisitoConformidadeConfiguration : IEntityTypeConfiguration<Requi
     {
         builder.Property(r => r.Requisito).HasMaxLength(300);
         builder.Property(r => r.Entidade).HasMaxLength(200);
+        builder.Property(r => r.ResponsavelNome).HasMaxLength(200);
         builder.HasOne(r => r.Responsavel).WithMany().HasForeignKey(r => r.ResponsavelId).OnDelete(DeleteBehavior.SetNull);
     }
 }

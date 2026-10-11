@@ -1,7 +1,7 @@
 namespace Innovera.Domain.Entities;
 
 /// <summary>Lição aprendida num Project Charter; agregada no repositório global (Mod.252).</summary>
-public class LicaoAprendida : BaseAuditableEntity
+public class LicaoAprendida : BaseAuditableEntity, IItemCharter
 {
     public int CharterId { get; set; }
 

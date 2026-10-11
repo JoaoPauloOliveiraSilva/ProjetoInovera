@@ -16,6 +16,9 @@ public class ProjectCharter : BaseAuditableEntity
 
     public Utilizador? Supervisor { get; set; }
 
+    /// <summary>Nome do supervisor (texto livre, como no modelo Excel).</summary>
+    public string? SupervisorNome { get; set; }
+
     /// <summary>Fase atual (ex.: "Fase de desenvolvimento").</summary>
     public string? Fase { get; set; }
 

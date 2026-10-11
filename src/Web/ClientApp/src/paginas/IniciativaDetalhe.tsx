@@ -80,6 +80,14 @@ function Ficha({ detalhe, aoEditar, recarregar }: { detalhe: Detalhe; aoEditar: 
         <span className={`etiqueta ${classeEstadoIniciativa[r.estado]}`}>{nomeEstadoIniciativa[r.estado]}</span>
       </div>
 
+      {detalhe.temCharter && (
+        <div className="ficha-acoes">
+          <Link className="botao-pequeno" to={`/inovacao/iniciativas/${r.id}/charter`}>
+            abrir project charter →
+          </Link>
+        </div>
+      )}
+
       <div className="ficha ficha-simples">
         <dl>
           <dt>código</dt>
@@ -123,6 +131,8 @@ function Ficha({ detalhe, aoEditar, recarregar }: { detalhe: Detalhe; aoEditar: 
           <p className="texto">{detalhe.descricao}</p>
         </>
       )}
+
+      <LinksDocumentos detalhe={detalhe} recarregar={recarregar} />
 
       <h3 className="secao">ponto de situação</h3>
       <p className="texto">{r.pontoSituacao ?? 'Ainda sem ponto de situação.'}</p>
@@ -290,5 +300,73 @@ function FormIniciativa({
         </button>
       </div>
     </form>
+  );
+}
+
+/** Documentos no OneDrive (RF15): a plataforma guarda só o link. */
+function LinksDocumentos({ detalhe, recarregar }: { detalhe: Detalhe; recarregar: () => void }) {
+  const [titulo, setTitulo] = useState('');
+  const [url, setUrl] = useState('');
+  const [erro, setErro] = useState('');
+  const [aEnviar, setAEnviar] = useState(false);
+  const id = detalhe.resumo.id;
+
+  if (!detalhe.podeEditar && detalhe.links.length === 0) return null;
+
+  const executar = async (acao: () => Promise<unknown>) => {
+    setErro('');
+    setAEnviar(true);
+    try {
+      await acao();
+      recarregar();
+      return true;
+    } catch (falha) {
+      setErro(falha instanceof Error ? falha.message : String(falha));
+      return false;
+    } finally {
+      setAEnviar(false);
+    }
+  };
+
+  const adicionar = async (e: FormEvent) => {
+    e.preventDefault();
+    if (await executar(() => api.adicionarLink(id, titulo.trim(), url.trim()))) {
+      setTitulo('');
+      setUrl('');
+    }
+  };
+
+  return (
+    <>
+      <h3 className="secao">documentos (OneDrive)</h3>
+      {detalhe.links.length > 0 ? (
+        <ul className="links-documentos">
+          {detalhe.links.map((l) => (
+            <li key={l.id}>
+              <a className="ligacao" href={l.url} target="_blank" rel="noreferrer">
+                {l.titulo} ↗
+              </a>
+              {detalhe.podeEditar && (
+                <button className="ligacao-simples cinzento-escuro" disabled={aEnviar} onClick={() => void executar(() => api.removerLink(id, l.id))}>
+                  remover
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="cinzento-escuro">Ainda não há documentos ligados.</p>
+      )}
+      {detalhe.podeEditar && (
+        <form className="link-novo" onSubmit={(e) => void adicionar(e)}>
+          <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="título (ex.: candidatura PRR)" maxLength={300} aria-label="Título do documento" />
+          <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…sharepoint.com/…" maxLength={2000} aria-label="Link do documento" />
+          <button type="submit" className="botao-pequeno" disabled={aEnviar || !titulo.trim() || !url.trim()}>
+            adicionar
+          </button>
+        </form>
+      )}
+      {erro && <div className="erro">{erro}</div>}
+    </>
   );
 }

@@ -4,7 +4,7 @@ namespace Innovera.Domain.Entities;
 /// Requisito de conformidade do Project Charter: legal (NDA, contrato, RGPD…) ou
 /// de Qualidade/Ambiente/Segurança por entidade.
 /// </summary>
-public class RequisitoConformidade : BaseAuditableEntity
+public class RequisitoConformidade : BaseAuditableEntity, IItemCharter
 {
     public int CharterId { get; set; }
 
@@ -26,6 +26,9 @@ public class RequisitoConformidade : BaseAuditableEntity
     public int? ResponsavelId { get; set; }
 
     public Utilizador? Responsavel { get; set; }
+
+    /// <summary>Nome do responsável (texto livre, como no modelo Excel).</summary>
+    public string? ResponsavelNome { get; set; }
 
     public DateOnly? DataPrevista { get; set; }
 

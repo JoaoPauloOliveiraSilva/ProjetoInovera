@@ -10,3 +10,6 @@ global using Innovera.Domain.Constants;
 global using Innovera.Domain.Entities;
 global using Innovera.Domain.Enums;
 global using Innovera.Domain.Exceptions;
+global using Innovera.Application.Common.Validacao;
+global using Innovera.Domain.Common;
+global using Innovera.Domain.Events;

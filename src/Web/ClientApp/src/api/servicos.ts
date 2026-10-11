@@ -21,6 +21,14 @@ import type {
   UtilizadorAdmin,
   UtilizadorAtual,
   UtilizadorResumo,
+  CategoriaLicao,
+  CharterGeral,
+  ConhecimentoCodificado,
+  LicaoRepositorio,
+  OrigemConhecimento,
+  ProjectCharter,
+  RegistoAuditoria,
+  SeccaoCharter,
 } from './tipos';
 
 // Contas (ASP.NET Core Identity com cookie). As contas são criadas pelo Administrador (convite por email).
@@ -130,4 +138,40 @@ export const iniciativas = {
     dados.append('ficheiro', ficheiro);
     return enviar<ResultadoImportacao>(`${baseIniciativas}/importar-mod246`, dados);
   },
+  adicionarLink: (id: number, titulo: string, url: string) => enviar<number>(`${baseIniciativas}/${id}/links`, { titulo, url }),
+  removerLink: (id: number, linkId: number) => pedido<void>('DELETE', `${baseIniciativas}/${id}/links/${linkId}`),
+};
+
+/** Project Charter: um GET com os 6 separadores; cada linha grava-se sozinha. */
+export const charter = {
+  obter: (id: number) => obter<ProjectCharter>(`${baseIniciativas}/${id}/charter`),
+  guardarGeral: (id: number, dados: CharterGeral) => pedido<void>('PUT', `${baseIniciativas}/${id}/charter/geral`, dados),
+  guardarItem: (id: number, seccao: SeccaoCharter, itemId: number | null, dados: unknown) =>
+    itemId === null
+      ? enviar<number>(`${baseIniciativas}/${id}/charter/${seccao}`, dados)
+      : pedido<number>('PUT', `${baseIniciativas}/${id}/charter/${seccao}/${itemId}`, dados),
+  apagarItem: (id: number, seccao: SeccaoCharter, itemId: number) =>
+    pedido<void>('DELETE', `${baseIniciativas}/${id}/charter/${seccao}/${itemId}`),
+};
+
+function consulta(base: string, filtros: Record<string, string | undefined>): string {
+  const p = new URLSearchParams();
+  for (const [chave, valor] of Object.entries(filtros)) {
+    if (valor?.trim()) p.set(chave, valor.trim());
+  }
+  const q = p.toString();
+  return q ? `${base}?${q}` : base;
+}
+
+/** Repositórios de conhecimento: lições aprendidas (Mod.252) e conhecimento codificado (Mod.237). */
+export const conhecimento = {
+  licoes: (filtro: { categoria?: CategoriaLicao; texto?: string } = {}) =>
+    obter<LicaoRepositorio[]>(consulta('/api/Conhecimento/licoes', filtro)),
+  codificado: (filtro: { origem?: OrigemConhecimento; texto?: string } = {}) =>
+    obter<ConhecimentoCodificado[]>(consulta('/api/Conhecimento/codificado', filtro)),
+};
+
+export const auditoria = {
+  listar: (filtro: { entidade?: string; entidadeId?: string; texto?: string } = {}) =>
+    obter<RegistoAuditoria[]>(consulta('/api/Administracao/auditoria', filtro)),
 };

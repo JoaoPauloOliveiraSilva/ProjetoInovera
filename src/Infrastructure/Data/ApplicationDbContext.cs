@@ -31,6 +31,20 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Iniciativa> Iniciativas => Set<Iniciativa>();
     public DbSet<ProjectCharter> ProjectCharters => Set<ProjectCharter>();
 
+    public DbSet<TarefaWbs> TarefasWbs => Set<TarefaWbs>();
+
+    public DbSet<Entrega> Entregas => Set<Entrega>();
+
+    public DbSet<Risco> Riscos => Set<Risco>();
+
+    public DbSet<LinhaOrcamento> LinhasOrcamento => Set<LinhaOrcamento>();
+
+    public DbSet<RequisitoConformidade> RequisitosConformidade => Set<RequisitoConformidade>();
+
+    public DbSet<LicaoAprendida> LicoesAprendidas => Set<LicaoAprendida>();
+
+    public DbSet<LinkDocumento> LinksDocumento => Set<LinkDocumento>();
+
     // Registos
     public DbSet<Parceiro> Parceiros => Set<Parceiro>();
     public DbSet<AcordoParceria> AcordosParceria => Set<AcordoParceria>();

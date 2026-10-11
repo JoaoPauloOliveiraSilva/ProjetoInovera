@@ -21,6 +21,9 @@ if (!aGerarOpenApi)
     await app.InitialiseDatabaseAsync();
 }
 
+// Em produção a aplicação fica atrás do Caddy (HTTPS): usar o protocolo e o IP originais do pedido.
+app.UseForwardedHeaders();
+
 if (!app.Environment.IsDevelopment())
 {
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
@@ -28,15 +31,22 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors(static builder => 
-    builder.AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowAnyOrigin());
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors(static builder =>
+        builder.AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowAnyOrigin());
+}
 
 app.UseFileServer();
 
-app.MapOpenApi();
-app.MapScalarApiReference();
+// Documentação da API (/scalar) só em desenvolvimento.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
 
 app.UseExceptionHandler(options => { });
 

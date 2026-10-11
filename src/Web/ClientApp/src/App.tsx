@@ -3,9 +3,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { VersaoDados } from './api/usePedido';
 import { Layout } from './componentes/Layout';
 import { Permissoes } from './api/permissoes';
+import { AdminAuditoria } from './paginas/AdminAuditoria';
 import { AdminPerfis } from './paginas/AdminPerfis';
 import { AdminUtilizadores } from './paginas/AdminUtilizadores';
 import { Avaliacao } from './paginas/Avaliacao';
+import { CharterPagina } from './paginas/Charter';
 import { DefinirPassword } from './paginas/DefinirPassword';
 import { EmConstrucao } from './paginas/EmConstrucao';
 import { Entrar } from './paginas/Entrar';
@@ -14,6 +16,7 @@ import { IdeiasLista } from './paginas/IdeiasLista';
 import { ImportarMod246 } from './paginas/ImportarMod246';
 import { IniciativasLista } from './paginas/IniciativasLista';
 import { Landing } from './paginas/Landing';
+import { RepositorioConhecimento, RepositorioLicoes } from './paginas/Repositorios';
 import { Validacao } from './paginas/Validacao';
 import { Protegido, SessaoProvider } from './sessao/Sessao';
 
@@ -22,7 +25,6 @@ const emConstrucao: [string, string][] = [
   ['i9news', 'i9news'],
   ['premios', 'prémios'],
   ['sifide', 'sifide'],
-  ['conhecimento', 'conhecimento'],
   ['indicadores', 'indicadores'],
 ];
 
@@ -53,6 +55,9 @@ export function App() {
               <Route path="ideias/:id" element={<IdeiasLista modo="todas" />} />
               <Route path="iniciativas" element={<IniciativasLista titulo="iniciativas" />} />
               <Route path="iniciativas/:id" element={<IniciativasLista titulo="iniciativas" />} />
+              <Route path="iniciativas/:id/charter" element={<CharterPagina />} />
+              <Route path="licoes" element={<RepositorioLicoes />} />
+              <Route path="conhecimento" element={<RepositorioConhecimento />} />
               <Route path="projetos" element={<IniciativasLista titulo="projetos" tipo="Projeto" />} />
               <Route path="desafios" element={<IniciativasLista titulo="desafios" tipo="Desafio" />} />
               <Route path="vigilancias" element={<IniciativasLista titulo="vigilâncias" tipo="Vigilancia" />} />
@@ -94,6 +99,14 @@ export function App() {
                 element={
                   <Protegido permissao={Permissoes.gerirPerfis}>
                     <AdminPerfis />
+                  </Protegido>
+                }
+              />
+              <Route
+                path="admin/auditoria"
+                element={
+                  <Protegido permissao={Permissoes.verAuditoria}>
+                    <AdminAuditoria />
                   </Protegido>
                 }
               />

@@ -35,6 +35,7 @@ public static class Permissoes
     {
         public const string GerirUtilizadores = "utilizadores.gerir";
         public const string GerirPerfis = "perfis.gerir";
+        public const string VerAuditoria = "auditoria.ver";
     }
 
     public static readonly IReadOnlyList<PermissaoInfo> Todas =
@@ -45,6 +46,7 @@ public static class Permissoes
         new(Iniciativas.Gerir, "Gerir projetos, desafios e outras iniciativas e importar o portefólio (Mod.246)", "Iniciativas"),
         new(Administracao.GerirUtilizadores, "Adicionar e gerir utilizadores", "Administração"),
         new(Administracao.GerirPerfis, "Gerir perfis e permissões", "Administração"),
+        new(Administracao.VerAuditoria, "Ver o registo de auditoria (quem alterou o quê e quando)", "Administração"),
     ];
 
     public static bool Existe(string codigo) => Todas.Any(p => p.Codigo == codigo);

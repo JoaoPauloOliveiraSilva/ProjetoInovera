@@ -61,8 +61,9 @@ public class RegistoAuditoriaConfiguration : IEntityTypeConfiguration<RegistoAud
         builder.Property(r => r.Entidade).HasMaxLength(100);
         builder.Property(r => r.EntidadeId).HasMaxLength(100);
         builder.Property(r => r.UtilizadorId).HasMaxLength(450);
-        builder.Property(r => r.ValoresAntes).HasColumnType("jsonb");
-        builder.Property(r => r.ValoresDepois).HasColumnType("jsonb");
+        // Texto (JSON) e não jsonb: assim a procura por texto no registo funciona com lower()/LIKE.
+        builder.Property(r => r.ValoresAntes).HasColumnType("text");
+        builder.Property(r => r.ValoresDepois).HasColumnType("text");
         builder.HasIndex(r => new { r.Entidade, r.EntidadeId });
     }
 }

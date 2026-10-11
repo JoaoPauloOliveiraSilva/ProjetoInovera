@@ -1,0 +1,74 @@
+# Produção (servidor Lightsail). Ver docs/publicacao-aws.md.
+#   cp deploy/.env.exemplo deploy/.env   (e preencher)
+#   docker compose -f deploy/docker-compose.producao.yml --env-file deploy/.env up -d --build
+#
+# Base de dados: a PostgreSQL gerida do Lightsail (ConnectionStrings__InnoveraDb no .env).
+# Para experimentar tudo num só PC, junte "--profile bd-local" e use a ligação a "bd" do .env.exemplo.
+name: innovera
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: innovera:latest
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__InnoveraDb: ${LIGACAO_BD:?Falta LIGACAO_BD no .env}
+      ContaAdministrador__Email: ${ADMIN_EMAIL:?Falta ADMIN_EMAIL no .env}
+      ContaAdministrador__Password: ${ADMIN_PASSWORD:?Falta ADMIN_PASSWORD no .env}
+      Email__UrlSite: https://${DOMINIO}
+      Email__Remetente: ${EMAIL_REMETENTE}
+      Email__NomeRemetente: ${EMAIL_NOME:-Inovação dstelecom}
+      Smtp__Host: ${SMTP_HOST}
+      Smtp__Porta: ${SMTP_PORTA:-587}
+      Smtp__Ssl: ${SMTP_SSL:-true}
+      Smtp__Utilizador: ${SMTP_UTILIZADOR}
+      Smtp__Password: ${SMTP_PASSWORD}
+    volumes:
+      - dados:/data
+    # Só conta com --profile bd-local: espera que a base de dados local esteja pronta.
+    depends_on:
+      bd:
+        condition: service_healthy
+        required: false
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      DOMINIO: ${DOMINIO:?Falta DOMINIO no .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-dados:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+  # Só para testes locais (--profile bd-local). Em produção usa-se a base de dados gerida do Lightsail.
+  bd:
+    image: postgres:17
+    profiles: ["bd-local"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: innovera
+      POSTGRES_PASSWORD: ${BD_LOCAL_PASSWORD:-innovera-local}
+      POSTGRES_DB: innovera
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U innovera -d innovera"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - bd-dados:/var/lib/postgresql/data
+
+volumes:
+  dados:
+  caddy-dados:
+  caddy-config:
+  bd-dados:

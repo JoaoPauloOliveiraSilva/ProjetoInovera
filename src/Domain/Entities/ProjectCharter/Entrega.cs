@@ -3,7 +3,7 @@ namespace Innovera.Domain.Entities;
 /// <summary>
 /// Entregável (E1…) ou milestone (M1…) do Project Charter, com meio de verificação e controlo.
 /// </summary>
-public class Entrega : BaseAuditableEntity
+public class Entrega : BaseAuditableEntity, IItemCharter
 {
     public int CharterId { get; set; }
 

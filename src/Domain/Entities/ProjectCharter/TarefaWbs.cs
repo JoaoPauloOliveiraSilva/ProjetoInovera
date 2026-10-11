@@ -1,7 +1,7 @@
 namespace Innovera.Domain.Entities;
 
 /// <summary>Tarefa da WBS com datas planeadas e reais (separador Planeamento).</summary>
-public class TarefaWbs : BaseAuditableEntity
+public class TarefaWbs : BaseAuditableEntity, IItemCharter
 {
     public int CharterId { get; set; }
 
@@ -36,6 +36,9 @@ public class TarefaWbs : BaseAuditableEntity
     public int? ResponsavelId { get; set; }
 
     public Utilizador? Responsavel { get; set; }
+
+    /// <summary>Nome do responsável (texto livre, como no modelo Excel).</summary>
+    public string? ResponsavelNome { get; set; }
 
     /// <summary>Atrasada se passou o fim planeado e ainda não terminou.</summary>
     public bool EstaAtrasada(DateOnly hoje)

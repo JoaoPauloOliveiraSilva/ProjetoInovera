@@ -206,7 +206,16 @@ export interface IniciativaDetalhe {
   horizonte: Horizonte | null;
   detalhes: { nome: string; valor: string }[];
   historico: { data: string; texto: string; autor: string | null }[];
+  links: LinkDocumento[];
+  temCharter: boolean;
   podeEditar: boolean;
+}
+
+/** Link para um documento no OneDrive (RF15). */
+export interface LinkDocumento {
+  id: number;
+  titulo: string;
+  url: string;
 }
 
 export interface DadosIniciativa {
@@ -331,3 +340,235 @@ export const classeEstado: Record<EstadoIdeia, string> = {
   Aprovada: 'estado-aprovada',
   NaoAprovada: 'estado-nao-aprovada',
 };
+
+// Project Charter (projetos e desafios)
+
+export type TipoTarefa = 'Analise' | 'Gestao' | 'Comunicacao' | 'Tecnica' | 'Dados' | 'Testes';
+export type EstadoTrabalho = 'Planeado' | 'EmCurso' | 'Concluido' | 'Atrasado' | 'Cancelado';
+export type TipoEntrega = 'Entregavel' | 'Milestone';
+export type NivelImpacto = 'Baixo' | 'Medio' | 'Alto' | 'Extremo';
+export type NivelProbabilidade = 'Raro' | 'Improvavel' | 'PoucoProvavel' | 'MuitoProvavel';
+export type RespostaRisco = 'Evitar' | 'Mitigar' | 'Transferir' | 'Aceitar';
+export type TipoRequisito = 'Legal' | 'Qualidade' | 'Ambiente' | 'Seguranca';
+export type EstadoRequisito = 'Pendente' | 'EmCurso' | 'Cumprido' | 'NaoAplicavel';
+export type CategoriaLicao = 'Estrategica' | 'Gestao' | 'Operacional' | 'Tecnica';
+export type OrigemConhecimento = 'Manual' | 'RelatorioIniciativa' | 'Vigilancia';
+export type AcaoAuditoria = 'Criar' | 'Alterar' | 'Eliminar';
+
+export interface CharterGeral {
+  supervisorNome: string | null;
+  fase: string | null;
+  classe: string | null;
+  contextoJustificacao: string | null;
+  businessCase: string | null;
+  decisaoAprovacao: string | null;
+  objetivos: string | null;
+  resultadosEsperados: string | null;
+}
+
+export interface Tarefa {
+  id: number;
+  codigoWbs: string;
+  nome: string;
+  tipo: TipoTarefa;
+  estado: EstadoTrabalho;
+  inicioPlaneado: string | null;
+  fimPlaneado: string | null;
+  inicioReal: string | null;
+  fimReal: string | null;
+  responsavel: string | null;
+  milestoneId: number | null;
+  atrasada: boolean;
+}
+
+export interface Entrega {
+  id: number;
+  tipo: TipoEntrega;
+  codigo: string;
+  descricao: string;
+  prazo: string | null;
+  estado: EstadoTrabalho;
+  meioVerificacao: string | null;
+  controlo: string | null;
+  dataConclusao: string | null;
+  linkRelatorio: string | null;
+}
+
+export interface Risco {
+  id: number;
+  numero: number;
+  data: string;
+  descricao: string;
+  impacto: NivelImpacto;
+  probabilidade: NivelProbabilidade;
+  severidade: number;
+  exigeMitigacao: boolean;
+  faltaPlanoMitigacao: boolean;
+  resposta: RespostaRisco | null;
+  planoAcao: string | null;
+  responsavel: string | null;
+  prazo: string | null;
+  dataConclusao: string | null;
+  avaliacaoEficacia: string | null;
+}
+
+export interface LinhaOrcamento {
+  id: number;
+  categoria: string;
+  descricao: string | null;
+  ano: number;
+  valorPrevisto: number;
+  valorReal: number | null;
+  variacao: number | null;
+  observacoes: string | null;
+}
+
+export interface Requisito {
+  id: number;
+  tipo: TipoRequisito;
+  requisito: string;
+  descricao: string | null;
+  entidade: string | null;
+  resposta: string | null;
+  responsavel: string | null;
+  dataPrevista: string | null;
+  dataConfirmacao: string | null;
+  estado: EstadoRequisito;
+  observacoes: string | null;
+}
+
+export interface Licao {
+  id: number;
+  categoria: CategoriaLicao;
+  licao: string;
+  descricao: string | null;
+  impacto: string | null;
+  data: string;
+}
+
+export interface ProjectCharter {
+  iniciativaId: number;
+  codigo: string;
+  titulo: string;
+  tipo: TipoIniciativa;
+  estado: EstadoIniciativa;
+  responsavel: string | null;
+  dataInicio: string | null;
+  dataFim: string | null;
+  geral: CharterGeral;
+  tarefas: Tarefa[];
+  entregas: Entrega[];
+  riscos: Risco[];
+  orcamento: LinhaOrcamento[];
+  totaisOrcamento: { ano: number; previsto: number; real: number }[];
+  conformidade: Requisito[];
+  licoes: Licao[];
+  podeEditar: boolean;
+}
+
+/** Caminho de cada separador na API (/api/Iniciativas/{id}/charter/{seccao}). */
+export type SeccaoCharter = 'tarefas' | 'entregas' | 'riscos' | 'orcamento' | 'conformidade' | 'licoes';
+
+export interface LicaoRepositorio {
+  id: number;
+  data: string;
+  iniciativaId: number;
+  iniciativaCodigo: string;
+  iniciativaTitulo: string;
+  categoria: CategoriaLicao;
+  licao: string;
+  descricao: string | null;
+  impacto: string | null;
+}
+
+export interface ConhecimentoCodificado {
+  id: number;
+  data: string;
+  documento: string;
+  url: string | null;
+  modoConsulta: string | null;
+  descricao: string | null;
+  resultado: string | null;
+  origem: OrigemConhecimento;
+  iniciativaId: number | null;
+  iniciativaCodigo: string | null;
+  entregaCodigo: string | null;
+}
+
+export interface RegistoAuditoria {
+  id: number;
+  data: string;
+  utilizador: string | null;
+  acao: AcaoAuditoria;
+  entidade: string;
+  entidadeId: string;
+  valoresAntes: string | null;
+  valoresDepois: string | null;
+}
+
+export const nomeTipoTarefa: Record<TipoTarefa, string> = {
+  Analise: 'análise',
+  Gestao: 'gestão',
+  Comunicacao: 'comunicação',
+  Tecnica: 'técnica',
+  Dados: 'dados',
+  Testes: 'testes',
+};
+
+export const nomeEstadoTrabalho: Record<EstadoTrabalho, string> = {
+  Planeado: 'planeado',
+  EmCurso: 'em curso',
+  Concluido: 'concluído',
+  Atrasado: 'atrasado',
+  Cancelado: 'cancelado',
+};
+
+export const classeEstadoTrabalho: Record<EstadoTrabalho, string> = {
+  Planeado: 'estado-validacao-equipa',
+  EmCurso: 'estado-em-avaliacao',
+  Concluido: 'estado-aprovada',
+  Atrasado: 'estado-em-discussao',
+  Cancelado: 'estado-nao-aprovada',
+};
+
+export const nomeTipoEntrega: Record<TipoEntrega, string> = { Entregavel: 'entregável', Milestone: 'milestone' };
+
+export const nomeImpacto: Record<NivelImpacto, string> = { Baixo: '1 · baixo', Medio: '2 · médio', Alto: '3 · alto', Extremo: '4 · extremo' };
+
+export const nomeProbabilidade: Record<NivelProbabilidade, string> = {
+  Raro: '1 · raro',
+  Improvavel: '2 · improvável',
+  PoucoProvavel: '3 · pouco provável',
+  MuitoProvavel: '4 · muito provável',
+};
+
+export const nomeResposta: Record<RespostaRisco, string> = { Evitar: 'evitar', Mitigar: 'mitigar', Transferir: 'transferir', Aceitar: 'aceitar' };
+
+export const nomeTipoRequisito: Record<TipoRequisito, string> = {
+  Legal: 'legal',
+  Qualidade: 'qualidade',
+  Ambiente: 'ambiente',
+  Seguranca: 'segurança',
+};
+
+export const nomeEstadoRequisito: Record<EstadoRequisito, string> = {
+  Pendente: 'pendente',
+  EmCurso: 'em curso',
+  Cumprido: 'cumprido',
+  NaoAplicavel: 'não aplicável',
+};
+
+export const nomeCategoriaLicao: Record<CategoriaLicao, string> = {
+  Estrategica: 'estratégica',
+  Gestao: 'gestão',
+  Operacional: 'operacional',
+  Tecnica: 'técnica',
+};
+
+export const nomeOrigemConhecimento: Record<OrigemConhecimento, string> = {
+  Manual: 'manual',
+  RelatorioIniciativa: 'relatório de iniciativa',
+  Vigilancia: 'vigilância',
+};
+
+export const nomeAcaoAuditoria: Record<AcaoAuditoria, string> = { Criar: 'criou', Alterar: 'alterou', Eliminar: 'eliminou' };

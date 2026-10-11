@@ -18,6 +18,20 @@ public interface IApplicationDbContext
     DbSet<Iniciativa> Iniciativas { get; }
     DbSet<ProjectCharter> ProjectCharters { get; }
 
+    DbSet<TarefaWbs> TarefasWbs { get; }
+
+    DbSet<Entrega> Entregas { get; }
+
+    DbSet<Risco> Riscos { get; }
+
+    DbSet<LinhaOrcamento> LinhasOrcamento { get; }
+
+    DbSet<RequisitoConformidade> RequisitosConformidade { get; }
+
+    DbSet<LicaoAprendida> LicoesAprendidas { get; }
+
+    DbSet<LinkDocumento> LinksDocumento { get; }
+
     DbSet<Parceiro> Parceiros { get; }
     DbSet<AcordoParceria> AcordosParceria { get; }
     DbSet<AtivoIntangivel> AtivosIntangiveis { get; }

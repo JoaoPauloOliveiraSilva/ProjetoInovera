@@ -4,7 +4,7 @@ namespace Innovera.Domain.Entities;
 /// Linha do orçamento do Project Charter (previsto vs. real por ano).
 /// A soma alimenta o investimento IDI (KPI 38).
 /// </summary>
-public class LinhaOrcamento : BaseAuditableEntity
+public class LinhaOrcamento : BaseAuditableEntity, IItemCharter
 {
     public int CharterId { get; set; }
 

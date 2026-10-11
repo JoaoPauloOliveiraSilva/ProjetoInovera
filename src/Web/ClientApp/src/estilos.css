@@ -351,3 +351,38 @@ a { color: inherit; }
 .resultado-importacao th, .resultado-importacao td { padding: 8px 14px; border-bottom: 1px solid #eee; text-align: left; }
 .avisos-importacao { color: #8a6100; line-height: 1.6; }
 .detalhe > .botao-pequeno.claro { margin-top: 14px; }
+
+/* ---------- Project Charter e repositórios ---------- */
+.charter-topo { margin: -20px 0 20px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; }
+.charter-dados { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; font-size: 14px; color: #555; }
+.separadores { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid #d4d4d4; margin-bottom: 24px; }
+.separadores button {
+  background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 18px; font-size: 15px; color: #555; position: relative;
+}
+.separadores button:hover { color: var(--vermelho); }
+.separadores button.ativo { color: var(--texto); font-weight: 700; border-bottom-color: var(--vermelho); }
+.ponto-alerta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--vermelho); margin-left: 6px; vertical-align: 2px; }
+.charter-painel { background: #fff; padding: 24px 28px; max-width: 1100px; }
+.campos-tres { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.charter-seccao { margin-bottom: 36px; }
+.charter-seccao-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 10px; }
+.charter-seccao-topo .secao { margin: 0; }
+.charter-tabela .tabela-linha { padding: 14px 18px; }
+.tabela-linha.so-leitura { cursor: default; }
+.botao-pequeno.com-icone { display: inline-flex; align-items: center; gap: 6px; }
+.botao-largo.perigo { background: var(--vermelho); color: #fff; }
+.charter-aviso { background: #fde9ec; color: var(--vermelho); padding: 12px 16px; margin-bottom: 16px; font-weight: 600; }
+.charter-nota { margin: 0 0 16px; }
+.campo small.ajuda { font-size: 12px; line-height: 1.4; }
+.repositorio-linha { grid-template-columns: 100px 200px 120px minmax(240px, 1fr) minmax(160px, 0.6fr); padding: 14px 22px; }
+.conhecimento-linha { grid-template-columns: 100px minmax(240px, 1fr) 140px 160px 120px; padding: 14px 22px; }
+.auditoria-linha { grid-template-columns: 160px 170px 90px 220px minmax(160px, 1fr); padding: 12px 22px; }
+.auditoria-detalhe { padding: 4px 22px 18px; background: #fafafa; }
+.auditoria-detalhe td { max-width: 480px; overflow-wrap: anywhere; }
+.filtro-texto.curto { min-width: 0; width: 80px; }
+.ficha-acoes { display: flex; flex-wrap: wrap; gap: 10px; margin: -28px 0 28px; }
+.links-documentos { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.links-documentos li { background: #fff; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.link-novo { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; }
+.link-novo input { background: #fff; border: 1px solid var(--linha); padding: 8px 10px; font-weight: 400; }
+a.botao-pequeno { text-decoration: none; display: inline-block; }

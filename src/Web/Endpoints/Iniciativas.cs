@@ -1,3 +1,4 @@
+using Innovera.Application.Charters;
 using Innovera.Application.Iniciativas;
 using Innovera.Domain.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -17,6 +18,27 @@ public class Iniciativas : IEndpointGroup
         groupBuilder.MapPut(AtualizarIniciativa, "{id:int}");
         groupBuilder.MapPost(RegistarPontoSituacao, "{id:int}/ponto-situacao");
         groupBuilder.MapPost(ImportarMod246, "importar-mod246").DisableAntiforgery();
+
+        // Links para documentos no OneDrive (RF15)
+        groupBuilder.MapPost(AdicionarLink, "{id:int}/links");
+        groupBuilder.MapDelete(RemoverLink, "{id:int}/links/{linkId:int}");
+
+        // Project Charter (6 separadores)
+        groupBuilder.MapGet(ObterCharter, "{id:int}/charter");
+        groupBuilder.MapPut(GuardarCharterGeral, "{id:int}/charter/geral");
+        groupBuilder.MapPost(CriarTarefa, "{id:int}/charter/tarefas");
+        groupBuilder.MapPut(EditarTarefa, "{id:int}/charter/tarefas/{itemId:int}");
+        groupBuilder.MapPost(CriarEntrega, "{id:int}/charter/entregas");
+        groupBuilder.MapPut(EditarEntrega, "{id:int}/charter/entregas/{itemId:int}");
+        groupBuilder.MapPost(CriarRisco, "{id:int}/charter/riscos");
+        groupBuilder.MapPut(EditarRisco, "{id:int}/charter/riscos/{itemId:int}");
+        groupBuilder.MapPost(CriarLinhaOrcamento, "{id:int}/charter/orcamento");
+        groupBuilder.MapPut(EditarLinhaOrcamento, "{id:int}/charter/orcamento/{itemId:int}");
+        groupBuilder.MapPost(CriarRequisito, "{id:int}/charter/conformidade");
+        groupBuilder.MapPut(EditarRequisito, "{id:int}/charter/conformidade/{itemId:int}");
+        groupBuilder.MapPost(CriarLicao, "{id:int}/charter/licoes");
+        groupBuilder.MapPut(EditarLicao, "{id:int}/charter/licoes/{itemId:int}");
+        groupBuilder.MapDelete(ApagarItemCharter, "{id:int}/charter/{seccao}/{itemId:int}");
     }
 
     public static async Task<Ok<IReadOnlyList<IniciativaResumoDto>>> ListarIniciativas(ISender sender, TipoIniciativa? tipo, EstadoIniciativa? estado, string? texto)
@@ -51,5 +73,82 @@ public class Iniciativas : IEndpointGroup
 
         await using var conteudo = ficheiro.OpenReadStream();
         return TypedResults.Ok(await sender.Send(new ImportarPortefolioCommand(conteudo)));
+    }
+
+    public record LinkPedido(string Titulo, string Url);
+
+    public static async Task<Ok<int>> AdicionarLink(ISender sender, int id, LinkPedido pedido)
+        => TypedResults.Ok(await sender.Send(new AdicionarLinkCommand(id, pedido.Titulo, pedido.Url)));
+
+    public static async Task<NoContent> RemoverLink(ISender sender, int id, int linkId)
+    {
+        await sender.Send(new RemoverLinkCommand(id, linkId));
+        return TypedResults.NoContent();
+    }
+
+    public static async Task<Ok<ProjectCharterDto>> ObterCharter(ISender sender, int id)
+        => TypedResults.Ok(await sender.Send(new ObterCharterQuery(id)));
+
+    public static async Task<NoContent> GuardarCharterGeral(ISender sender, int id, CharterGeralDto dados)
+    {
+        await sender.Send(new GuardarCharterGeralCommand(id, dados));
+        return TypedResults.NoContent();
+    }
+
+    public static async Task<Ok<int>> CriarTarefa(ISender sender, int id, TarefaDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarTarefaCommand(id, null, dados)));
+
+    public static async Task<Ok<int>> EditarTarefa(ISender sender, int id, int itemId, TarefaDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarTarefaCommand(id, itemId, dados)));
+
+    public static async Task<Ok<int>> CriarEntrega(ISender sender, int id, EntregaDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarEntregaCommand(id, null, dados)));
+
+    public static async Task<Ok<int>> EditarEntrega(ISender sender, int id, int itemId, EntregaDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarEntregaCommand(id, itemId, dados)));
+
+    public static async Task<Ok<int>> CriarRisco(ISender sender, int id, RiscoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarRiscoCommand(id, null, dados)));
+
+    public static async Task<Ok<int>> EditarRisco(ISender sender, int id, int itemId, RiscoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarRiscoCommand(id, itemId, dados)));
+
+    public static async Task<Ok<int>> CriarLinhaOrcamento(ISender sender, int id, LinhaOrcamentoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarLinhaOrcamentoCommand(id, null, dados)));
+
+    public static async Task<Ok<int>> EditarLinhaOrcamento(ISender sender, int id, int itemId, LinhaOrcamentoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarLinhaOrcamentoCommand(id, itemId, dados)));
+
+    public static async Task<Ok<int>> CriarRequisito(ISender sender, int id, RequisitoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarRequisitoCommand(id, null, dados)));
+
+    public static async Task<Ok<int>> EditarRequisito(ISender sender, int id, int itemId, RequisitoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarRequisitoCommand(id, itemId, dados)));
+
+    public static async Task<Ok<int>> CriarLicao(ISender sender, int id, LicaoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarLicaoCommand(id, null, dados)));
+
+    public static async Task<Ok<int>> EditarLicao(ISender sender, int id, int itemId, LicaoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarLicaoCommand(id, itemId, dados)));
+
+    private static readonly Dictionary<string, SeccaoCharter> Seccoes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["tarefas"] = SeccaoCharter.Tarefa,
+        ["entregas"] = SeccaoCharter.Entrega,
+        ["riscos"] = SeccaoCharter.Risco,
+        ["orcamento"] = SeccaoCharter.Orcamento,
+        ["conformidade"] = SeccaoCharter.Conformidade,
+        ["licoes"] = SeccaoCharter.Licao,
+    };
+
+    public static async Task<Results<NoContent, NotFound>> ApagarItemCharter(ISender sender, int id, string seccao, int itemId)
+    {
+        if (!Seccoes.TryGetValue(seccao, out var s))
+        {
+            return TypedResults.NotFound();
+        }
+
+        await sender.Send(new ApagarItemCharterCommand(id, s, itemId));
+        return TypedResults.NoContent();
     }
 }

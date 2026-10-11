@@ -4,7 +4,7 @@ namespace Innovera.Domain.Entities;
 /// Risco do Project Charter: Impacto (1–4) × Probabilidade (1–4), resposta, plano e reavaliação.
 /// Regra: I × P &gt; 4 obriga a uma estratégia de mitigação.
 /// </summary>
-public class Risco : BaseAuditableEntity
+public class Risco : BaseAuditableEntity, IItemCharter
 {
     public const int SeveridadeMaximaSemMitigacao = 4;
 
@@ -39,6 +39,9 @@ public class Risco : BaseAuditableEntity
     public int? ResponsavelId { get; set; }
 
     public Utilizador? Responsavel { get; set; }
+
+    /// <summary>Nome do responsável (texto livre, como no modelo Excel).</summary>
+    public string? ResponsavelNome { get; set; }
 
     public DateOnly? Prazo { get; set; }
 

@@ -494,3 +494,6 @@ $RECYCLE.BIN/
 # Innovera
 # Anexos guardados localmente em desenvolvimento (Armazenamento:Pasta)
 src/Web/ficheiros/
+
+# Produção: configuração com passwords
+deploy/.env

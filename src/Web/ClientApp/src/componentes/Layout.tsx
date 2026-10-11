@@ -41,7 +41,13 @@ const menu: ItemMenu[] = [
   { nome: 'sifide', filhos: [{ nome: 'candidaturas', para: '/inovacao/sifide' }] },
   { nome: 'iniciativas de inovação', para: '/inovacao/iniciativas' },
   { nome: 'oportunidades de inovação', para: '/inovacao/oportunidades' },
-  { nome: 'repositório do conhecimento', filhos: [{ nome: 'conhecimento codificado', para: '/inovacao/conhecimento' }] },
+  {
+    nome: 'repositório do conhecimento',
+    filhos: [
+      { nome: 'conhecimento codificado', para: '/inovacao/conhecimento' },
+      { nome: 'lições aprendidas', para: '/inovacao/licoes' },
+    ],
+  },
   { nome: 'indicadores de desempenho', filhos: [{ nome: 'KPIs', para: '/inovacao/indicadores' }] },
   {
     nome: 'administração',
@@ -49,6 +55,7 @@ const menu: ItemMenu[] = [
       { nome: 'utilizadores', para: '/inovacao/admin/utilizadores', permissao: Permissoes.gerirUtilizadores },
       { nome: 'perfis e permissões', para: '/inovacao/admin/perfis', permissao: Permissoes.gerirPerfis },
       { nome: 'importar Mod.246', para: '/inovacao/admin/importar', permissao: Permissoes.iniciativasGerir },
+      { nome: 'registo de auditoria', para: '/inovacao/admin/auditoria', permissao: Permissoes.verAuditoria },
     ],
   },
 ];

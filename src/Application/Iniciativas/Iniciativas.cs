@@ -24,7 +24,12 @@ public record IniciativaDetalheDto(
     Horizonte? Horizonte,
     IReadOnlyList<CampoDto> Detalhes,
     IReadOnlyList<NotaPontoSituacaoDto> Historico,
+    IReadOnlyList<LinkDto> Links,
+    bool TemCharter,
     bool PodeEditar);
+
+/// <summary>Link para um documento no OneDrive (RF15).</summary>
+public record LinkDto(int Id, string Titulo, string Url);
 
 internal static class Tipos
 {
@@ -100,6 +105,7 @@ public class ObterIniciativaQueryHandler(IApplicationDbContext context, IUtiliza
             .Include(x => x.Responsavel)
             .Include(x => x.IdeiaOrigem)
             .Include(x => x.NotasPontoSituacao).ThenInclude(n => n.Autor)
+            .Include(x => x.Links)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
         Guard.Against.NotFound(request.Id, i);
 
@@ -111,7 +117,9 @@ public class ObterIniciativaQueryHandler(IApplicationDbContext context, IUtiliza
             .Select(n => new NotaPontoSituacaoDto(n.Data, n.Texto, n.Autor?.Nome))
             .ToList();
 
-        return new IniciativaDetalheDto(resumo, i.Descricao, i.Horizonte, Detalhes(i), historico,
+        var links = i.Links.OrderBy(l => l.Titulo).Select(l => new LinkDto(l.Id, l.Titulo, l.Url)).ToList();
+
+        return new IniciativaDetalheDto(resumo, i.Descricao, i.Horizonte, Detalhes(i), historico, links, i is IniciativaComCharter,
             await utilizadores.TemPermissaoAsync(Permissoes.Iniciativas.Gerir, cancellationToken));
     }
 

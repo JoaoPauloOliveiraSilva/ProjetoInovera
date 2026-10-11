@@ -2,6 +2,7 @@ using Azure.Identity;
 using Innovera.Application.Common.Interfaces;
 using Innovera.Infrastructure.Data;
 using Innovera.Web.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -30,6 +31,25 @@ public static class DependencyInjection
         });
 
         builder.Services.AddCors();
+
+        // Atrás do proxy (Caddy no mesmo servidor, rede do Docker): aceitar X-Forwarded-For/Proto.
+        builder.Services.Configure<Microsoft.AspNetCore.Builder.ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor
+                | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
+
+        // Chaves que cifram o cookie de sessão e os links dos emails: numa pasta persistente em produção,
+        // senão cada reinício da aplicação terminava as sessões e invalidava os convites.
+        var pastaChaves = builder.Configuration["DataProtection:Pasta"];
+        if (!string.IsNullOrWhiteSpace(pastaChaves))
+        {
+            builder.Services.AddDataProtection()
+                .SetApplicationName("Innovera")
+                .PersistKeysToFileSystem(new DirectoryInfo(pastaChaves));
+        }
 
         // Enums em texto no JSON (ex.: "EmDiscussao"), mais fácil de usar no frontend.
         builder.Services.ConfigureHttpJsonOptions(options =>

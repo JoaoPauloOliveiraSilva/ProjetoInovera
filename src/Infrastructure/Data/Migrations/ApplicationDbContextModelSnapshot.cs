@@ -736,7 +736,7 @@ namespace Innovera.Infrastructure.Data.Migrations
 
                     b.HasIndex("CharterId");
 
-                    b.ToTable("Entrega");
+                    b.ToTable("Entregas");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.ExecucaoVigilancia", b =>
@@ -1157,7 +1157,7 @@ namespace Innovera.Infrastructure.Data.Migrations
 
                     b.HasIndex("CharterId");
 
-                    b.ToTable("LicaoAprendida");
+                    b.ToTable("LicoesAprendidas");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.LikeIdeia", b =>
@@ -1296,7 +1296,7 @@ namespace Innovera.Infrastructure.Data.Migrations
 
                     b.HasIndex("CharterId");
 
-                    b.ToTable("LinhaOrcamento");
+                    b.ToTable("LinhasOrcamento");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.LinkDocumento", b =>
@@ -1336,7 +1336,7 @@ namespace Innovera.Infrastructure.Data.Migrations
 
                     b.HasIndex("IniciativaId");
 
-                    b.ToTable("LinkDocumento");
+                    b.ToTable("LinksDocumento");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.MembroEquipa", b =>
@@ -1624,6 +1624,10 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.Property<int?>("SupervisorId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("SupervisorNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("IniciativaId")
@@ -1663,10 +1667,10 @@ namespace Innovera.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(450)");
 
                     b.Property<string>("ValoresAntes")
-                        .HasColumnType("jsonb");
+                        .HasColumnType("text");
 
                     b.Property<string>("ValoresDepois")
-                        .HasColumnType("jsonb");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -1725,6 +1729,10 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.Property<int?>("ResponsavelId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ResponsavelNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Resposta")
                         .HasColumnType("text");
 
@@ -1737,7 +1745,7 @@ namespace Innovera.Infrastructure.Data.Migrations
 
                     b.HasIndex("ResponsavelId");
 
-                    b.ToTable("RequisitoConformidade");
+                    b.ToTable("RequisitosConformidade");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.Risco", b =>
@@ -1803,6 +1811,10 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.Property<int?>("ResponsavelId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ResponsavelNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<int?>("Resposta")
                         .HasColumnType("integer");
 
@@ -1815,7 +1827,7 @@ namespace Innovera.Infrastructure.Data.Migrations
 
                     b.HasIndex("ResponsavelId");
 
-                    b.ToTable("Risco");
+                    b.ToTable("Riscos");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.TarefaWbs", b =>
@@ -1875,6 +1887,10 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.Property<int?>("ResponsavelId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ResponsavelNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<int>("Tipo")
                         .HasColumnType("integer");
 
@@ -1888,7 +1904,7 @@ namespace Innovera.Infrastructure.Data.Migrations
 
                     b.HasIndex("ResponsavelId");
 
-                    b.ToTable("TarefaWbs");
+                    b.ToTable("TarefasWbs");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.Utilizador", b =>
