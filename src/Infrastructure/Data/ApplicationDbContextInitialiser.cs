@@ -281,12 +281,21 @@ public class ApplicationDbContextInitialiser
         olt.DefinirClasse(ClasseIdeia.Projeto);
         olt.Status = "Será desenvolvida como projeto de inovação interna.";
         await GuardarAsync(olt);
-        _context.Iniciativas.Add(new Projeto
+        var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+        var projetoOlt = new Projeto
         {
             Codigo = olt.Codigo, Titulo = olt.Titulo, Descricao = olt.Descricao, IdeiaOrigemId = olt.Id,
             ResponsavelId = andre.Id, Estado = EstadoIniciativa.EmCurso, TipoProjeto = TipoProjeto.Inovacao,
-            Horizonte = Horizonte.H2, Origem = "Inov. Interna",
+            Horizonte = Horizonte.H2, Origem = "Inov. Interna", DataInicio = hoje.AddDays(-40), DataFim = hoje.AddMonths(9),
+            PontoSituacao = "Dados históricos recolhidos; a começar o treino do modelo.",
+        };
+        projetoOlt.Links.Add(new LinkDocumento
+        {
+            Titulo = "Proposta aprovada pela CE", Url = "https://dstelecom.sharepoint.com/sites/inovacao/OLT-proposta.pdf",
         });
+        _context.Iniciativas.Add(projetoOlt);
+        await _context.SaveChangesAsync();
+        await CriarCharterExemploAsync(projetoOlt, hoje);
 
         var bebedouros = Nova(tiago, TipoIdeia.Melhoria, "Bebedouros nas obras", "Instalar bebedouros portáteis nas frentes de obra no verão.", 80);
         Discussao(bebedouros, 79, 2);
@@ -351,5 +360,109 @@ public class ApplicationDbContextInitialiser
 
         await _context.SaveChangesAsync();
         _logger.LogInformation("Dados de exemplo criados (contas com a password {Password}).", PasswordExemplo);
+    }
+
+    /// <summary>
+    /// Project Charter de exemplo, já preenchido, para a demonstração: tarefas (uma atrasada), milestones (o M1 com
+    /// relatório, que entra no conhecimento codificado), riscos (um sem plano de ação), orçamento, conformidade e uma lição.
+    /// </summary>
+    private async Task CriarCharterExemploAsync(Projeto projeto, DateOnly hoje)
+    {
+        var charter = new ProjectCharter
+        {
+            Iniciativa = projeto,
+            SupervisorNome = "Rui Dias",
+            Fase = "Fase de desenvolvimento",
+            Classe = "Inovação interna / Projeto",
+            ContextoJustificacao = "As falhas das OLT só são detetadas quando os clientes reclamam, o que obriga a deslocações de emergência.",
+            BusinessCase = "Menos deslocações urgentes, menos clientes afetados e menos penalizações nos contratos.",
+            DecisaoAprovacao = $"Aprovado pela CE a {hoje.AddDays(-45):dd/MM/yyyy}",
+            Objetivos = "Prever 70% das falhas das OLT com 48 horas de antecedência\nIntegrar os alertas no NOC",
+            ResultadosEsperados = "Modelo de previsão em produção em 2 regiões\nPainel de alertas usado pelo NOC",
+        };
+
+        var m1 = new Entrega
+        {
+            Charter = charter, Tipo = TipoEntrega.Milestone, Codigo = "M1", Descricao = "Dados históricos das OLT limpos e documentados",
+            Prazo = hoje.AddDays(-5), Estado = EstadoTrabalho.EmCurso, MeioVerificacao = "Relatório", Controlo = "120 h de RH, sem desvios",
+        };
+        var m2 = new Entrega
+        {
+            Charter = charter, Tipo = TipoEntrega.Milestone, Codigo = "M2", Descricao = "Modelo validado numa região",
+            Prazo = hoje.AddDays(60), Estado = EstadoTrabalho.Planeado, MeioVerificacao = "Relatório",
+        };
+        var e1 = new Entrega
+        {
+            Charter = charter, Tipo = TipoEntrega.Entregavel, Codigo = "E1", Descricao = "Painel de alertas para o NOC",
+            Prazo = hoje.AddDays(150), Estado = EstadoTrabalho.Planeado, MeioVerificacao = "Demonstração",
+        };
+        charter.Entregas.Add(m1);
+        charter.Entregas.Add(m2);
+        charter.Entregas.Add(e1);
+
+        charter.Tarefas.Add(new TarefaWbs
+        {
+            Charter = charter, CodigoWbs = "1", Nome = "Gestão do projeto", Tipo = TipoTarefa.Gestao, Estado = EstadoTrabalho.EmCurso,
+            InicioPlaneado = projeto.DataInicio, FimPlaneado = projeto.DataFim, InicioReal = projeto.DataInicio, ResponsavelNome = "André Costa",
+        });
+        charter.Tarefas.Add(new TarefaWbs
+        {
+            Charter = charter, CodigoWbs = "2.1", Nome = "Recolha dos registos das OLT", Tipo = TipoTarefa.Dados, Estado = EstadoTrabalho.EmCurso,
+            InicioPlaneado = hoje.AddDays(-35), FimPlaneado = hoje.AddDays(-3), InicioReal = hoje.AddDays(-33), ResponsavelNome = "Inês Correia",
+            Milestone = m1,
+        });
+        charter.Tarefas.Add(new TarefaWbs
+        {
+            Charter = charter, CodigoWbs = "2.2", Nome = "Treino do modelo de previsão", Tipo = TipoTarefa.Tecnica, Estado = EstadoTrabalho.Planeado,
+            InicioPlaneado = hoje.AddDays(5), FimPlaneado = hoje.AddDays(55), ResponsavelNome = "Tiago Araújo", Milestone = m2,
+        });
+
+        charter.Riscos.Add(new Risco
+        {
+            Charter = charter, Numero = 1, Data = hoje.AddDays(-38), Descricao = "Registos incompletos em equipamentos antigos",
+            Impacto = NivelImpacto.Alto, Probabilidade = NivelProbabilidade.PoucoProvavel, ResponsavelNome = "Inês Correia", Prazo = hoje.AddDays(20),
+        });
+        charter.Riscos.Add(new Risco
+        {
+            Charter = charter, Numero = 2, Data = hoje.AddDays(-38), Descricao = "Equipa do NOC sem tempo para testar os alertas",
+            Impacto = NivelImpacto.Medio, Probabilidade = NivelProbabilidade.Improvavel, Resposta = RespostaRisco.Aceitar,
+            ResponsavelNome = "André Costa",
+        });
+
+        charter.LinhasOrcamento.Add(new LinhaOrcamento
+        {
+            Charter = charter, Categoria = "RH", Descricao = "Equipa interna (840 h)", Ano = hoje.Year, ValorPrevisto = 18000m, ValorReal = 6200m,
+        });
+        charter.LinhasOrcamento.Add(new LinhaOrcamento
+        {
+            Charter = charter, Categoria = "Serviços", Descricao = "Cloud para o treino do modelo", Ano = hoje.Year, ValorPrevisto = 3250m,
+            ValorReal = 3400m,
+        });
+
+        charter.RequisitosConformidade.Add(new RequisitoConformidade
+        {
+            Charter = charter, Tipo = TipoRequisitoConformidade.Legal, Requisito = "RGPD: dados de clientes nos registos das OLT", Entidade = "CNPD",
+            ResponsavelNome = "Jurídico", DataPrevista = hoje.AddDays(10), Estado = EstadoRequisito.EmCurso,
+        });
+        charter.RequisitosConformidade.Add(new RequisitoConformidade
+        {
+            Charter = charter, Tipo = TipoRequisitoConformidade.Seguranca, Requisito = "Acesso só de leitura às OLT",
+            Resposta = "Conta técnica dedicada, sem permissões de escrita", ResponsavelNome = "TI", DataPrevista = hoje.AddDays(-30),
+            DataConfirmacao = hoje.AddDays(-31), Estado = EstadoRequisito.Cumprido,
+        });
+
+        _context.ProjectCharters.Add(charter);
+
+        // Pelos métodos do domínio, como na aplicação: o relatório do M1 entra no conhecimento codificado (Mod.237)
+        // e a lição no repositório de lições aprendidas (Mod.252).
+        m1.RegistarRelatorio("https://dstelecom.sharepoint.com/sites/inovacao/OLT-relatorio-M1.pdf", hoje.AddDays(-3));
+        charter.RegistarLicao(new LicaoAprendida
+        {
+            Charter = charter, Categoria = CategoriaLicao.Gestao, Licao = "Envolver o NOC desde o arranque",
+            Descricao = "Os requisitos dos alertas mudaram a meio porque o NOC só foi ouvido no fim da recolha de dados.",
+            Impacto = "Duas semanas de retrabalho",
+        });
+
+        await _context.SaveChangesAsync();
     }
 }
