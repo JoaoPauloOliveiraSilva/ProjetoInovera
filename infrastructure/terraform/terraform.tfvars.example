@@ -1,0 +1,19 @@
+project_name                 = "innovera"
+aws_region                   = "eu-west-1"
+availability_zone             = "eu-west-1a"
+lightsail_blueprint_id        = "amazon_linux_2023"
+lightsail_bundle_id           = "nano_3_0"
+admin_cidr                    = "203.0.113.10/32" # Replace with your trusted public IPv4 address/CIDR.
+lightsail_database_blueprint_id = "postgres_16"
+lightsail_database_bundle_id    = "micro_2_0"
+database_name                 = "innovera-db"
+database_username             = "innovera_admin"
+database_backup_window        = "03:00-04:00"
+s3_bucket_name                = "innovera-s3-bucket"
+ses_domain                    = "example.com"
+monthly_budget_limit          = "50"
+budget_alert_threshold        = 80
+budget_notification_email     = "billing@example.com"
+
+# Set database_password via the TF_VAR_database_password environment variable.
+# Do not store real passwords or SMTP credentials in this file.

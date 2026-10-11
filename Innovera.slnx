@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
@@ -6,6 +7,31 @@
     <File Path="Directory.Packages.props" />
     <File Path="global.json" />
     <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <File Path="Dockerfile" />
+    <File Path="docker-compose.yml" />
+    <File Path=".dockerignore" />
+    <File Path="infrastructure/terraform/README.md" />
+    <File Path="infrastructure/terraform/main.tf" />
+    <File Path="infrastructure/terraform/variables.tf" />
+    <File Path="infrastructure/terraform/outputs.tf" />
+    <File Path="infrastructure/terraform/terraform.tfvars.example" />
+    <File Path="infrastructure/terraform/modules/app_host/main.tf" />
+    <File Path="infrastructure/terraform/modules/database/main.tf" />
+    <File Path="infrastructure/terraform/modules/storage/main.tf" />
+    <File Path="infrastructure/terraform/modules/email/main.tf" />
+    <File Path="infrastructure/terraform/modules/budget/main.tf" />
+    <File Path="infrastructure/terraform/modules/email/variables.tf" />
+    <File Path="infrastructure/terraform/modules/email/outputs.tf" />
+    <File Path="infrastructure/terraform/modules/app_host/variables.tf" />
+    <File Path="infrastructure/terraform/modules/app_host/outputs.tf" />
+    <File Path="infrastructure/terraform/modules/database/variables.tf" />
+    <File Path="infrastructure/terraform/modules/database/outputs.tf" />
+    <File Path="infrastructure/terraform/modules/storage/variables.tf" />
+    <File Path="infrastructure/terraform/modules/storage/outputs.tf" />
+    <File Path="infrastructure/terraform/modules/budget/variables.tf" />
+    <File Path="infrastructure/terraform/modules/budget/outputs.tf" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/AppHost/AppHost.csproj" DefaultStartup="true" />
