@@ -48,7 +48,9 @@ public record ProjectCharterDto(
     IReadOnlyList<TotalOrcamentoDto> TotaisOrcamento,
     IReadOnlyList<RequisitoDto> Conformidade,
     IReadOnlyList<LicaoDto> Licoes,
-    bool PodeEditar);
+    bool PodeEditar,
+    bool PodeVerOrcamento,
+    bool PodeEditarOrcamento);
 
 // Dados enviados nos formulários de cada separador.
 

@@ -7,6 +7,8 @@ export const Permissoes = {
   gerirUtilizadores: 'utilizadores.gerir',
   gerirPerfis: 'perfis.gerir',
   verAuditoria: 'auditoria.ver',
+  verOrcamento: 'orcamento.ver',
+  gerirOrcamento: 'orcamento.gerir',
 } as const;
 
 export type Permissao = (typeof Permissoes)[keyof typeof Permissoes];

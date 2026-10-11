@@ -77,7 +77,9 @@ export function CharterPagina() {
             </div>
           </div>
           <nav className="separadores" aria-label="Separadores do Project Charter">
-            {separadores.map(([s, nome]) => (
+            {separadores
+              .filter(([s]) => s !== 'orcamento' || dados.podeVerOrcamento)
+              .map(([s, nome]) => (
               <button
                 key={s}
                 className={s === atual ? 'ativo' : undefined}
@@ -88,7 +90,7 @@ export function CharterPagina() {
                   <span className="ponto-alerta" title="Há riscos sem plano de ação" />
                 )}
               </button>
-            ))}
+              ))}
           </nav>
           {atual === 'geral' && <Geral key={dados.iniciativaId} charter={dados} aoGuardar={recarregar} />}
           {atual === 'planeamento' && (
@@ -103,7 +105,7 @@ export function CharterPagina() {
               <SeccaoTabela def={defRiscos} charter={dados} itens={dados.riscos} aoMudar={recarregar} />
             </>
           )}
-          {atual === 'orcamento' && (
+          {atual === 'orcamento' && dados.podeVerOrcamento && (
             <>
               <SeccaoTabela def={defOrcamento} charter={dados} itens={dados.orcamento} aoMudar={recarregar} />
               <TotaisOrcamento charter={dados} />
@@ -248,6 +250,8 @@ interface DefSeccao<T extends { id: number }> {
   feminino?: boolean;
   /** grid-template-columns da tabela. */
   colunas: string;
+  /** Quem pode editar este separador (por omissão, quem pode editar o Charter). */
+  podeEditar?: (charter: Charter) => boolean;
   cabecalhos: string[];
   celulas: (item: T) => ReactNode[];
   campos: (charter: Charter) => Campo[];
@@ -447,6 +451,7 @@ const defOrcamento: DefSeccao<LinhaOrcamento> = {
   titulo: 'orçamento',
   singular: 'linha de orçamento',
   feminino: true,
+  podeEditar: (c) => c.podeEditarOrcamento,
   colunas: '160px minmax(180px, 1fr) 70px 120px 120px 120px',
   cabecalhos: ['Categoria', 'Descrição', 'Ano', 'Previsto', 'Real', 'Variação'],
   celulas: (l) => [
@@ -599,12 +604,13 @@ function SeccaoTabela<T extends { id: number }>({
 }) {
   const [aberto, setAberto] = useState<T | 'novo' | null>(null);
   const estilo = { gridTemplateColumns: def.colunas };
+  const podeEditar = def.podeEditar ? def.podeEditar(charter) : charter.podeEditar;
 
   return (
     <section className="charter-seccao">
       <div className="charter-seccao-topo">
         <h3 className="secao">{def.titulo}</h3>
-        {charter.podeEditar && (
+        {podeEditar && (
           <button className="botao-pequeno com-icone" onClick={() => setAberto('novo')}>
             <Mais /> {def.feminino ? 'nova' : 'novo'} {def.singular}
           </button>
@@ -619,9 +625,9 @@ function SeccaoTabela<T extends { id: number }>({
         {itens.map((item) => (
           <div
             key={item.id}
-            className={`tabela-linha${charter.podeEditar ? '' : ' so-leitura'}`}
+            className={`tabela-linha${podeEditar ? '' : ' so-leitura'}`}
             style={estilo}
-            onClick={charter.podeEditar ? () => setAberto(item) : undefined}
+            onClick={podeEditar ? () => setAberto(item) : undefined}
           >
             {def.celulas(item).map((celula, i) => (
               <span key={i}>{celula}</span>

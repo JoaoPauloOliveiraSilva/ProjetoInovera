@@ -19,7 +19,7 @@ Estado: ✅ feito · 🟡 em parte · ⏳ por fazer (sprint indicado)
 | RF09 | Dados externos dos KPIs, manuais e parametrizáveis | ⏳ sprint 3 |
 | RF10 | Conhecimento codificado automático (Mod.237) | 🟡 relatórios de entregáveis/milestones feitos; vigilâncias no sprint 3 |
 | RF11 | Lições aprendidas agregadas (Mod.252) | ✅ |
-| RF12 | Orçamento agregado | 🟡 totais por projeto feitos; agregado global no sprint 3 |
+| RF12 | Orçamento agregado (só o Administrador, por omissão) | 🟡 totais por projeto feitos; agregado global no sprint 3 |
 | RF13 | Relatório semestral/anual pré-preenchido | ⏳ sprint 4 |
 | RF14 | Registos manuais (estratégia, planeamento, tácito, ferramentas, parcerias, ativos) | ⏳ sprint 3 |
 | RF15 | Links para documentos no OneDrive | ✅ |
@@ -58,7 +58,7 @@ Estado: ✅ feito · 🟡 em parte · ⏳ por fazer (sprint indicado)
 
 ## RF03 — Histórico e ponto de situação
 
-**US03.1** Como **gestor de uma iniciativa**, quero registar o ponto de situação, para que fique o histórico de cada atualização, com autor e data.
+**US03.1** Como **Equipa de Inovação**, quero registar o ponto de situação, para que fique o histórico de cada atualização, com autor e data.
 - O último ponto de situação aparece na lista; os anteriores ficam no histórico da ficha.
 
 ## RF04 — Fluxo das ideias e avaliação
@@ -83,24 +83,27 @@ Estado: ✅ feito · 🟡 em parte · ⏳ por fazer (sprint indicado)
 
 ## RF06 — Project Charter digital
 
-**US06.1** Como **gestor de projeto**, quero preencher a informação geral do Charter: supervisor, fase, classe, contexto, business case, decisão de aprovação, objetivos e resultados esperados.
+**US06.1** Como **Equipa de Inovação**, quero preencher a informação geral do Charter: supervisor, fase, classe, contexto, business case, decisão de aprovação, objetivos e resultados esperados.
 
-**US06.2** Como **gestor de projeto**, quero planear as tarefas (WBS) com datas planeadas e reais, responsável e milestone, e ver as tarefas atrasadas assinaladas.
+**US06.2** Como **Equipa de Inovação**, quero planear as tarefas (WBS) com datas planeadas e reais, responsável e milestone, e ver as tarefas atrasadas assinaladas.
 
-**US06.3** Como **gestor de projeto**, quero registar entregáveis e milestones e colar o link do relatório no OneDrive quando ficam concluídos.
+**US06.3** Como **Equipa de Inovação**, quero registar entregáveis e milestones e colar o link do relatório no OneDrive quando ficam concluídos.
 
-**US06.4** Como **gestor de projeto**, quero registar riscos com impacto e probabilidade (1–4).
+**US06.4** Como **Equipa de Inovação**, quero registar riscos com impacto e probabilidade (1–4).
 - A severidade é calculada automaticamente.
 - Os riscos com severidade acima de 4 e sem plano de ação ficam assinalados.
 
-**US06.5** Como **gestor de projeto**, quero registar o orçamento por categoria e ano (previsto e real) e ver os totais e a execução.
+**US06.5** Como **Administrador**, quero registar o orçamento de cada projeto por categoria e ano (previsto e real) e ver os totais e a execução.
+- Por omissão, só o Administrador vê e altera o orçamento; pode dar essa permissão a outros perfis (`orcamento.ver`, `orcamento.gerir`).
+- Quem não tem permissão não vê o separador do orçamento.
 
-**US06.6** Como **gestor de projeto**, quero registar os requisitos de conformidade (legal, qualidade, ambiente, segurança) e o seu estado.
+**US06.6** Como **Equipa de Inovação**, quero registar os requisitos de conformidade (legal, qualidade, ambiente, segurança) e o seu estado.
 
-**US06.7** Como **gestor de projeto**, quero registar lições aprendidas por categoria (estratégica, gestão, operacional, técnica).
+**US06.7** Como **Equipa de Inovação**, quero registar lições aprendidas por categoria (estratégica, gestão, operacional, técnica).
 
 - Só projetos e desafios têm Charter.
-- Editar exige `iniciativas.gerir`; os restantes utilizadores consultam.
+- Quem edita o Charter é a Equipa de Inovação (permissão `iniciativas.gerir`); não há um gestor por projeto com permissões próprias.
+- Os restantes utilizadores consultam.
 
 ## RF07 — Portefólios (Mod.246)
 
@@ -114,7 +117,7 @@ Estado: ✅ feito · 🟡 em parte · ⏳ por fazer (sprint indicado)
 
 **US08.1** Como **Equipa de Inovação**, quero ver os 41 indicadores calculados a partir dos registos (ideias, projetos, conhecimento, parcerias…) por período, com o objetivo e o desvio.
 
-**US09.1** Como **Equipa de Inovação**, quero introduzir os valores externos (ex.: n.º de trabalhadores, volume de negócios) e mudar fórmulas e objetivos sem alterar o código.
+**US09.1** Como **Administrador**, quero introduzir manualmente os valores externos (ex.: n.º de trabalhadores, volume de negócios) e mudar fórmulas e objetivos sem alterar o código.
 
 ## RF10 — Conhecimento codificado (Mod.237)
 
@@ -132,7 +135,8 @@ Estado: ✅ feito · 🟡 em parte · ⏳ por fazer (sprint indicado)
 
 ## RF12 — Orçamento agregado
 
-**US12.1** Como **Equipa de Inovação**, quero ver o orçamento de inovação previsto e real por ano, somando os Charters de todos os projetos *(sprint 3)*.
+**US12.1** Como **Administrador**, quero ver o orçamento de inovação previsto e real por ano, somando os Charters de todos os projetos *(sprint 3)*.
+- Mesmas permissões do orçamento de cada projeto: por omissão só o Administrador.
 
 ## RF13 — Relatório de inovação *(sprint 4)*
 
@@ -144,7 +148,7 @@ Estado: ✅ feito · 🟡 em parte · ⏳ por fazer (sprint indicado)
 
 ## RF15 — Links OneDrive
 
-**US15.1** Como **gestor de uma iniciativa**, quero juntar links para documentos no OneDrive/SharePoint à ficha da iniciativa.
+**US15.1** Como **Equipa de Inovação**, quero juntar links para documentos no OneDrive/SharePoint à ficha da iniciativa.
 - A plataforma guarda só o título e o link, não o ficheiro.
 - Só aceita endereços http(s).
 

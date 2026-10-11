@@ -221,7 +221,7 @@ public class GuardarRiscoCommandHandler(IApplicationDbContext context, TimeProvi
 
 // ---------- 4. Orçamento ----------
 
-[Authorize(Permissao = Permissoes.Iniciativas.Gerir)]
+[Authorize(Permissao = Permissoes.Orcamento.Gerir)]
 public record GuardarLinhaOrcamentoCommand(int IniciativaId, int? Id, LinhaOrcamentoDados Dados) : IRequest<int>;
 
 public class GuardarLinhaOrcamentoCommandValidator : AbstractValidator<GuardarLinhaOrcamentoCommand>
@@ -355,13 +355,20 @@ public class GuardarLicaoCommandHandler(IApplicationDbContext context, INotifica
 
 // ---------- Apagar uma linha de qualquer separador ----------
 
-[Authorize(Permissao = Permissoes.Iniciativas.Gerir)]
+/// <summary>A permissão depende do separador: orçamento → orcamento.gerir; os outros → iniciativas.gerir.</summary>
+[Authorize]
 public record ApagarItemCharterCommand(int IniciativaId, SeccaoCharter Seccao, int ItemId) : IRequest;
 
-public class ApagarItemCharterCommandHandler(IApplicationDbContext context) : IRequestHandler<ApagarItemCharterCommand>
+public class ApagarItemCharterCommandHandler(IApplicationDbContext context, IUtilizadores utilizadores) : IRequestHandler<ApagarItemCharterCommand>
 {
     public async Task Handle(ApagarItemCharterCommand request, CancellationToken cancellationToken)
     {
+        var permissao = request.Seccao == SeccaoCharter.Orcamento ? Permissoes.Orcamento.Gerir : Permissoes.Iniciativas.Gerir;
+        if (!await utilizadores.TemPermissaoAsync(permissao, cancellationToken))
+        {
+            throw new Innovera.Application.Common.Exceptions.ForbiddenAccessException();
+        }
+
         var charterId = await context.ProjectCharters
             .Where(c => c.IniciativaId == request.IniciativaId)
             .Select(c => (int?)c.Id)

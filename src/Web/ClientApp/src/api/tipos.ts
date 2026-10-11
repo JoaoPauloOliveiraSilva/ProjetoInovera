@@ -464,6 +464,9 @@ export interface ProjectCharter {
   conformidade: Requisito[];
   licoes: Licao[];
   podeEditar: boolean;
+  /** Orçamento: por omissão só o Administrador. */
+  podeVerOrcamento: boolean;
+  podeEditarOrcamento: boolean;
 }
 
 /** Caminho de cada separador na API (/api/Iniciativas/{id}/charter/{seccao}). */

@@ -39,12 +39,16 @@ public class CharterTests : TestBase
                 null, null, "Ana", m1)));
         var risco = await TestApp.SendAsync(new GuardarRiscoCommand(id, null,
             new RiscoDados(null, "Atraso do fornecedor", NivelImpacto.Alto, NivelProbabilidade.PoucoProvavel, null, null, "Ana", null, null, null)));
-        await TestApp.SendAsync(new GuardarLinhaOrcamentoCommand(id, null, new LinhaOrcamentoDados("RH", null, 2026, 10000m, 8000m, null)));
-        await TestApp.SendAsync(new GuardarLinhaOrcamentoCommand(id, null, new LinhaOrcamentoDados("Serviços", null, 2026, 3250m, null, null)));
         await TestApp.SendAsync(new GuardarRequisitoCommand(id, null,
             new RequisitoDados(TipoRequisitoConformidade.Legal, "RGPD", null, "CNPD", null, null, null, null, EstadoRequisito.Pendente, null)));
 
+        // O orçamento é introduzido pelo Administrador.
+        await TestApp.RunAsAdministratorAsync();
+        await TestApp.SendAsync(new GuardarLinhaOrcamentoCommand(id, null, new LinhaOrcamentoDados("RH", null, 2026, 10000m, 8000m, null)));
+        await TestApp.SendAsync(new GuardarLinhaOrcamentoCommand(id, null, new LinhaOrcamentoDados("Serviços", null, 2026, 3250m, null, null)));
+
         var charter = await TestApp.SendAsync(new ObterCharterQuery(id));
+        charter.PodeVerOrcamento.ShouldBeTrue();
         charter.Geral.SupervisorNome.ShouldBe("Rui Dias");
         charter.Tarefas.ShouldHaveSingleItem().MilestoneId.ShouldBe(m1);
         charter.Entregas.ShouldHaveSingleItem().Codigo.ShouldBe("M1");
@@ -169,5 +173,30 @@ public class CharterTests : TestBase
         alteracao.Utilizador.ShouldNotBeNull();
 
         (await TestApp.SendAsync(new ListarAuditoriaQuery(null, null, "poles 2"))).ShouldNotBeEmpty();
+    }
+
+    [Test]
+    public async Task OrcamentoSoParaQuemTemPermissao()
+    {
+        await TestApp.RunAsAdministratorAsync();
+        var id = await CriarProjetoAsync();
+        var linha = await TestApp.SendAsync(new GuardarLinhaOrcamentoCommand(id, null, new LinhaOrcamentoDados("RH", null, 2026, 5000m, null, null)));
+
+        // A equipa de inovação gere o Charter, mas não vê nem altera o orçamento.
+        await TestApp.RunAsEquipaInovacaoAsync();
+        var charter = await TestApp.SendAsync(new ObterCharterQuery(id));
+        charter.PodeEditar.ShouldBeTrue();
+        charter.PodeVerOrcamento.ShouldBeFalse();
+        charter.Orcamento.ShouldBeEmpty();
+        charter.TotaisOrcamento.ShouldBeEmpty();
+        await Should.ThrowAsync<ForbiddenAccessException>(() => TestApp.SendAsync(
+            new GuardarLinhaOrcamentoCommand(id, null, new LinhaOrcamentoDados("Serviços", null, 2026, 100m, null, null))));
+        await Should.ThrowAsync<ForbiddenAccessException>(() => TestApp.SendAsync(new ApagarItemCharterCommand(id, SeccaoCharter.Orcamento, linha)));
+
+        // O Administrador vê e apaga.
+        await TestApp.RunAsAdministratorAsync();
+        (await TestApp.SendAsync(new ObterCharterQuery(id))).Orcamento.ShouldHaveSingleItem();
+        await TestApp.SendAsync(new ApagarItemCharterCommand(id, SeccaoCharter.Orcamento, linha));
+        (await TestApp.SendAsync(new ObterCharterQuery(id))).Orcamento.ShouldBeEmpty();
     }
 }

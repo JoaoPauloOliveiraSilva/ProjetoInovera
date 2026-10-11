@@ -33,7 +33,12 @@ public class ObterCharterQueryHandler(IApplicationDbContext context, IUtilizador
             : new CharterGeralDto(c.SupervisorNome, c.Fase, c.Classe, c.ContextoJustificacao, c.BusinessCase, c.DecisaoAprovacao, c.Objetivos,
                 c.ResultadosEsperados);
 
-        var orcamento = c?.LinhasOrcamento.OrderBy(l => l.Ano).ThenBy(l => l.Categoria).ToList() ?? [];
+        // O orçamento só aparece a quem tem permissão (por omissão, só o Administrador).
+        var podeEditarOrcamento = await utilizadores.TemPermissaoAsync(Permissoes.Orcamento.Gerir, cancellationToken);
+        var podeVerOrcamento = podeEditarOrcamento || await utilizadores.TemPermissaoAsync(Permissoes.Orcamento.Ver, cancellationToken);
+        var orcamento = podeVerOrcamento
+            ? c?.LinhasOrcamento.OrderBy(l => l.Ano).ThenBy(l => l.Categoria).ToList() ?? []
+            : [];
 
         return new ProjectCharterDto(
             iniciativa.Id, iniciativa.Codigo, iniciativa.Titulo, iniciativa.Tipo, iniciativa.Estado,
@@ -63,6 +68,8 @@ public class ObterCharterQueryHandler(IApplicationDbContext context, IUtilizador
             c?.LicoesAprendidas.OrderByDescending(l => l.Created)
                 .Select(l => new LicaoDto(l.Id, l.Categoria, l.Licao, l.Descricao, l.Impacto, l.Created))
                 .ToList() ?? [],
-            await utilizadores.TemPermissaoAsync(Permissoes.Iniciativas.Gerir, cancellationToken));
+            await utilizadores.TemPermissaoAsync(Permissoes.Iniciativas.Gerir, cancellationToken),
+            podeVerOrcamento,
+            podeEditarOrcamento);
     }
 }

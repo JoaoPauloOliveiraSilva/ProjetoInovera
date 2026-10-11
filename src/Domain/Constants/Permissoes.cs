@@ -31,6 +31,13 @@ public static class Permissoes
         public const string Gerir = "iniciativas.gerir";
     }
 
+    /// <summary>Orçamento dos projetos: por omissão só o Administrador (pode dar a outros perfis no backoffice).</summary>
+    public static class Orcamento
+    {
+        public const string Ver = "orcamento.ver";
+        public const string Gerir = "orcamento.gerir";
+    }
+
     public static class Administracao
     {
         public const string GerirUtilizadores = "utilizadores.gerir";
@@ -44,6 +51,8 @@ public static class Permissoes
         new(Ideias.Validar, "Validar ideias e fechar discussões", "Ideias"),
         new(Ideias.Avaliar, "Registar a avaliação da CE, a decisão dst e a classe", "Ideias"),
         new(Iniciativas.Gerir, "Gerir projetos, desafios e outras iniciativas e importar o portefólio (Mod.246)", "Iniciativas"),
+        new(Orcamento.Ver, "Ver o orçamento dos projetos e desafios", "Orçamento"),
+        new(Orcamento.Gerir, "Introduzir e alterar o orçamento dos projetos e desafios", "Orçamento"),
         new(Administracao.GerirUtilizadores, "Adicionar e gerir utilizadores", "Administração"),
         new(Administracao.GerirPerfis, "Gerir perfis e permissões", "Administração"),
         new(Administracao.VerAuditoria, "Ver o registo de auditoria (quem alterou o quê e quando)", "Administração"),
