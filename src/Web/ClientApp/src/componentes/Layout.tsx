@@ -118,7 +118,7 @@ export function Layout() {
     <div className="app">
       <nav className="barra" aria-label="Aplicações">
         <Link to="/" className="barra-logo" title="Plataforma de Gestão da Certificação">
-          dstgroup
+          dstelecom
         </Link>
         <div className="barra-avatar" aria-hidden="true">
           {utilizador.nome[0]?.toUpperCase()}

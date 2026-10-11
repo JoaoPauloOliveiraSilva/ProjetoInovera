@@ -129,7 +129,7 @@ a { color: inherit; }
 
 /* ---------- Gaveta (painel à direita) ---------- */
 .gaveta-fundo { position: fixed; inset: 0; background: rgba(120, 120, 120, 0.45); z-index: 10; display: flex; justify-content: flex-end; }
-.gaveta { width: min(780px, 100%); height: 100%; background: #efefef; position: relative; overflow-y: auto; animation: entrar 0.18s ease-out; }
+.gaveta { width: min(780px, 100%); height: 100%; background: #efefef; color: var(--texto); text-align: left; font-size: 14px; position: relative; overflow-y: auto; animation: entrar 0.18s ease-out; }
 @keyframes entrar { from { transform: translateX(40px); opacity: 0.6; } to { transform: none; opacity: 1; } }
 .gaveta-fechar { position: sticky; top: 0; float: right; width: 52px; height: 52px; background: #fff; border: 0; display: flex; align-items: center; justify-content: center; z-index: 1; }
 .gaveta-conteudo { padding: 44px 64px 64px; }
@@ -329,7 +329,9 @@ a { color: inherit; }
   width: 100%; text-align: left; background: #fff; border: 0; border-left: 4px solid transparent; padding: 14px 16px;
   display: flex; flex-direction: column; gap: 4px; line-height: 1.4;
 }
+.avisos button { color: var(--texto); font-size: 14px; }
 .avisos .por-ler button { border-left-color: var(--vermelho); }
+.avisos li:not(.por-ler) strong { font-weight: 600; color: #444; }
 .avisos button:hover { background: #fafafa; }
 .aviso-topo { margin: -16px 0 24px; }
 .filtros-varios { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; }
