@@ -495,3 +495,13 @@ $RECYCLE.BIN/
 .skills/
 doc/
 AGENTS.md
+
+# Terraform local state, providers, plans, and secret-bearing variable files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+terraform.tfvars
+terraform.tfvars.json
+crash.log
+crash.*.log
