@@ -113,3 +113,5 @@ public class ListarConhecimentoCodificadoQueryHandler(IApplicationDbContext cont
             .ToListAsync(cancellationToken);
     }
 }
+
+

@@ -11,6 +11,8 @@ public interface IApplicationDbContext
     DbSet<OutputGerado> OutputsGerados { get; }
     DbSet<RegistoAuditoria> RegistosAuditoria { get; }
 
+    DbSet<ExecucaoVigilancia> ExecucaoVigilancias { get; }
+
     DbSet<Ideia> Ideias { get; }
     DbSet<ComentarioIdeia> ComentariosIdeia { get; }
     DbSet<AnexoIdeia> AnexosIdeia { get; }
