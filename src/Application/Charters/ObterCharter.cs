@@ -27,6 +27,12 @@ public class ObterCharterQueryHandler(IApplicationDbContext context, IUtilizador
             .Include(x => x.LicoesAprendidas)
             .FirstOrDefaultAsync(x => x.IniciativaId == request.IniciativaId, cancellationToken);
 
+        var equipa = await context.MembrosEquipa.AsNoTracking()
+            .Include(m => m.Utilizador)
+            .Include(m => m.Alocacoes)
+            .Where(m => m.IniciativaId == request.IniciativaId)
+            .ToListAsync(cancellationToken);
+
         var hoje = DateOnly.FromDateTime(relogio.GetUtcNow().UtcDateTime);
         var geral = c is null
             ? new CharterGeralDto(null, null, null, null, null, null, null, null)
@@ -70,6 +76,11 @@ public class ObterCharterQueryHandler(IApplicationDbContext context, IUtilizador
                 .ToList() ?? [],
             await utilizadores.TemPermissaoAsync(Permissoes.Iniciativas.Gerir, cancellationToken),
             podeVerOrcamento,
-            podeEditarOrcamento);
+            podeEditarOrcamento,
+            equipa.OrderBy(m => m.NomeVisivel)
+                .Select(m => new MembroDto(m.Id, m.UtilizadorId, m.NomeVisivel, m.Funcao,
+                    m.Alocacoes.OrderBy(a => a.Ano).ThenBy(a => a.Mes).Select(a => new AlocacaoDto(a.Ano, a.Mes, a.Percentagem, a.Horas)).ToList()))
+                .ToList(),
+            iniciativa.PilarEstrategico);
     }
 }

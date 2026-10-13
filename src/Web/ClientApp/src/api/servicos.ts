@@ -36,6 +36,8 @@ import type {
   Ferramenta,
   Parceiro,
   ValorExterno,
+  Indicadores,
+  PilarEstrategico,
 } from './tipos';
 
 // Contas (ASP.NET Core Identity com cookie). As contas são criadas pelo Administrador (convite por email).
@@ -128,10 +130,12 @@ export const notificacoes = {
 const baseIniciativas = '/api/Iniciativas';
 
 export const iniciativas = {
-  listar: (filtro: { tipo?: TipoIniciativa; estado?: EstadoIniciativa; texto?: string } = {}) => {
+  listar: (filtro: { tipo?: TipoIniciativa; estado?: EstadoIniciativa; texto?: string; pilar?: PilarEstrategico; ano?: number } = {}) => {
     const p = new URLSearchParams();
     if (filtro.tipo) p.set('tipo', filtro.tipo);
     if (filtro.estado) p.set('estado', filtro.estado);
+    if (filtro.pilar) p.set('pilar', filtro.pilar);
+    if (filtro.ano) p.set('ano', String(filtro.ano));
     if (filtro.texto?.trim()) p.set('texto', filtro.texto.trim());
     const q = p.toString();
     return obter<IniciativaResumo[]>(q ? `${baseIniciativas}?${q}` : baseIniciativas);
@@ -159,6 +163,13 @@ export const charter = {
       : pedido<number>('PUT', `${baseIniciativas}/${id}/charter/${seccao}/${itemId}`, dados),
   apagarItem: (id: number, seccao: SeccaoCharter, itemId: number) =>
     pedido<void>('DELETE', `${baseIniciativas}/${id}/charter/${seccao}/${itemId}`),
+  guardarMembro: (id: number, membroId: number | null, dados: { utilizadorId: number | null; nome: string | null; funcao: string | null }) =>
+    membroId === null
+      ? enviar<number>(`${baseIniciativas}/${id}/equipa`, dados)
+      : pedido<number>('PUT', `${baseIniciativas}/${id}/equipa/${membroId}`, dados),
+  apagarMembro: (id: number, membroId: number) => pedido<void>('DELETE', `${baseIniciativas}/${id}/equipa/${membroId}`),
+  guardarAlocacoes: (id: number, membroId: number, ano: number, meses: (number | null)[]) =>
+    pedido<void>('PUT', `${baseIniciativas}/${id}/equipa/${membroId}/alocacoes/${ano}`, { meses }),
 };
 
 function consulta(base: string, filtros: Record<string, string | undefined>): string {
@@ -207,6 +218,7 @@ export const planoAnual = {
 };
 
 export const kpis = {
+  indicadores: (ano: number) => obter<Indicadores>(`/api/Kpis/indicadores?ano=${ano}`),
   valoresExternos: () => obter<ValorExterno[]>('/api/Kpis/valores-externos'),
   guardarValorExterno: (id: number | null, dados: unknown) =>
     id === null ? enviar<number>('/api/Kpis/valores-externos', dados) : pedido<number>('PUT', `/api/Kpis/valores-externos/${id}`, dados),

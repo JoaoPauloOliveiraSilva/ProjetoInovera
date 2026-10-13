@@ -45,6 +45,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
 
     public DbSet<LinkDocumento> LinksDocumento => Set<LinkDocumento>();
 
+    public DbSet<MembroEquipa> MembrosEquipa => Set<MembroEquipa>();
+
+    public DbSet<AlocacaoMensal> AlocacoesMensais => Set<AlocacaoMensal>();
+
     // Registos
     public DbSet<Parceiro> Parceiros => Set<Parceiro>();
     public DbSet<AcordoParceria> AcordosParceria => Set<AcordoParceria>();

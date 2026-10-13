@@ -50,7 +50,9 @@ public record ProjectCharterDto(
     IReadOnlyList<LicaoDto> Licoes,
     bool PodeEditar,
     bool PodeVerOrcamento,
-    bool PodeEditarOrcamento);
+    bool PodeEditarOrcamento,
+    IReadOnlyList<MembroDto> Equipa,
+    PilarEstrategico? Pilar);
 
 // Dados enviados nos formulários de cada separador.
 

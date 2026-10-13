@@ -454,6 +454,25 @@ public class ApplicationDbContextInitialiser
 
         _context.ProjectCharters.Add(charter);
 
+        // Pilar estratégico e equipa de trabalho com a alocação mensal (8 h × 21 dias × %).
+        projeto.PilarEstrategico ??= PilarEstrategico.Pilar2;
+        foreach (var (nome, funcao, percentagem) in new[]
+                 {
+                     ("André Costa", "Gestor do projeto", 30m),
+                     ("Inês Correia", "Engenheira de dados", 80m),
+                     ("Tiago Araújo", "Cientista de dados", 50m),
+                 })
+        {
+            var membro = new MembroEquipa { Iniciativa = projeto, Nome = nome, Funcao = funcao };
+            for (var k = -1; k <= 2; k++)
+            {
+                var mes = hoje.AddMonths(k);
+                membro.Alocacoes.Add(new AlocacaoMensal { Ano = mes.Year, Mes = mes.Month, Percentagem = percentagem });
+            }
+
+            projeto.MembrosEquipa.Add(membro);
+        }
+
         // Pelos métodos do domínio, como na aplicação: o relatório do M1 entra no conhecimento codificado (Mod.237)
         // e a lição no repositório de lições aprendidas (Mod.252).
         m1.RegistarRelatorio("https://dstelecom.sharepoint.com/sites/inovacao/OLT-relatorio-M1.pdf", hoje.AddDays(-3));

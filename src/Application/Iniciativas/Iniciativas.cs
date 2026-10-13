@@ -12,7 +12,8 @@ public record IniciativaResumoDto(
     string? Origem,
     string? PontoSituacao,
     int? IdeiaOrigemId,
-    string? IdeiaOrigemCodigo);
+    string? IdeiaOrigemCodigo,
+    PilarEstrategico? Pilar = null);
 
 public record CampoDto(string Nome, string Valor);
 
@@ -64,7 +65,8 @@ internal static class Tipos
 
 /// <summary>Portefólio de iniciativas (Mod.246): projetos, desafios, melhorias, oportunidades, vigilâncias, mestrados, ações.</summary>
 [Authorize]
-public record ListarIniciativasQuery(TipoIniciativa? Tipo, EstadoIniciativa? Estado, string? Texto) : IRequest<IReadOnlyList<IniciativaResumoDto>>;
+public record ListarIniciativasQuery(TipoIniciativa? Tipo, EstadoIniciativa? Estado, string? Texto, PilarEstrategico? Pilar = null, int? Ano = null)
+    : IRequest<IReadOnlyList<IniciativaResumoDto>>;
 
 public class ListarIniciativasQueryHandler(IApplicationDbContext context) : IRequestHandler<ListarIniciativasQuery, IReadOnlyList<IniciativaResumoDto>>
 {
@@ -80,6 +82,20 @@ public class ListarIniciativasQueryHandler(IApplicationDbContext context) : IReq
         if (request.Estado is not null)
         {
             consulta = consulta.Where(i => i.Estado == request.Estado);
+        }
+
+        if (request.Pilar is not null)
+        {
+            consulta = consulta.Where(i => i.PilarEstrategico == request.Pilar);
+        }
+
+        if (request.Ano is { } ano)
+        {
+            // Ativas nesse ano: começaram até ao fim do ano e não terminaram antes de ele começar.
+            var inicioAno = new DateOnly(ano, 1, 1);
+            var fimAno = new DateOnly(ano, 12, 31);
+            consulta = consulta.Where(i => (i.DataInicio == null || i.DataInicio <= fimAno) && (i.DataFim == null || i.DataFim >= inicioAno)
+                && (i.DataInicio != null || i.DataFim != null));
         }
 
         if (!string.IsNullOrWhiteSpace(request.Texto))
@@ -107,12 +123,13 @@ public class ListarIniciativasQueryHandler(IApplicationDbContext context) : IReq
                 i.PontoSituacao,
                 i.IdeiaOrigemId,
                 IdeiaCodigo = i.IdeiaOrigem != null ? i.IdeiaOrigem.Codigo : null,
+                i.PilarEstrategico,
             })
             .ToListAsync(cancellationToken);
 
         return linhas
             .Select(l => new IniciativaResumoDto(l.Id, l.Codigo, Tipos.DoDiscriminador(l.Discriminador), l.Titulo, l.Estado, l.Responsavel,
-                l.DataInicio, l.DataFim, l.Origem, l.PontoSituacao, l.IdeiaOrigemId, l.IdeiaCodigo))
+                l.DataInicio, l.DataFim, l.Origem, l.PontoSituacao, l.IdeiaOrigemId, l.IdeiaCodigo, l.PilarEstrategico))
             .ToList();
     }
 }
@@ -135,7 +152,7 @@ public class ObterIniciativaQueryHandler(IApplicationDbContext context, IUtiliza
         Guard.Against.NotFound(request.Id, i);
 
         var resumo = new IniciativaResumoDto(i.Id, i.Codigo, i.Tipo, i.Titulo, i.Estado, i.Responsavel?.Nome ?? i.ResponsavelNome,
-            i.DataInicio, i.DataFim, i.Origem, i.PontoSituacao, i.IdeiaOrigemId, i.IdeiaOrigem?.Codigo);
+            i.DataInicio, i.DataFim, i.Origem, i.PontoSituacao, i.IdeiaOrigemId, i.IdeiaOrigem?.Codigo, i.PilarEstrategico);
 
         var historico = i.NotasPontoSituacao
             .OrderByDescending(n => n.Data)
@@ -211,6 +228,8 @@ public record DadosIniciativa
     public string? Origem { get; init; }
     public Horizonte? Horizonte { get; init; }
 
+    public PilarEstrategico? Pilar { get; init; }
+
     /// <summary>Campos próprios do tipo (opcional: se vier vazio, não se mexe neles).</summary>
     public CamposTipoDto? Campos { get; init; }
 }
@@ -223,6 +242,7 @@ public class DadosIniciativaValidator : AbstractValidator<DadosIniciativa>
         RuleFor(d => d.Responsavel).MaximumLength(200);
         RuleFor(d => d.Origem).MaximumLength(200);
         RuleFor(d => d.Estado).IsInEnum();
+        RuleFor(d => d.Pilar).IsInEnum().When(d => d.Pilar is not null);
         RuleFor(d => d.DataFim).GreaterThanOrEqualTo(d => d.DataInicio)
             .When(d => d.DataInicio is not null && d.DataFim is not null)
             .WithMessage("A data de fim não pode ser anterior à de início.");
@@ -252,6 +272,7 @@ internal static class AplicarDados
         iniciativa.DataFim = dados.DataFim;
         iniciativa.Origem = string.IsNullOrWhiteSpace(dados.Origem) ? null : dados.Origem.Trim();
         iniciativa.Horizonte = dados.Horizonte;
+        iniciativa.PilarEstrategico = dados.Pilar;
 
         if (dados.Campos is { } c)
         {

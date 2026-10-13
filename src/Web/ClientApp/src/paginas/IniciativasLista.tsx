@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Permissoes } from '../api/permissoes';
 import { iniciativas as api } from '../api/servicos';
-import { classeEstadoIniciativa, nomeEstadoIniciativa, nomeTipoIniciativa } from '../api/tipos';
-import type { EstadoIniciativa, TipoIniciativa } from '../api/tipos';
+import { classeEstadoIniciativa, nomeEstadoIniciativa, nomePilar, nomeTipoIniciativa } from '../api/tipos';
+import type { EstadoIniciativa, PilarEstrategico, TipoIniciativa } from '../api/tipos';
 import { usePedido } from '../api/usePedido';
 import { EstadoPedido } from '../componentes/Estado';
 import { Cabecalho } from '../componentes/Layout';
@@ -20,6 +20,9 @@ export function IniciativasLista({ titulo, tipo }: { titulo: string; tipo?: Tipo
   const [aberta, setAberta] = useState<number | 'nova' | null>(id ? Number(id) : null);
   const [filtroTipo, setFiltroTipo] = useState<TipoIniciativa | ''>('');
   const [estado, setEstado] = useState<EstadoIniciativa | ''>('');
+  const [pilar, setPilar] = useState<PilarEstrategico | ''>('');
+  const [ano, setAno] = useState<number | ''>('');
+  const anoAtual = new Date().getFullYear();
   const [texto, setTexto] = useState('');
   const [procura, setProcura] = useState('');
 
@@ -35,8 +38,8 @@ export function IniciativasLista({ titulo, tipo }: { titulo: string; tipo?: Tipo
 
   const tipoEfetivo = tipo ?? (filtroTipo || undefined);
   const { dados, erro, aCarregar } = usePedido(
-    () => api.listar({ tipo: tipoEfetivo, estado: estado || undefined, texto: procura }),
-    [tipoEfetivo, estado, procura],
+    () => api.listar({ tipo: tipoEfetivo, estado: estado || undefined, texto: procura, pilar: pilar || undefined, ano: ano || undefined }),
+    [tipoEfetivo, estado, procura, pilar, ano],
   );
   const lista = dados ?? [];
 
@@ -79,6 +82,28 @@ export function IniciativasLista({ titulo, tipo }: { titulo: string; tipo?: Tipo
             {(Object.keys(nomeEstadoIniciativa) as EstadoIniciativa[]).map((s) => (
               <option key={s} value={s}>
                 {nomeEstadoIniciativa[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          pilar
+          <select value={pilar} onChange={(e) => setPilar(e.target.value as PilarEstrategico | '')}>
+            <option value="">todos</option>
+            {(Object.keys(nomePilar) as PilarEstrategico[]).map((p) => (
+              <option key={p} value={p}>
+                {nomePilar[p]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label title="Iniciativas com atividade nesse ano (entre a data de início e a de fim)">
+          ativas em
+          <select value={ano} onChange={(e) => setAno(e.target.value ? Number(e.target.value) : '')}>
+            <option value="">qualquer ano</option>
+            {[anoAtual + 1, anoAtual, anoAtual - 1, anoAtual - 2, anoAtual - 3].map((a) => (
+              <option key={a} value={a}>
+                {a}
               </option>
             ))}
           </select>

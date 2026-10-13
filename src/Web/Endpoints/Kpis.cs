@@ -3,18 +3,22 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Innovera.Web.Endpoints;
 
-/// <summary>Indicadores (Mod.239). Por agora: valores externos introduzidos à mão.</summary>
+/// <summary>Indicadores (Mod.239): os 41 KPIs calculados, o painel inicial e os valores externos introduzidos à mão.</summary>
 public class Kpis : IEndpointGroup
 {
     public static void Map(RouteGroupBuilder groupBuilder)
     {
         groupBuilder.RequireAuthorization();
 
+        groupBuilder.MapGet(ObterIndicadores, "indicadores");
         groupBuilder.MapGet(ListarValoresExternos, "valores-externos");
         groupBuilder.MapPost(CriarValorExterno, "valores-externos");
         groupBuilder.MapPut(EditarValorExterno, "valores-externos/{id:int}");
         groupBuilder.MapDelete(ApagarValorExterno, "valores-externos/{id:int}");
     }
+
+    public static async Task<Ok<IndicadoresDto>> ObterIndicadores(ISender sender, int? ano)
+        => TypedResults.Ok(await sender.Send(new ObterIndicadoresQuery(ano ?? DateTime.Today.Year)));
 
     public static async Task<Ok<IReadOnlyList<ValorExternoDto>>> ListarValoresExternos(ISender sender)
         => TypedResults.Ok(await sender.Send(new ListarValoresExternosQuery()));

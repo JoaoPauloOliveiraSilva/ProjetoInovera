@@ -2,7 +2,7 @@ import { Fragment, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { iniciativas as api } from '../api/servicos';
-import { classeEstadoIniciativa, nomeEstadoIniciativa, nomePeriodicidade, nomeTipoIniciativa, nomeTipoProjeto } from '../api/tipos';
+import { classeEstadoIniciativa, nomeEstadoIniciativa, nomePeriodicidade, nomePilar, nomeTipoIniciativa, nomeTipoProjeto } from '../api/tipos';
 import type {
   AmbitoProjeto,
   CamposTipo,
@@ -11,6 +11,7 @@ import type {
   Horizonte,
   IniciativaDetalhe as Detalhe,
   Periodicidade,
+  PilarEstrategico,
   TipoAcaoInovacao,
   TipoIniciativa,
   TipoProjeto,
@@ -117,6 +118,12 @@ function Ficha({ detalhe, aoEditar, recarregar }: { detalhe: Detalhe; aoEditar: 
               <dd>{detalhe.horizonte}</dd>
             </>
           )}
+          {r.pilar && (
+            <>
+              <dt>pilar</dt>
+              <dd>{nomePilar[r.pilar]}</dd>
+            </>
+          )}
           {detalhe.detalhes.map((d) => (
             <Fragment key={d.nome}>
               <dt>{d.nome.toLowerCase()}</dt>
@@ -210,6 +217,7 @@ function FormIniciativa({
     dataFim: r?.dataFim ?? null,
     origem: r?.origem ?? null,
     horizonte: existente?.horizonte ?? null,
+    pilar: r?.pilar ?? null,
     campos: existente?.campos ?? camposVazios,
   });
   const [erro, setErro] = useState('');
@@ -261,7 +269,7 @@ function FormIniciativa({
         <span>descrição</span>
         <textarea rows={3} value={dados.descricao ?? ''} onChange={(e) => mudar({ descricao: vazioANull(e.target.value) })} />
       </label>
-      <div className="campos-lado">
+      <div className="campos-lado tres">
         <label className="campo">
           <span>estado</span>
           <select value={dados.estado} onChange={(e) => mudar({ estado: e.target.value as EstadoIniciativa })}>
@@ -279,6 +287,17 @@ function FormIniciativa({
             <option value="H1">H1</option>
             <option value="H2">H2</option>
             <option value="H3">H3</option>
+          </select>
+        </label>
+        <label className="campo">
+          <span>pilar estratégico</span>
+          <select value={dados.pilar ?? ''} onChange={(e) => mudar({ pilar: (e.target.value || null) as PilarEstrategico | null })}>
+            <option value="">—</option>
+            {(Object.keys(nomePilar) as PilarEstrategico[]).map((p) => (
+              <option key={p} value={p}>
+                {nomePilar[p]}
+              </option>
+            ))}
           </select>
         </label>
       </div>

@@ -185,6 +185,15 @@ export type EstadoIniciativa = 'Pendente' | 'EmAnalise' | 'EmCurso' | 'EmImpleme
 
 export type Horizonte = 'H1' | 'H2' | 'H3';
 
+/** Pilares estratégicos da dst (KPIs 35–37). Os nomes oficiais estão por confirmar com a dst. */
+export type PilarEstrategico = 'Pilar1' | 'Pilar2' | 'Pilar3';
+
+export const nomePilar: Record<PilarEstrategico, string> = {
+  Pilar1: 'pilar estratégico 1',
+  Pilar2: 'pilar estratégico 2',
+  Pilar3: 'pilar estratégico 3',
+};
+
 export interface IniciativaResumo {
   id: number;
   codigo: string;
@@ -198,6 +207,7 @@ export interface IniciativaResumo {
   pontoSituacao: string | null;
   ideiaOrigemId: number | null;
   ideiaOrigemCodigo: string | null;
+  pilar: PilarEstrategico | null;
 }
 
 export interface IniciativaDetalhe {
@@ -263,6 +273,7 @@ export interface DadosIniciativa {
   dataFim: string | null;
   origem: string | null;
   horizonte: Horizonte | null;
+  pilar: PilarEstrategico | null;
   campos?: CamposTipo | null;
 }
 
@@ -504,6 +515,24 @@ export interface ProjectCharter {
   /** Orçamento: por omissão só o Administrador. */
   podeVerOrcamento: boolean;
   podeEditarOrcamento: boolean;
+  equipa: MembroEquipa[];
+  pilar: PilarEstrategico | null;
+}
+
+/** Alocação de uma pessoa num mês (em %; horas = 8 h × 21 dias × %). */
+export interface AlocacaoMensal {
+  ano: number;
+  mes: number;
+  percentagem: number;
+  horas: number;
+}
+
+export interface MembroEquipa {
+  id: number;
+  utilizadorId: number | null;
+  nome: string;
+  funcao: string;
+  alocacoes: AlocacaoMensal[];
 }
 
 /** Caminho de cada separador na API (/api/Iniciativas/{id}/charter/{seccao}). */
@@ -735,3 +764,26 @@ export const nomeTipoValorExterno: Record<TipoValorExterno, string> = {
 };
 
 export const nomePeriodoKpi: Record<PeriodoKpi, string> = { Anual: 'anual', PrimeiroSemestre: '1.º semestre', AnoAteData: 'ano até à data' };
+
+// Indicadores (Mod.239) e dashboard inicial
+
+export type UnidadeKpi = 'Numero' | 'Percentagem' | 'Euros' | 'Media';
+
+export interface Kpi {
+  numero: number;
+  nome: string;
+  categoria: string;
+  unidade: UnidadeKpi;
+  valor: number | null;
+  valorAnoAnterior: number | null;
+  disponivel: boolean;
+  nota: string | null;
+}
+
+export interface Indicadores {
+  ano: number;
+  kpis: Kpi[];
+  iniciativasPorEstado: { tipo: TipoIniciativa; estado: EstadoIniciativa; quantidade: number }[];
+  proximasAtividades: { id: number; titulo: string; data: string; cor: string | null }[];
+  alertas: { tipo: 'validade' | 'atraso' | 'risco' | string; titulo: string; detalhe: string; data: string | null; link: string }[];
+}

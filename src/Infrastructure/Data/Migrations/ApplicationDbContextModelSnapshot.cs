@@ -260,7 +260,7 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.HasIndex("MembroEquipaId", "Ano", "Mes")
                         .IsUnique();
 
-                    b.ToTable("AlocacaoMensal");
+                    b.ToTable("AlocacoesMensais");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.AnexoIdeia", b =>
@@ -1367,7 +1367,11 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("UtilizadorId")
+                    b.Property<string>("Nome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("UtilizadorId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -1377,7 +1381,7 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.HasIndex("IniciativaId", "UtilizadorId")
                         .IsUnique();
 
-                    b.ToTable("MembroEquipa");
+                    b.ToTable("MembrosEquipa");
                 });
 
             modelBuilder.Entity("Innovera.Domain.Entities.NotaPontoSituacao", b =>
@@ -2823,8 +2827,7 @@ namespace Innovera.Infrastructure.Data.Migrations
                     b.HasOne("Innovera.Domain.Entities.Utilizador", "Utilizador")
                         .WithMany()
                         .HasForeignKey("UtilizadorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Iniciativa");
 

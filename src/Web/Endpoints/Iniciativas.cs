@@ -39,10 +39,17 @@ public class Iniciativas : IEndpointGroup
         groupBuilder.MapPost(CriarLicao, "{id:int}/charter/licoes");
         groupBuilder.MapPut(EditarLicao, "{id:int}/charter/licoes/{itemId:int}");
         groupBuilder.MapDelete(ApagarItemCharter, "{id:int}/charter/{seccao}/{itemId:int}");
+
+        // Equipa de trabalho e alocação mensal (Charter › planeamento)
+        groupBuilder.MapPost(CriarMembro, "{id:int}/equipa");
+        groupBuilder.MapPut(EditarMembro, "{id:int}/equipa/{membroId:int}");
+        groupBuilder.MapDelete(ApagarMembro, "{id:int}/equipa/{membroId:int}");
+        groupBuilder.MapPut(GuardarAlocacoes, "{id:int}/equipa/{membroId:int}/alocacoes/{ano:int}");
     }
 
-    public static async Task<Ok<IReadOnlyList<IniciativaResumoDto>>> ListarIniciativas(ISender sender, TipoIniciativa? tipo, EstadoIniciativa? estado, string? texto)
-        => TypedResults.Ok(await sender.Send(new ListarIniciativasQuery(tipo, estado, texto)));
+    public static async Task<Ok<IReadOnlyList<IniciativaResumoDto>>> ListarIniciativas(
+        ISender sender, TipoIniciativa? tipo, EstadoIniciativa? estado, string? texto, PilarEstrategico? pilar, int? ano)
+        => TypedResults.Ok(await sender.Send(new ListarIniciativasQuery(tipo, estado, texto, pilar, ano)));
 
     public static async Task<Ok<IniciativaDetalheDto>> ObterIniciativa(ISender sender, int id)
         => TypedResults.Ok(await sender.Send(new ObterIniciativaQuery(id)));
@@ -149,6 +156,26 @@ public class Iniciativas : IEndpointGroup
         }
 
         await sender.Send(new ApagarItemCharterCommand(id, s, itemId));
+        return TypedResults.NoContent();
+    }
+
+    public static async Task<Ok<int>> CriarMembro(ISender sender, int id, MembroDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarMembroCommand(id, null, dados)));
+
+    public static async Task<Ok<int>> EditarMembro(ISender sender, int id, int membroId, MembroDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarMembroCommand(id, membroId, dados)));
+
+    public static async Task<NoContent> ApagarMembro(ISender sender, int id, int membroId)
+    {
+        await sender.Send(new ApagarMembroCommand(id, membroId));
+        return TypedResults.NoContent();
+    }
+
+    public record AlocacoesPedido(IReadOnlyList<decimal?> Meses);
+
+    public static async Task<NoContent> GuardarAlocacoes(ISender sender, int id, int membroId, int ano, AlocacoesPedido pedido)
+    {
+        await sender.Send(new GuardarAlocacoesCommand(id, membroId, ano, pedido.Meses));
         return TypedResults.NoContent();
     }
 }

@@ -9,6 +9,7 @@ import { nomeClasse } from '../api/tipos';
 import { formatarData } from '../dados/regras';
 import { NovaIdeiaGaveta } from './NovaIdeia';
 import { IdeiaGaveta } from './IdeiaDetalhe';
+import { PainelHomepage } from './Indicadores';
 
 const porPagina = 3;
 
@@ -95,6 +96,7 @@ export function Homepage() {
           ))}
         </div>
       </section>
+      <PainelHomepage />
       <NovaIdeiaGaveta aberta={novaAberta} aoFechar={() => setNovaAberta(false)} />
       <IdeiaGaveta id={aberta} aoFechar={() => setAberta(null)} />
     </>

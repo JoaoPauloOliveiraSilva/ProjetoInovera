@@ -10,6 +10,7 @@ import {
   nomeEstadoRequisito,
   nomeEstadoTrabalho,
   nomeImpacto,
+  nomePilar,
   nomeProbabilidade,
   nomeResposta,
   nomeTipoEntrega,
@@ -35,6 +36,7 @@ import { SetaContinuar } from '../componentes/Icones';
 import { LinkExterno, TabelaEditavel, data, euros, hoje, opcoes, texto } from '../componentes/TabelaEditavel';
 import type { Campo, DefTabela } from '../componentes/TabelaEditavel';
 import { formatarData } from '../dados/regras';
+import { EquipaTrabalho, Gantt } from './CharterEquipa';
 
 const separadores = [
   ['geral', 'informação geral'],
@@ -69,6 +71,7 @@ export function CharterPagina() {
               <span>{nomeTipoIniciativa[dados.tipo]}</span>
               <span className={`etiqueta ${classeEstadoIniciativa[dados.estado]}`}>{nomeEstadoIniciativa[dados.estado]}</span>
               <span>responsável: {dados.responsavel ?? '—'}</span>
+              {dados.pilar && <span>{nomePilar[dados.pilar]}</span>}
               <span>
                 {dados.dataInicio ? formatarData(dados.dataInicio) : '—'} → {dados.dataFim ? formatarData(dados.dataFim) : '—'}
               </span>
@@ -96,8 +99,10 @@ export function CharterPagina() {
           {atual === 'geral' && <Geral key={dados.iniciativaId} charter={dados} aoGuardar={recarregar} />}
           {atual === 'planeamento' && (
             <>
+              <Gantt charter={dados} />
               <SeccaoTabela def={defTarefas} charter={dados} itens={dados.tarefas} aoMudar={recarregar} />
               <SeccaoTabela def={defEntregas} charter={dados} itens={dados.entregas} aoMudar={recarregar} />
+              <EquipaTrabalho charter={dados} aoMudar={recarregar} />
             </>
           )}
           {atual === 'riscos' && (

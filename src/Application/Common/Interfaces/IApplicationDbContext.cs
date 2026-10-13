@@ -32,6 +32,10 @@ public interface IApplicationDbContext
 
     DbSet<LinkDocumento> LinksDocumento { get; }
 
+    DbSet<MembroEquipa> MembrosEquipa { get; }
+
+    DbSet<AlocacaoMensal> AlocacoesMensais { get; }
+
     DbSet<Parceiro> Parceiros { get; }
     DbSet<AcordoParceria> AcordosParceria { get; }
     DbSet<AtivoIntangivel> AtivosIntangiveis { get; }

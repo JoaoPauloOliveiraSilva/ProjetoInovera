@@ -14,6 +14,7 @@ import { Entrar } from './paginas/Entrar';
 import { Homepage } from './paginas/Homepage';
 import { IdeiasLista } from './paginas/IdeiasLista';
 import { ImportarMod246 } from './paginas/ImportarMod246';
+import { IndicadoresPagina } from './paginas/Indicadores';
 import { IniciativasLista } from './paginas/IniciativasLista';
 import { Landing } from './paginas/Landing';
 import { PlanoAnualPagina } from './paginas/PlanoAnual';
@@ -28,7 +29,6 @@ const emConstrucao: [string, string][] = [
   ['i9news', 'i9news'],
   ['premios', 'prémios'],
   ['sifide', 'sifide'],
-  ['indicadores', 'indicadores'],
 ];
 
 export function App() {
@@ -66,6 +66,7 @@ export function App() {
               <Route path="parcerias" element={<Parcerias />} />
               <Route path="ativos" element={<AtivosIntangiveis />} />
               <Route path="plano-anual" element={<PlanoAnualPagina />} />
+              <Route path="indicadores" element={<IndicadoresPagina />} />
               <Route
                 path="indicadores/valores-externos"
                 element={

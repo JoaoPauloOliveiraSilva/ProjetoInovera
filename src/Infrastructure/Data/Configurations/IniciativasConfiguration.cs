@@ -86,6 +86,8 @@ public class MembroEquipaConfiguration : IEntityTypeConfiguration<MembroEquipa>
     public void Configure(EntityTypeBuilder<MembroEquipa> builder)
     {
         builder.Property(m => m.Funcao).HasMaxLength(150);
+        builder.Property(m => m.Nome).HasMaxLength(200);
+        builder.Ignore(m => m.NomeVisivel);
         builder.HasIndex(m => new { m.IniciativaId, m.UtilizadorId }).IsUnique();
         builder.HasOne(m => m.Utilizador).WithMany().HasForeignKey(m => m.UtilizadorId).OnDelete(DeleteBehavior.Restrict);
         builder.HasMany(m => m.Alocacoes).WithOne(a => a.MembroEquipa).HasForeignKey(a => a.MembroEquipaId).OnDelete(DeleteBehavior.Cascade);
