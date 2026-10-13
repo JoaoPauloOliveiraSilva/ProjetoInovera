@@ -77,6 +77,7 @@ public class ExecucaoVigilanciaConfiguration : IEntityTypeConfiguration<Execucao
 {
     public void Configure(EntityTypeBuilder<ExecucaoVigilancia> builder)
     {
+        builder.ToTable("ExecucaoVigilancia");
         builder.Property(e => e.LinkResultado).HasMaxLength(2000);
     }
 }
