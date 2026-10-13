@@ -74,25 +74,35 @@ internal static class PlanosKpi
             ?? throw new RegraDeNegocioException($"O KPI {numero} não existe (os KPIs vão de 1 a {CatalogoKpi.Todos.Count}).");
 
     /// <summary>O registo anual do KPI (criado na primeira vez, tal como a definição do KPI).</summary>
-    public static async Task<ValorKpi> ObterOuCriarAsync(IApplicationDbContext context, int numero, int ano, CancellationToken cancellationToken)
+    public static Task<ValorKpi> ObterOuCriarAsync(IApplicationDbContext context, int numero, int ano, CancellationToken cancellationToken)
+        => ObterOuCriarAsync(context, numero, ano, PeriodoKpi.Anual, cancellationToken);
+
+    /// <summary>O registo do KPI num ano e período (criado na primeira vez, tal como a definição do KPI).</summary>
+    public static async Task<ValorKpi> ObterOuCriarAsync(IApplicationDbContext context, int numero, int ano, PeriodoKpi periodo,
+        CancellationToken cancellationToken)
     {
         var def = Definicao(numero);
-        var valor = await context.ValoresKpi
-            .Include(v => v.Acoes)
-            .FirstOrDefaultAsync(v => v.Kpi.Numero == numero && v.Ano == ano && v.Periodo == PeriodoKpi.Anual, cancellationToken);
+
+        // Primeiro o que já foi acrescentado ao contexto e ainda não foi gravado (importações de vários KPIs de uma vez).
+        var valor = context.ValoresKpi.Local.FirstOrDefault(v => v.Kpi?.Numero == numero && v.Ano == ano && v.Periodo == periodo)
+            ?? await context.ValoresKpi
+                .Include(v => v.Kpi)
+                .Include(v => v.Acoes)
+                .FirstOrDefaultAsync(v => v.Kpi.Numero == numero && v.Ano == ano && v.Periodo == periodo, cancellationToken);
         if (valor is not null)
         {
             return valor;
         }
 
-        var kpi = await context.Kpis.FirstOrDefaultAsync(k => k.Numero == numero, cancellationToken);
+        var kpi = context.Kpis.Local.FirstOrDefault(k => k.Numero == numero)
+            ?? await context.Kpis.FirstOrDefaultAsync(k => k.Numero == numero, cancellationToken);
         if (kpi is null)
         {
             kpi = new KpiDefinicao { Numero = def.Numero, Nome = def.Nome, Categoria = Categoria(def.Categoria) };
             context.Kpis.Add(kpi);
         }
 
-        valor = new ValorKpi { Kpi = kpi, Ano = ano, Periodo = PeriodoKpi.Anual };
+        valor = new ValorKpi { Kpi = kpi, Ano = ano, Periodo = periodo };
         context.ValoresKpi.Add(valor);
         return valor;
     }

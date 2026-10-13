@@ -336,6 +336,8 @@ export interface DadosIniciativa {
 }
 
 export interface ResultadoImportacao {
+  /** Modelo reconhecido (ex.: "Mod.237 · Conhecimento codificado"); não vem na importação antiga do Mod.246. */
+  modelo?: string;
   folhas: { folha: string; importadas: number; jaExistiam: number; ignoradas: number }[];
   avisos: string[];
 }

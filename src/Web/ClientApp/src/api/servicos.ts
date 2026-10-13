@@ -243,6 +243,15 @@ export const auditoria = {
 /** Registos manuais (RF14): parcerias, ativos intangíveis, conhecimento tácito e ferramentas. */
 export type TipoRegistoApi = 'parceiros' | 'acordos' | 'ativos' | 'conhecimento-tacito' | 'ferramentas';
 
+/** Importação de qualquer modelo Excel da dstelecom (o servidor reconhece o modelo pelo conteúdo). */
+export const importacoes = {
+  importar: (ficheiro: File) => {
+    const dados = new FormData();
+    dados.append('ficheiro', ficheiro);
+    return enviar<ResultadoImportacao>('/api/Importacoes', dados);
+  },
+};
+
 const baseRegistos = '/api/Registos';
 
 export const registos = {

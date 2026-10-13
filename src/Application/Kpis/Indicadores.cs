@@ -39,8 +39,17 @@ public class ObterIndicadoresQueryHandler(IApplicationDbContext context, IUtiliz
         var veOrcamento = await utilizadores.TemPermissaoAsync(Permissoes.Orcamento.Ver, cancellationToken)
             || await utilizadores.TemPermissaoAsync(Permissoes.Orcamento.Gerir, cancellationToken);
 
+        var hoje = DateOnly.FromDateTime(relogio.GetUtcNow().UtcDateTime);
         var atual = CalculoKpi.Calcular(dados, request.Ano, request.Periodo);
         var anterior = CalculoKpi.Calcular(dados, request.Ano - 1, request.Periodo);
+
+        // Valores oficiais importados do Mod.239: nos períodos já fechados prevalecem sobre o cálculo (que só conhece o que está na plataforma).
+        var importados = (await context.ValoresKpi.AsNoTracking()
+                .Where(v => (v.Ano == request.Ano || v.Ano == request.Ano - 1) && v.Periodo == request.Periodo && v.ValorAbsoluto != null)
+                .Select(v => new { v.Kpi.Numero, v.Ano, v.ValorAbsoluto })
+                .ToListAsync(cancellationToken))
+            .Where(v => CalculoKpi.Intervalo(v.Ano, request.Periodo).Fim < hoje)
+            .ToDictionary(v => (v.Numero, v.Ano), v => v.ValorAbsoluto);
         var objetivos = await context.ValoresKpi.AsNoTracking()
             .Where(v => v.Ano == request.Ano && v.Periodo == PeriodoKpi.Anual)
             .Select(v => new { v.Kpi.Numero, v.Objetivo, Abertas = v.Acoes.Count(a => a.ConcluidaEm == null) })
@@ -49,6 +58,16 @@ public class ObterIndicadoresQueryHandler(IApplicationDbContext context, IUtiliz
         {
             var (valor, nota) = atual.GetValueOrDefault(k.Numero);
             var (valorAnterior, _) = anterior.GetValueOrDefault(k.Numero);
+            if (importados.TryGetValue((k.Numero, request.Ano), out var oficial))
+            {
+                (valor, nota) = (oficial, "Valor do Mod.239 (importado).");
+            }
+
+            if (importados.TryGetValue((k.Numero, request.Ano - 1), out var oficialAnterior))
+            {
+                valorAnterior = oficialAnterior;
+            }
+
             if (k.Financeiro && !veOrcamento)
             {
                 return new KpiDto(k.Numero, k.Nome, k.Categoria, k.Unidade, null, null, false, "Só para quem pode ver o orçamento.");
@@ -61,7 +80,6 @@ public class ObterIndicadoresQueryHandler(IApplicationDbContext context, IUtiliz
                 plano?.Objetivo, atingido, plano?.Abertas ?? 0);
         }).ToList();
 
-        var hoje = DateOnly.FromDateTime(relogio.GetUtcNow().UtcDateTime);
         return new IndicadoresDto(request.Ano, request.Periodo, kpis, PorEstado(dados), await ProximasAsync(hoje, cancellationToken),
             await AlertasAsync(dados, hoje, cancellationToken));
     }

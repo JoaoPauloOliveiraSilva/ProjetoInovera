@@ -547,3 +547,20 @@ a.kpi:hover { outline: 2px solid #22222222; }
 .plano-objetivo { display: flex; gap: 8px; align-items: center; }
 .plano-objetivo input { background: #fff; border: 1px solid var(--linha); padding: 6px 8px; width: 140px; }
 @media (max-width: 700px) { .vigilancias { grid-template-columns: 1fr; } }
+
+/* Importar modelos */
+.modelos-importaveis {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.modelos-importaveis strong {
+  display: inline-block;
+  min-width: 70px;
+}
+p.ajuda {
+  font-size: 13px;
+  color: var(--cinzento);
+  margin: 0 0 16px;
+}

@@ -1,12 +1,25 @@
 import { useState } from 'react';
-import { iniciativas as api } from '../api/servicos';
+import { importacoes as api } from '../api/servicos';
 import type { ResultadoImportacao } from '../api/tipos';
 import { useAtualizar } from '../api/usePedido';
 import { Cabecalho } from '../componentes/Layout';
 import { Camara, Upload } from '../componentes/Icones';
 
-/** Importa o Excel Mod.246 (portefólio) da dstelecom: ideias da Caixa de Inovação e todas as iniciativas. */
-export function ImportarMod246() {
+/** Importa os modelos Excel da dstelecom (Mod.246, 235, 236, 237, 238, 239, 241, 252, 52 e 69); o modelo é reconhecido pelo conteúdo. */
+const modelos: [string, string][] = [
+  ['Mod.246', 'portefólio: ideias da Caixa de Inovação e todas as iniciativas'],
+  ['Mod.235', 'acordos de parceria (e os parceiros)'],
+  ['Mod.236', 'ativos intangíveis, com as atividades'],
+  ['Mod.237', 'conhecimento codificado, com as atividades de partilha'],
+  ['Mod.238', 'conhecimento tácito'],
+  ['Mod.239', 'indicadores: valores dos anos e semestres fechados, objetivos anuais e planos de ação'],
+  ['Mod.241', 'ferramentas e métodos, com as análises anuais'],
+  ['Mod.252', 'lições aprendidas (no Project Charter de cada projeto ou desafio)'],
+  ['Mod.52', 'estratégia de inovação (uma folha por ano)'],
+  ['Mod.69', 'plano anual de atividades (as cores do calendário dizem que atividade é em cada dia)'],
+];
+
+export function ImportarModelos() {
   const atualizar = useAtualizar();
   const [ficheiro, setFicheiro] = useState<File | null>(null);
   const [resultado, setResultado] = useState<ResultadoImportacao | null>(null);
@@ -19,7 +32,7 @@ export function ImportarMod246() {
     setResultado(null);
     setAEnviar(true);
     try {
-      setResultado(await api.importarMod246(ficheiro));
+      setResultado(await api.importar(ficheiro));
       atualizar();
     } catch (e) {
       setErro(e instanceof Error ? e.message : String(e));
@@ -32,9 +45,19 @@ export function ImportarMod246() {
     <>
       <Cabecalho titulo="importar" corLampada="#8a8a8a" />
       <p className="introducao">
-        Escolha o Excel <strong>Mod.246 Portfólio de Iniciativas de Inovação</strong>. São importadas as ideias (com o n.º da Caixa de
-        Inovação, as notas e a decisão) e as folhas Projetos, Melhorias Contínuas, Oportunidades, Vigilâncias, Mestrados e Ações de
-        Inovação. Pode importar outra vez mais tarde: o que já existe não se repete.
+        Escolha um dos <strong>modelos Excel da inovação</strong>: o modelo é reconhecido sozinho pelo conteúdo do ficheiro. Pode importar
+        outra vez mais tarde (por exemplo depois de atualizar o Excel): o que já existe não se repete.
+      </p>
+      <ul className="modelos-importaveis">
+        {modelos.map(([codigo, descricao]) => (
+          <li key={codigo}>
+            <strong>{codigo}</strong> {descricao}
+          </li>
+        ))}
+      </ul>
+      <p className="ajuda">
+        Importe primeiro o Mod.246: as lições aprendidas (Mod.252) ficam nos projetos e desafios com o mesmo nome, e a estratégia (Mod.52)
+        liga-se às iniciativas.
       </p>
       <section className="painel importar">
         <label className="anexos">
@@ -52,7 +75,7 @@ export function ImportarMod246() {
         {erro && <div className="erro">{erro}</div>}
         {resultado && (
           <div className="resultado-importacao">
-            <h3 className="secao">resultado</h3>
+            <h3 className="secao">resultado · {resultado.modelo}</h3>
             <table>
               <thead>
                 <tr>

@@ -14,7 +14,7 @@ import { EstrategiaPagina } from './paginas/Estrategia';
 import { Entrar } from './paginas/Entrar';
 import { Homepage } from './paginas/Homepage';
 import { IdeiasLista } from './paginas/IdeiasLista';
-import { ImportarMod246 } from './paginas/ImportarMod246';
+import { ImportarModelos } from './paginas/ImportarModelos';
 import { IndicadoresPagina } from './paginas/Indicadores';
 import { IniciativasLista } from './paginas/IniciativasLista';
 import { Landing } from './paginas/Landing';
@@ -88,7 +88,7 @@ export function App() {
                 path="admin/importar"
                 element={
                   <Protegido permissao={Permissoes.iniciativasGerir}>
-                    <ImportarMod246 />
+                    <ImportarModelos />
                   </Protegido>
                 }
               />

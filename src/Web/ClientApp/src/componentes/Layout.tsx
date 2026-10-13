@@ -71,7 +71,7 @@ const menu: ItemMenu[] = [
     filhos: [
       { nome: 'utilizadores', para: '/inovacao/admin/utilizadores', permissao: Permissoes.gerirUtilizadores },
       { nome: 'perfis e permissões', para: '/inovacao/admin/perfis', permissao: Permissoes.gerirPerfis },
-      { nome: 'importar Mod.246', para: '/inovacao/admin/importar', permissao: Permissoes.iniciativasGerir },
+      { nome: 'importar modelos', para: '/inovacao/admin/importar', permissao: Permissoes.iniciativasGerir },
       { nome: 'registo de auditoria', para: '/inovacao/admin/auditoria', permissao: Permissoes.verAuditoria },
     ],
   },
