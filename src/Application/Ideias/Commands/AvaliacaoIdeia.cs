@@ -1,5 +1,7 @@
 using Innovera.Domain.ValueObjects;
 
+using Innovera.Application.Iniciativas;
+
 namespace Innovera.Application.Ideias.Commands;
 
 /// <summary>Regista as 5 notas de uma ideia da dstelecom; a nota e a decisão são calculadas pelo domínio.</summary>
@@ -101,7 +103,8 @@ public class DefinirClasseCommandHandler(IApplicationDbContext context, INotific
 
             if (iniciativa is not null)
             {
-                iniciativa.Codigo = ideia.Codigo;
+                // Código próprio do tipo (PRJ-0xx, DES-0xx, MC-0xx), como no Mod.246; a ideia de origem fica ligada.
+                iniciativa.Codigo = await CriarIniciativaCommandHandler.ProximoCodigoAsync(context, iniciativa.Tipo, cancellationToken);
                 iniciativa.Titulo = ideia.Titulo;
                 iniciativa.Descricao = ideia.Descricao;
                 iniciativa.ResponsavelId = ideia.AutorId;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Permissoes } from '../api/permissoes';
-import { estrategia as api, iniciativas as apiIniciativas, kpis as apiKpis } from '../api/servicos';
+import { estrategia as api, iniciativas as apiIniciativas, kpis as apiKpis, urlExportacao } from '../api/servicos';
 import { areasAtuacao } from '../api/tipos';
 import type { IniciativaResumo, Kpi, LinhaEstrategia } from '../api/tipos';
 import { usePedido } from '../api/usePedido';
@@ -149,7 +149,7 @@ export function EstrategiaPagina() {
 
   return (
     <>
-      <Cabecalho titulo="estratégia" corLampada="#7a5aa0" />
+      <Cabecalho titulo="estratégia" corLampada="#7a5aa0" exportar={urlExportacao('mod52', ano)} />
       <div className="filtros filtros-varios">
         <label>
           ano

@@ -195,7 +195,7 @@ public class GerarAlertasCommandHandler(IApplicationDbContext context, INotifica
             }
         }
 
-        // 4. Atividades de gestão/partilha (Atividades · Quem · Quando) dos ativos, conhecimento codificado e tácito
+        // 4. Atividades de gestão/partilha (Atividades · Quem · Quando) dos ativos e do conhecimento codificado
         var deGestao = new List<(AlvoAlerta Alvo, int Id, string Registo, AtividadeGestao Atividade, string Link)>();
         foreach (var a in await context.AtivosIntangiveis.AsNoTracking().ToListAsync(cancellationToken))
         {
@@ -205,11 +205,6 @@ public class GerarAlertasCommandHandler(IApplicationDbContext context, INotifica
         foreach (var c in await context.ConhecimentosCodificados.AsNoTracking().ToListAsync(cancellationToken))
         {
             deGestao.AddRange(c.Atividades.Select(x => (AlvoAlerta.ConhecimentoCodificado, c.Id, c.Documento, x, "/inovacao/conhecimento")));
-        }
-
-        foreach (var c in await context.ConhecimentosTacitos.AsNoTracking().ToListAsync(cancellationToken))
-        {
-            deGestao.AddRange(c.Atividades.Select(x => (AlvoAlerta.ConhecimentoTacito, c.Id, c.Detentor, x, "/inovacao/conhecimento-tacito")));
         }
 
         var proximas = deGestao.Where(x => !x.Atividade.Concluida && x.Atividade.Data is { } d && d >= hoje && d <= ateAtividades).ToList();

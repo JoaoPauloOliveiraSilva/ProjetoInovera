@@ -12,7 +12,7 @@ public enum UnidadeKpi
 }
 
 public record KpiDto(int Numero, string Nome, string Categoria, UnidadeKpi Unidade, decimal? Valor, decimal? ValorAnoAnterior, bool Disponivel,
-    string? Nota);
+    string? Nota, string? Objetivo = null, bool? Atingido = null, int AcoesAbertas = 0);
 
 public record ContagemEstadoDto(TipoIniciativa Tipo, EstadoIniciativa Estado, int Quantidade);
 
@@ -20,12 +20,15 @@ public record ProximaAtividadeDto(int Id, string Titulo, DateOnly Data, string? 
 
 public record AlertaDashboardDto(string Tipo, string Titulo, string Detalhe, DateOnly? Data, string Link);
 
-public record IndicadoresDto(int Ano, IReadOnlyList<KpiDto> Kpis, IReadOnlyList<ContagemEstadoDto> IniciativasPorEstado,
+public record IndicadoresDto(int Ano, PeriodoKpi Periodo, IReadOnlyList<KpiDto> Kpis, IReadOnlyList<ContagemEstadoDto> IniciativasPorEstado,
     IReadOnlyList<ProximaAtividadeDto> ProximasAtividades, IReadOnlyList<AlertaDashboardDto> Alertas);
 
-/// <summary>Os 41 indicadores de um ano (com o ano anterior para comparar) e o resumo para o dashboard.</summary>
+/// <summary>
+/// Os 41 indicadores de um período (1.º semestre, 2.º semestre ou ano completo), com o mesmo período do ano anterior
+/// para comparar, o objetivo anual de cada um e o resumo para o dashboard.
+/// </summary>
 [Authorize]
-public record ObterIndicadoresQuery(int Ano) : IRequest<IndicadoresDto>;
+public record ObterIndicadoresQuery(int Ano, PeriodoKpi Periodo = PeriodoKpi.Anual) : IRequest<IndicadoresDto>;
 
 public class ObterIndicadoresQueryHandler(IApplicationDbContext context, IUtilizadores utilizadores, TimeProvider relogio)
     : IRequestHandler<ObterIndicadoresQuery, IndicadoresDto>
@@ -36,8 +39,12 @@ public class ObterIndicadoresQueryHandler(IApplicationDbContext context, IUtiliz
         var veOrcamento = await utilizadores.TemPermissaoAsync(Permissoes.Orcamento.Ver, cancellationToken)
             || await utilizadores.TemPermissaoAsync(Permissoes.Orcamento.Gerir, cancellationToken);
 
-        var atual = CalculoKpi.Calcular(dados, request.Ano);
-        var anterior = CalculoKpi.Calcular(dados, request.Ano - 1);
+        var atual = CalculoKpi.Calcular(dados, request.Ano, request.Periodo);
+        var anterior = CalculoKpi.Calcular(dados, request.Ano - 1, request.Periodo);
+        var objetivos = await context.ValoresKpi.AsNoTracking()
+            .Where(v => v.Ano == request.Ano && v.Periodo == PeriodoKpi.Anual)
+            .Select(v => new { v.Kpi.Numero, v.Objetivo, Abertas = v.Acoes.Count(a => a.ConcluidaEm == null) })
+            .ToDictionaryAsync(v => v.Numero, cancellationToken);
         var kpis = CatalogoKpi.Todos.Select(k =>
         {
             var (valor, nota) = atual.GetValueOrDefault(k.Numero);
@@ -47,11 +54,15 @@ public class ObterIndicadoresQueryHandler(IApplicationDbContext context, IUtiliz
                 return new KpiDto(k.Numero, k.Nome, k.Categoria, k.Unidade, null, null, false, "Só para quem pode ver o orçamento.");
             }
 
-            return new KpiDto(k.Numero, k.Nome, k.Categoria, k.Unidade, valor, valorAnterior, valor is not null, nota ?? k.Nota);
+            var plano = objetivos.GetValueOrDefault(k.Numero);
+            // O objetivo é anual: só se avalia com o ano completo.
+            var atingido = request.Periodo == PeriodoKpi.Anual ? ObjetivoKpi.Atingido(plano?.Objetivo, valor) : null;
+            return new KpiDto(k.Numero, k.Nome, k.Categoria, k.Unidade, valor, valorAnterior, valor is not null, nota ?? k.Nota,
+                plano?.Objetivo, atingido, plano?.Abertas ?? 0);
         }).ToList();
 
         var hoje = DateOnly.FromDateTime(relogio.GetUtcNow().UtcDateTime);
-        return new IndicadoresDto(request.Ano, kpis, PorEstado(dados), await ProximasAsync(hoje, cancellationToken),
+        return new IndicadoresDto(request.Ano, request.Periodo, kpis, PorEstado(dados), await ProximasAsync(hoje, cancellationToken),
             await AlertasAsync(dados, hoje, cancellationToken));
     }
 
@@ -153,9 +164,9 @@ public static class CatalogoKpi
         new(32, "N.º de eventos criados da inovação", "Cultura", UnidadeKpi.Numero),
         new(33, "Média de participantes por evento", "Cultura", UnidadeKpi.Media),
         new(34, "N.º de eventos externos em que participamos", "Cultura", UnidadeKpi.Numero),
-        new(35, "N.º de projetos e desafios do pilar estratégico 1", "Estratégia", UnidadeKpi.Numero, Nota: "Nomes dos pilares por confirmar com a dst."),
-        new(36, "N.º de projetos e desafios do pilar estratégico 2", "Estratégia", UnidadeKpi.Numero, Nota: "Nomes dos pilares por confirmar com a dst."),
-        new(37, "N.º de projetos e desafios do pilar estratégico 3", "Estratégia", UnidadeKpi.Numero, Nota: "Nomes dos pilares por confirmar com a dst."),
+        new(35, "N.º de projetos e desafios do pilar 1 (Modelo de Negócio Core)", "Estratégia", UnidadeKpi.Numero),
+        new(36, "N.º de projetos e desafios do pilar 2 (Exportação do Modelo de Negócio)", "Estratégia", UnidadeKpi.Numero),
+        new(37, "N.º de projetos e desafios do pilar 3 (Ambiente e Prosperidade do Planeta)", "Estratégia", UnidadeKpi.Numero),
         new(38, "Investimento em atividades de IDI", "Orçamento", UnidadeKpi.Euros, true, "Soma do orçamento real dos Project Charters."),
         new(39, "Proveito das atividades de IDI", "Orçamento", UnidadeKpi.Euros, true, "Valor externo (introduzido pelo Administrador)."),
         new(40, "Investimento IDI / Receitas", "Orçamento", UnidadeKpi.Percentagem, true),
@@ -193,10 +204,9 @@ public static class CalculoKpi
 {
     private static readonly EstadoIniciativa[] EmCurso = [EstadoIniciativa.EmCurso, EstadoIniciativa.EmImplementacao];
 
-    public static Dictionary<int, (decimal? Valor, string? Nota)> Calcular(DadosKpi d, int ano)
+    public static Dictionary<int, (decimal? Valor, string? Nota)> Calcular(DadosKpi d, int ano, PeriodoKpi periodo = PeriodoKpi.Anual)
     {
-        var inicio = new DateOnly(ano, 1, 1);
-        var fim = new DateOnly(ano, 12, 31);
+        var (inicio, fim) = Intervalo(ano, periodo);
         bool NoAno(DateOnly? data) => data is { } x && x >= inicio && x <= fim;
         var r = new Dictionary<int, (decimal?, string?)>();
         void Por(int n, decimal? valor, string? nota = null) => r[n] = (valor, nota);
@@ -230,7 +240,7 @@ public static class CalculoKpi
         }
 
         Por(8, autores.Count);
-        var trabalhadores = Externo(d, TipoValorExterno.NumeroTrabalhadores, ano);
+        var trabalhadores = Externo(d, TipoValorExterno.NumeroTrabalhadores, ano, periodo);
         Por(9, trabalhadores, trabalhadores is null ? "Falta o n.º de trabalhadores em valores externos." : null);
 
         // 10–21 Desafios, projetos, melhorias e mestrados
@@ -291,12 +301,14 @@ public static class CalculoKpi
         Por(37, ativas.Count(i => i.PilarEstrategico == PilarEstrategico.Pilar3));
 
         // 38–41 Orçamento e valores externos
+        // O orçamento dos Charters é anual: num semestre mostra-se o do ano.
         var linhas = d.Orcamento.Where(l => l.Ano == ano && l.ValorReal is not null).ToList();
         decimal? investimento = linhas.Count == 0 ? null : linhas.Sum(l => l.ValorReal!.Value);
-        Por(38, investimento, investimento is null ? "Sem orçamento real registado nos Project Charters." : null);
-        var proveito = Externo(d, TipoValorExterno.ProveitosIdi, ano);
+        Por(38, investimento, investimento is null ? "Sem orçamento real registado nos Project Charters."
+            : periodo == PeriodoKpi.Anual ? null : "Valor do ano (o orçamento dos Charters é anual).");
+        var proveito = Externo(d, TipoValorExterno.ProveitosIdi, ano, periodo);
         Por(39, proveito, proveito is null ? "Falta o proveito de IDI em valores externos." : null);
-        var receitas = Externo(d, TipoValorExterno.Receitas, ano);
+        var receitas = Externo(d, TipoValorExterno.Receitas, ano, periodo);
         Por(40, investimento is not null && receitas is > 0m ? Math.Round(100m * investimento.Value / receitas.Value, 2) : null,
             receitas is null ? "Falta o valor das receitas em valores externos." : null);
         Por(41, proveito is not null && investimento is > 0m ? Math.Round(100m * proveito.Value / investimento.Value, 1) : null);
@@ -304,6 +316,18 @@ public static class CalculoKpi
         return r;
     }
 
-    private static decimal? Externo(DadosKpi d, TipoValorExterno tipo, int ano)
-        => d.Externos.Where(v => v.Tipo == tipo && v.Ano == ano).OrderBy(v => v.Periodo).Select(v => (decimal?)v.Valor).FirstOrDefault();
+    /// <summary>Início e fim do período: 1.º semestre (jan–jun), 2.º semestre (jul–dez) ou o ano completo.</summary>
+    public static (DateOnly Inicio, DateOnly Fim) Intervalo(int ano, PeriodoKpi periodo) => periodo switch
+    {
+        PeriodoKpi.PrimeiroSemestre => (new DateOnly(ano, 1, 1), new DateOnly(ano, 6, 30)),
+        PeriodoKpi.SegundoSemestre => (new DateOnly(ano, 7, 1), new DateOnly(ano, 12, 31)),
+        _ => (new DateOnly(ano, 1, 1), new DateOnly(ano, 12, 31)),
+    };
+
+    /// <summary>Valor externo do período; se não houver, o valor anual.</summary>
+    private static decimal? Externo(DadosKpi d, TipoValorExterno tipo, int ano, PeriodoKpi periodo)
+    {
+        var doAno = d.Externos.Where(v => v.Tipo == tipo && v.Ano == ano).ToList();
+        return (doAno.FirstOrDefault(v => v.Periodo == periodo) ?? doAno.FirstOrDefault(v => v.Periodo == PeriodoKpi.Anual))?.Valor;
+    }
 }

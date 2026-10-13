@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Permissoes } from '../api/permissoes';
-import { iniciativas as api } from '../api/servicos';
+import { iniciativas as api, urlExportacao } from '../api/servicos';
 import { classeEstadoIniciativa, nomeEstadoIniciativa, nomePilar, nomeTipoIniciativa } from '../api/tipos';
 import type { EstadoIniciativa, PilarEstrategico, TipoIniciativa } from '../api/tipos';
 import { usePedido } from '../api/usePedido';
@@ -53,6 +53,7 @@ export function IniciativasLista({ titulo, tipo }: { titulo: string; tipo?: Tipo
       <Cabecalho
         titulo={titulo}
         corLampada="#7a9a3a"
+        exportar={urlExportacao('mod246')}
         acao={
           tem(Permissoes.iniciativasGerir) ? (
             <button className="nova-ideia" onClick={() => setAberta('nova')}>

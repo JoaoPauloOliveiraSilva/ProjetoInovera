@@ -7,5 +7,5 @@ public enum PeriodoKpi
 {
     Anual,
     PrimeiroSemestre,
-    AnoAteData
+    SegundoSemestre
 }

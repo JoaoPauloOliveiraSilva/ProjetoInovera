@@ -284,7 +284,7 @@ public class ApplicationDbContextInitialiser
         var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
         var projetoOlt = new Projeto
         {
-            Codigo = olt.Codigo, Titulo = olt.Titulo, Descricao = olt.Descricao, IdeiaOrigemId = olt.Id,
+            Codigo = "PRJ-001", Titulo = olt.Titulo, Descricao = olt.Descricao, IdeiaOrigemId = olt.Id,
             ResponsavelId = andre.Id, Estado = EstadoIniciativa.EmCurso, TipoProjeto = TipoProjeto.Inovacao,
             Horizonte = Horizonte.H2, Origem = "Inov. Interna", DataInicio = hoje.AddDays(-40), DataFim = hoje.AddMonths(9),
             PontoSituacao = "Dados históricos recolhidos; a começar o treino do modelo.",

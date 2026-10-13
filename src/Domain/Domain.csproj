@@ -5,8 +5,4 @@
     <AssemblyName>Innovera.Domain</AssemblyName>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MediatR.Contracts" />
-  </ItemGroup>
-
 </Project>

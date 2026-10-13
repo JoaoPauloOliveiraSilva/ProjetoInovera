@@ -1,7 +1,7 @@
 using Innovera.Domain.Constants;
 using Innovera.Infrastructure.Data;
 using Innovera.Infrastructure.Identity;
-using MediatR;
+using Innovera.Application.Common.Mediacao;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

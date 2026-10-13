@@ -19,10 +19,12 @@ import { IndicadoresPagina } from './paginas/Indicadores';
 import { IniciativasLista } from './paginas/IniciativasLista';
 import { Landing } from './paginas/Landing';
 import { PlanoAnualPagina } from './paginas/PlanoAnual';
+import { PlanoKpiPagina } from './paginas/PlanoKpi';
 import { AtivosIntangiveis, ConhecimentoTacitoPagina, Ferramentas, Parcerias } from './paginas/RegistosManuais';
 import { ValoresExternos } from './paginas/ValoresExternos';
 import { RepositorioConhecimento, RepositorioLicoes } from './paginas/Repositorios';
 import { Validacao } from './paginas/Validacao';
+import { VigilanciasPagina } from './paginas/Vigilancias';
 import { Protegido, SessaoProvider } from './sessao/Sessao';
 
 const emConstrucao: [string, string][] = [
@@ -77,9 +79,10 @@ export function App() {
                   </Protegido>
                 }
               />
+              <Route path="indicadores/:numero" element={<PlanoKpiPagina />} />
               <Route path="projetos" element={<IniciativasLista titulo="projetos" tipo="Projeto" />} />
               <Route path="desafios" element={<IniciativasLista titulo="desafios" tipo="Desafio" />} />
-              <Route path="vigilancias" element={<IniciativasLista titulo="vigilâncias" tipo="Vigilancia" />} />
+              <Route path="vigilancias" element={<VigilanciasPagina />} />
               <Route path="oportunidades" element={<IniciativasLista titulo="oportunidades" tipo="Oportunidade" />} />
               <Route
                 path="admin/importar"

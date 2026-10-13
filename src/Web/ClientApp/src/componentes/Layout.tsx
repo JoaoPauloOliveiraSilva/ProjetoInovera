@@ -184,7 +184,18 @@ export function Layout() {
 }
 
 /** Cabeçalho das páginas: lâmpada num círculo, "INOVAÇÃO" e título grande. */
-export function Cabecalho({ titulo, corLampada, acao }: { titulo: string; corLampada?: string; acao?: ReactNode }) {
+export function Cabecalho({
+  titulo,
+  corLampada,
+  acao,
+  exportar,
+}: {
+  titulo: string;
+  corLampada?: string;
+  acao?: ReactNode;
+  /** Link "exportar Excel" do modelo desta página. */
+  exportar?: string;
+}) {
   return (
     <header className="cabecalho">
       <div className="cabecalho-circulo">
@@ -193,7 +204,16 @@ export function Cabecalho({ titulo, corLampada, acao }: { titulo: string; corLam
       <div>
         <div className="sobretitulo">INOVAÇÃO</div>
         <h1 className="titulo">{titulo}</h1>
-        {acao}
+        {exportar ? (
+          <div className="cabecalho-acoes">
+            {acao}
+            <a className="exportar-excel" href={exportar} download>
+              exportar Excel ↓
+            </a>
+          </div>
+        ) : (
+          acao
+        )}
       </div>
     </header>
   );

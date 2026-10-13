@@ -40,7 +40,22 @@ import type {
   PilarEstrategico,
   ExecucaoVigilancia,
   LinhaEstrategia,
+  PeriodoKpi,
+  PlanoKpi,
+  VigilanciaPainel,
 } from './tipos';
+
+/** Modelos que se exportam em Excel (iguais a Application/Exportacoes). */
+export type ModeloExportacao = 'mod246' | 'mod239' | 'mod252' | 'mod237' | 'mod238' | 'mod235' | 'mod236' | 'mod241' | 'mod52' | 'mod69';
+
+/** Link de download do Excel de um modelo (a sessão vai no cookie). */
+export function urlExportacao(modelo: ModeloExportacao, ano?: number, periodo?: PeriodoKpi) {
+  const p = new URLSearchParams();
+  if (ano) p.set('ano', String(ano));
+  if (periodo) p.set('periodo', periodo);
+  const q = p.toString();
+  return `/api/Exportacoes/${modelo}${q ? `?${q}` : ''}`;
+}
 
 // Contas (ASP.NET Core Identity com cookie). As contas são criadas pelo Administrador (convite por email).
 export const contas = {
@@ -160,6 +175,16 @@ export const iniciativas = {
       ? enviar<number>(`${baseIniciativas}/${id}/execucoes`, dados)
       : pedido<number>('PUT', `${baseIniciativas}/${id}/execucoes/${execucaoId}`, dados),
   apagarExecucao: (id: number, execucaoId: number) => pedido<void>('DELETE', `${baseIniciativas}/${id}/execucoes/${execucaoId}`),
+  vigilancias: (incluirRetiradas = false) =>
+    obter<VigilanciaPainel[]>(`${baseIniciativas}/vigilancias${incluirRetiradas ? '?incluirRetiradas=true' : ''}`),
+  carregarRelatorio: (id: number, ficheiro: File, descricao: string, data: string) => {
+    const dados = new FormData();
+    dados.append('ficheiro', ficheiro);
+    if (descricao.trim()) dados.append('descricao', descricao.trim());
+    if (data) dados.append('data', data);
+    return enviar<number>(`${baseIniciativas}/${id}/relatorios`, dados);
+  },
+  alterarVigilanciaAtiva: (id: number, ativa: boolean) => pedido<void>('PUT', `${baseIniciativas}/${id}/ativa`, { ativa }),
 };
 
 /** Project Charter: um GET com os 6 separadores; cada linha grava-se sozinha. */
@@ -239,7 +264,15 @@ export const planoAnual = {
 };
 
 export const kpis = {
-  indicadores: (ano: number) => obter<Indicadores>(`/api/Kpis/indicadores?ano=${ano}`),
+  indicadores: (ano: number, periodo: PeriodoKpi = 'Anual') => obter<Indicadores>(`/api/Kpis/indicadores?ano=${ano}&periodo=${periodo}`),
+  plano: (numero: number, ano: number) => obter<PlanoKpi>(`/api/Kpis/${numero}/plano/${ano}`),
+  guardarObjetivo: (numero: number, ano: number, objetivo: string | null) =>
+    pedido<void>('PUT', `/api/Kpis/${numero}/plano/${ano}/objetivo`, { objetivo }),
+  guardarAcao: (numero: number, ano: number, id: number | null, dados: unknown) =>
+    id === null
+      ? enviar<number>(`/api/Kpis/${numero}/plano/${ano}/acoes`, dados)
+      : pedido<number>('PUT', `/api/Kpis/${numero}/plano/${ano}/acoes/${id}`, dados),
+  apagarAcao: (numero: number, ano: number, id: number) => pedido<void>('DELETE', `/api/Kpis/${numero}/plano/${ano}/acoes/${id}`),
   valoresExternos: () => obter<ValorExterno[]>('/api/Kpis/valores-externos'),
   guardarValorExterno: (id: number | null, dados: unknown) =>
     id === null ? enviar<number>('/api/Kpis/valores-externos', dados) : pedido<number>('PUT', `/api/Kpis/valores-externos/${id}`, dados),

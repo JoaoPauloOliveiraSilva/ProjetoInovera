@@ -10,6 +10,7 @@ import {
   nomeEstadoRequisito,
   nomeEstadoTrabalho,
   nomeImpacto,
+  areasPilar,
   nomePilar,
   nomeProbabilidade,
   nomeResposta,
@@ -71,7 +72,7 @@ export function CharterPagina() {
               <span>{nomeTipoIniciativa[dados.tipo]}</span>
               <span className={`etiqueta ${classeEstadoIniciativa[dados.estado]}`}>{nomeEstadoIniciativa[dados.estado]}</span>
               <span>responsável: {dados.responsavel ?? '—'}</span>
-              {dados.pilar && <span>{nomePilar[dados.pilar]}</span>}
+              {dados.pilar && <span title={areasPilar[dados.pilar].join(' · ')}>{nomePilar[dados.pilar]}</span>}
               <span>
                 {dados.dataInicio ? formatarData(dados.dataInicio) : '—'} → {dados.dataFim ? formatarData(dados.dataFim) : '—'}
               </span>

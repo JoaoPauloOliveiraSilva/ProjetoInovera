@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ideias as apiIdeias } from '../api/servicos';
-import { nomeClasse, nomeEstado, nomeTipo } from '../api/tipos';
+import { estadoIdeia, nomeClasse, nomeTipo } from '../api/tipos';
 import type { EstadoIdeia, IdeiaDetalhe as Ideia } from '../api/tipos';
 import { useAtualizar, usePedido } from '../api/usePedido';
 import { EstadoPedido } from '../componentes/Estado';
@@ -17,7 +17,7 @@ const passos: { estado: EstadoIdeia; nome: string }[] = [
   { estado: 'ValidacaoAutores', nome: '01. validação dos autores' },
   { estado: 'ValidacaoEquipa', nome: '02. validação equipa inovação' },
   { estado: 'EmDiscussao', nome: '03. discussão pública' },
-  { estado: 'EmAvaliacao', nome: '04. avaliação' },
+  { estado: 'EmAvaliacao', nome: '04. análise pela equipa' },
 ];
 
 function passoAtual(estado: EstadoIdeia): number {
@@ -162,7 +162,7 @@ function IdeiaDetalhe({ ideia, recarregar }: { ideia: Ideia; recarregar: () => v
           <dt>data</dt>
           <dd>{formatarData(ideia.data)}</dd>
           <dt>estado</dt>
-          <dd>{nomeEstado[ideia.estado]}</dd>
+          <dd>{estadoIdeia(ideia).nome}</dd>
           <dt>privada</dt>
           <dd>{ideia.privada ? 'sim' : 'não'}</dd>
         </dl>

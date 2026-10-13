@@ -1,5 +1,5 @@
 ﻿using Innovera.Domain.Common;
-using MediatR;
+using Innovera.Application.Common.Mediacao;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 

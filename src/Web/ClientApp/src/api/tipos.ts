@@ -185,13 +185,20 @@ export type EstadoIniciativa = 'Pendente' | 'EmAnalise' | 'EmCurso' | 'EmImpleme
 
 export type Horizonte = 'H1' | 'H2' | 'H3';
 
-/** Pilares estratégicos da dst (KPIs 35–37). Os nomes oficiais estão por confirmar com a dst. */
+/** Pilares estratégicos da dstelecom (KPIs 35–37). */
 export type PilarEstrategico = 'Pilar1' | 'Pilar2' | 'Pilar3';
 
 export const nomePilar: Record<PilarEstrategico, string> = {
-  Pilar1: 'pilar estratégico 1',
-  Pilar2: 'pilar estratégico 2',
-  Pilar3: 'pilar estratégico 3',
+  Pilar1: 'Pilar 1 · Modelo de Negócio Core',
+  Pilar2: 'Pilar 2 · Exportação do Modelo de Negócio',
+  Pilar3: 'Pilar 3 · Ambiente e Prosperidade do Planeta',
+};
+
+/** Linhas de cada pilar (como no documento de estratégia da dstelecom). */
+export const areasPilar: Record<PilarEstrategico, string[]> = {
+  Pilar1: ['Inovação Tecnológica', 'Digitalização de Processos'],
+  Pilar2: ['Neutral Hosting para Rede Móvel', 'Infraestrutura Aeroespacial', 'Tecnologia para Cabos Submarinos Sensorizados', 'Data Centers Avançados'],
+  Pilar3: ['Eficiência Energética', 'Sustentabilidade e Economia Circular'],
 };
 
 export interface IniciativaResumo {
@@ -239,6 +246,24 @@ export interface ExecucaoVigilancia {
   noPrazo: boolean;
   atrasada: boolean;
   conhecimentoId: number | null;
+  /** Relatório carregado na plataforma (descarrega-se pelo linkResultado). */
+  nomeFicheiro: string | null;
+  tamanhoBytes: number | null;
+}
+
+/** Uma vigilância na página das vigilâncias, com os relatórios. */
+export interface VigilanciaPainel {
+  id: number;
+  codigo: string;
+  titulo: string;
+  estado: EstadoIniciativa;
+  responsavel: string | null;
+  descritivo: string | null;
+  periodicidade: Periodicidade;
+  dataInicio: string | null;
+  proximaExecucao: string | null;
+  ativa: boolean;
+  execucoes: ExecucaoVigilancia[];
 }
 
 /** Modelo de gestão/partilha (Atividades · Quem · Quando) dos Mod.236, 237 e 238. */
@@ -391,13 +416,14 @@ export const nomeTipo: Record<TipoIdeia, string> = {
   NovoProdutoServicoDetalhado: 'novo produto/serviço detalhado',
 };
 
+/** Estados das ideias com os nomes que a dstelecom usa (reunião de 13/10). */
 export const nomeEstado: Record<EstadoIdeia, string> = {
   ValidacaoAutores: 'validação dos autores',
-  ValidacaoEquipa: 'validação equipa inovação',
-  EmDiscussao: 'em discussão',
-  EmAvaliacao: 'em avaliação pelo manager',
+  ValidacaoEquipa: 'validação da equipa de inovação',
+  EmDiscussao: 'em discussão pública',
+  EmAvaliacao: 'em análise pela equipa',
   Aprovada: 'aprovada',
-  NaoAprovada: 'não aprovada',
+  NaoAprovada: 'rejeitada',
 };
 
 export const nomeClasse: Record<ClasseIdeia, string> = {
@@ -411,6 +437,19 @@ export const nomeClasse: Record<ClasseIdeia, string> = {
 
 export const classesAprovada: ClasseIdeia[] = ['MelhoriaContinua', 'Projeto', 'Desafio', 'Arquivada'];
 export const classesNaoAprovada: ClasseIdeia[] = ['IdeiaDuplicada', 'NaoAplicavel'];
+
+/**
+ * Estado visível de uma ideia: depois de aprovada, a classe diz se foi "passada a projeto" (ou a desafio) ou "arquivada".
+ */
+export function estadoIdeia(i: { estado: EstadoIdeia; classe: ClasseIdeia | null }): { nome: string; classe: string } {
+  if (i.estado === 'Aprovada' && (i.classe === 'Projeto' || i.classe === 'Desafio')) {
+    return { nome: i.classe === 'Projeto' ? 'passada a projeto' : 'passada a desafio', classe: 'estado-passada' };
+  }
+  if (i.classe === 'Arquivada' || i.classe === 'IdeiaDuplicada') {
+    return { nome: 'arquivada', classe: 'estado-arquivada' };
+  }
+  return { nome: nomeEstado[i.estado], classe: classeEstado[i.estado] };
+}
 
 /** Classe CSS do estado (as etiquetas coloridas do site atual). */
 export const classeEstado: Record<EstadoIdeia, string> = {
@@ -685,7 +724,7 @@ export type EstadoAcordo = 'EmCurso' | 'Terminado';
 export type TipoAtivo = 'Patente' | 'Design' | 'Marca';
 export type Confidencialidade = 'Baixo' | 'Elevado';
 export type TipoValorExterno = 'NumeroTrabalhadores' | 'Receitas' | 'ProveitosIdi';
-export type PeriodoKpi = 'Anual' | 'PrimeiroSemestre' | 'AnoAteData';
+export type PeriodoKpi = 'Anual' | 'PrimeiroSemestre' | 'SegundoSemestre';
 
 export interface Parceiro {
   id: number;
@@ -802,7 +841,7 @@ export const nomeTipoValorExterno: Record<TipoValorExterno, string> = {
   ProveitosIdi: 'proveitos de IDI (€)',
 };
 
-export const nomePeriodoKpi: Record<PeriodoKpi, string> = { Anual: 'anual', PrimeiroSemestre: '1.º semestre', AnoAteData: 'ano até à data' };
+export const nomePeriodoKpi: Record<PeriodoKpi, string> = { PrimeiroSemestre: '1.º semestre', SegundoSemestre: '2.º semestre', Anual: 'ano completo' };
 
 // Indicadores (Mod.239) e dashboard inicial
 
@@ -817,10 +856,46 @@ export interface Kpi {
   valorAnoAnterior: number | null;
   disponivel: boolean;
   nota: string | null;
+  /** Objetivo anual escrito como no Mod.239 (ex.: "≥ 30"). */
+  objetivo: string | null;
+  /** Só com o ano completo; null sem objetivo ou sem valor. */
+  atingido: boolean | null;
+  acoesAbertas: number;
+}
+
+export type TipoAcaoKpi = 'PlanoInicial' | 'Acompanhamento';
+
+export const nomeTipoAcaoKpi: Record<TipoAcaoKpi, string> = { PlanoInicial: 'plano de ação inicial', Acompanhamento: 'acompanhamento' };
+
+export interface AcaoKpi {
+  id: number;
+  tipo: TipoAcaoKpi;
+  dataCriacao: string;
+  descricao: string;
+  analiseResultados: string | null;
+  recursos: string | null;
+  responsavelId: number | null;
+  responsavel: string | null;
+  prazo: string | null;
+  concluidaEm: string | null;
+  eficaz: boolean | null;
+  avaliacaoAnual: string | null;
+}
+
+export interface PlanoKpi {
+  numero: number;
+  nome: string;
+  categoria: string;
+  unidade: UnidadeKpi;
+  ano: number;
+  objetivo: string | null;
+  acoes: AcaoKpi[];
+  podeEditar: boolean;
 }
 
 export interface Indicadores {
   ano: number;
+  periodo: PeriodoKpi;
   kpis: Kpi[];
   iniciativasPorEstado: { tipo: TipoIniciativa; estado: EstadoIniciativa; quantidade: number }[];
   proximasAtividades: { id: number; titulo: string; data: string; cor: string | null }[];

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Permissoes } from '../api/permissoes';
-import { conhecimento as api, iniciativas as apiIniciativas } from '../api/servicos';
+import { conhecimento as api, iniciativas as apiIniciativas, urlExportacao } from '../api/servicos';
 import { nomeCategoriaLicao, nomeOrigemConhecimento } from '../api/tipos';
 import type { CategoriaLicao, ConhecimentoCodificado, IniciativaResumo, OrigemConhecimento } from '../api/tipos';
 import { usePedido } from '../api/usePedido';
@@ -32,7 +32,7 @@ export function RepositorioLicoes() {
 
   return (
     <>
-      <Cabecalho titulo="lições aprendidas" corLampada="#3a6f9a" />
+      <Cabecalho titulo="lições aprendidas" corLampada="#3a6f9a" exportar={urlExportacao('mod252')} />
       <div className="filtros filtros-varios">
         <label>
           categoria
@@ -100,7 +100,7 @@ export function RepositorioConhecimento() {
 
   return (
     <>
-      <Cabecalho titulo="conhecimento codificado" corLampada="#3a6f9a" />
+      <Cabecalho titulo="conhecimento codificado" corLampada="#3a6f9a" exportar={urlExportacao('mod237')} />
       <div className="filtros filtros-varios">
         <label>
           origem

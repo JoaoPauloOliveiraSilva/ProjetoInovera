@@ -5,7 +5,7 @@ import { Balao, Coracao, Direita, Esquerda, Mais } from '../componentes/Icones';
 import { ideias as apiIdeias } from '../api/servicos';
 import { usePedido } from '../api/usePedido';
 import { EstadoPedido } from '../componentes/Estado';
-import { nomeClasse } from '../api/tipos';
+import { estadoIdeia, nomeClasse } from '../api/tipos';
 import { formatarData } from '../dados/regras';
 import { NovaIdeiaGaveta } from './NovaIdeia';
 import { IdeiaGaveta } from './IdeiaDetalhe';
@@ -86,9 +86,7 @@ export function Homepage() {
             <button key={i.id} className="cartao-ideia" onClick={() => setAberta(i.id)}>
               <span className="cartao-titulo">{i.titulo}</span>
               <span className="cartao-resultado">
-                <span className={`etiqueta ${i.estado === 'Aprovada' ? 'estado-aprovada' : 'estado-nao-aprovada'}`}>
-                  {i.estado === 'Aprovada' ? 'aprovada' : 'não aprovada'}
-                </span>
+                <span className={`etiqueta ${estadoIdeia(i).classe}`}>{estadoIdeia(i).nome}</span>
                 {i.classe && <span className="cinzento-escuro">{nomeClasse[i.classe]}</span>}
                 <span className="cinzento-escuro">{formatarData(i.data)}</span>
               </span>

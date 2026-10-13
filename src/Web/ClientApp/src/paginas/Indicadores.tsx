@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Permissoes } from '../api/permissoes';
-import { kpis as api } from '../api/servicos';
-import { nomeEstadoIniciativa, nomeTipoIniciativa } from '../api/tipos';
-import type { EstadoIniciativa, Indicadores, Kpi, TipoIniciativa } from '../api/tipos';
+import { kpis as api, urlExportacao } from '../api/servicos';
+import { nomeEstadoIniciativa, nomePeriodoKpi, nomeTipoIniciativa } from '../api/tipos';
+import type { EstadoIniciativa, Indicadores, Kpi, PeriodoKpi, TipoIniciativa } from '../api/tipos';
 import { usePedido } from '../api/usePedido';
 import { EstadoPedido } from '../componentes/Estado';
 import { Cabecalho } from '../componentes/Layout';
 import { formatarData } from '../dados/regras';
 import { usePermissao } from '../sessao/Sessao';
 
-function formatar(k: Kpi, valor: number | null) {
+export function formatar(k: { unidade: Kpi['unidade'] }, valor: number | null) {
   if (valor === null) return '—';
   switch (k.unidade) {
     case 'Percentagem':
@@ -42,7 +42,11 @@ function Variacao({ k }: { k: Kpi }) {
 
 function CartaoKpi({ k, ano }: { k: Kpi; ano: number }) {
   return (
-    <div className={`kpi${k.disponivel ? '' : ' indisponivel'}`} title={k.nota ?? undefined}>
+    <Link
+      className={`kpi${k.disponivel ? '' : ' indisponivel'}`}
+      title={k.nota ?? 'Objetivo anual e plano de ação'}
+      to={`/inovacao/indicadores/${k.numero}?ano=${ano}`}
+    >
       <span className="kpi-numero">KPI {k.numero}</span>
       <span className="kpi-nome">{k.nome}</span>
       <span className="kpi-valor">{formatar(k, k.valor)}</span>
@@ -55,16 +59,30 @@ function CartaoKpi({ k, ano }: { k: Kpi; ano: number }) {
           (k.nota ?? 'Sem dados.')
         )}
       </span>
+      {(k.objetivo || k.acoesAbertas > 0) && (
+        <span className="kpi-objetivo">
+          {k.objetivo && <span>objetivo {k.objetivo}</span>}
+          {k.atingido !== null && (
+            <span className={`etiqueta ${k.atingido ? 'objetivo-atingido' : 'objetivo-falhado'}`}>
+              {k.atingido ? '✓ atingido' : '✗ abaixo'}
+            </span>
+          )}
+          {k.acoesAbertas > 0 && <span>· {k.acoesAbertas} {k.acoesAbertas === 1 ? 'ação' : 'ações'} em curso</span>}
+        </span>
+      )}
       {k.disponivel && k.nota && <span className="kpi-nota">{k.nota}</span>}
-    </div>
+    </Link>
   );
 }
 
-/** Indicadores de desempenho (Mod.239): os 41 KPIs de um ano, com o anterior para comparar. */
+const periodos: PeriodoKpi[] = ['PrimeiroSemestre', 'SegundoSemestre', 'Anual'];
+
+/** Indicadores de desempenho (Mod.239): os 41 KPIs por semestre ou ano, com o mesmo período do ano anterior para comparar. */
 export function IndicadoresPagina() {
   const tem = usePermissao();
   const [ano, setAno] = useState(new Date().getFullYear());
-  const { dados, erro, aCarregar } = usePedido(() => api.indicadores(ano), [ano]);
+  const [periodo, setPeriodo] = useState<PeriodoKpi>('Anual');
+  const { dados, erro, aCarregar } = usePedido(() => api.indicadores(ano, periodo), [ano, periodo]);
   const anoAtual = new Date().getFullYear();
 
   const categorias = dados ? [...new Set(dados.kpis.map((k) => k.categoria))] : [];
@@ -74,6 +92,7 @@ export function IndicadoresPagina() {
       <Cabecalho
         titulo="indicadores"
         corLampada="#3a6f9a"
+        exportar={urlExportacao('mod239', ano, periodo)}
         acao={
           tem(Permissoes.valoresExternos) ? (
             <Link className="botao-pequeno" to="/inovacao/indicadores/valores-externos">
@@ -93,7 +112,19 @@ export function IndicadoresPagina() {
             ))}
           </select>
         </label>
-        <span className="cinzento-escuro">Indicadores do Mod.239, calculados a partir dos registos da plataforma.</span>
+        <label>
+          período
+          <select value={periodo} onChange={(e) => setPeriodo(e.target.value as PeriodoKpi)}>
+            {periodos.map((p) => (
+              <option key={p} value={p}>
+                {nomePeriodoKpi[p]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <span className="cinzento-escuro">
+          Indicadores do Mod.239. Compara com o mesmo período de {ano - 1}; o objetivo anual avalia-se com o ano completo.
+        </span>
       </div>
       <EstadoPedido aCarregar={aCarregar} erro={erro} vazio={dados === undefined} />
       {dados && (

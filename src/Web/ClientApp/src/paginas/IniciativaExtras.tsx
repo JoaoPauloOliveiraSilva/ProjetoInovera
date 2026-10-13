@@ -142,8 +142,14 @@ export function ExecucoesVigilancia({ detalhe }: { detalhe: Detalhe }) {
                 {(e.linkResultado || e.conhecimentoId) && (
                   <div className="execucao-links">
                     {e.linkResultado && (
-                      <a className="ligacao" href={e.linkResultado} target="_blank" rel="noreferrer">
-                        relatório ↗
+                      <a
+                        className="ligacao"
+                        href={e.linkResultado}
+                        target={e.nomeFicheiro ? undefined : '_blank'}
+                        rel="noreferrer"
+                        download={e.nomeFicheiro ?? undefined}
+                      >
+                        {e.nomeFicheiro ?? 'relatório ↗'}
                       </a>
                     )}
                     {e.conhecimentoId && <span className="cinzento-escuro">no conhecimento codificado ✓</span>}

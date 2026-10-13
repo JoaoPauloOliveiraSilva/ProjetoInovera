@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Innovera.Application.Common.Behaviours;
+using Innovera.Application.Common.Mediacao;
 using Microsoft.Extensions.Hosting;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -8,18 +9,14 @@ public static class DependencyInjection
 {
     public static void AddApplicationServices(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddAutoMapper(cfg => 
-            cfg.AddMaps(Assembly.GetExecutingAssembly()));
-
         builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        builder.Services.AddMediatR(cfg => {
-            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
-            cfg.AddOpenRequestPreProcessor(typeof(LoggingBehaviour<>));
-            cfg.AddOpenBehavior(typeof(UnhandledExceptionBehaviour<,>));
-            cfg.AddOpenBehavior(typeof(AuthorizationBehaviour<,>));
-            cfg.AddOpenBehavior(typeof(ValidationBehaviour<,>));
-            cfg.AddOpenBehavior(typeof(PerformanceBehaviour<,>));
-        });
+        // Mediador próprio (sem MediatR): o primeiro comportamento é o mais exterior.
+        builder.Services.AddMediador(Assembly.GetExecutingAssembly(),
+            typeof(LoggingBehaviour<,>),
+            typeof(UnhandledExceptionBehaviour<,>),
+            typeof(AuthorizationBehaviour<,>),
+            typeof(ValidationBehaviour<,>),
+            typeof(PerformanceBehaviour<,>));
     }
 }

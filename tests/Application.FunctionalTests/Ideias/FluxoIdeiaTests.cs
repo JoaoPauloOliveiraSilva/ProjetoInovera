@@ -83,7 +83,8 @@ public class FluxoIdeiaTests : TestBase
         var projeto = await TestApp.FindAsync<Projeto>(iniciativaId.Value);
         projeto.ShouldNotBeNull();
         projeto.IdeiaOrigemId.ShouldBe(criada.Id);
-        projeto.Codigo.ShouldBe(criada.Codigo);
+        projeto.Codigo.ShouldBe("PRJ-001");
+        projeto.Origem.ShouldBe($"Ideia {criada.Codigo}");
     }
 
     [Test]

@@ -25,9 +25,9 @@ public class RequestLoggerTests
     {
         _user.Setup(x => x.Id).Returns(Guid.NewGuid().ToString());
 
-        var requestLogger = new LoggingBehaviour<PedidoDeTeste>(_logger.Object, _user.Object, _identityService.Object);
+        var requestLogger = new LoggingBehaviour<PedidoDeTeste, int>(_logger.Object, _user.Object, _identityService.Object);
 
-        await requestLogger.Process(new PedidoDeTeste { Nome = "teste" }, new CancellationToken());
+        await requestLogger.Handle(new PedidoDeTeste { Nome = "teste" }, _ => Task.FromResult(1), new CancellationToken());
 
         _identityService.Verify(i => i.GetUserNameAsync(It.IsAny<string>()), Times.Once);
     }
@@ -35,9 +35,9 @@ public class RequestLoggerTests
     [Test]
     public async Task ShouldNotCallGetUserNameAsyncOnceIfUnauthenticated()
     {
-        var requestLogger = new LoggingBehaviour<PedidoDeTeste>(_logger.Object, _user.Object, _identityService.Object);
+        var requestLogger = new LoggingBehaviour<PedidoDeTeste, int>(_logger.Object, _user.Object, _identityService.Object);
 
-        await requestLogger.Process(new PedidoDeTeste { Nome = "teste" }, new CancellationToken());
+        await requestLogger.Handle(new PedidoDeTeste { Nome = "teste" }, _ => Task.FromResult(1), new CancellationToken());
 
         _identityService.Verify(i => i.GetUserNameAsync(It.IsAny<string>()), Times.Never);
     }

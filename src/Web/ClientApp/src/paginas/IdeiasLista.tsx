@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ideias as apiIdeias } from '../api/servicos';
-import { classeEstado, nomeClasse, nomeEstado } from '../api/tipos';
+import { estadoIdeia, nomeClasse, nomeEstado } from '../api/tipos';
 import type { ClasseIdeia, EstadoIdeia, Responsabilidade } from '../api/tipos';
 import { usePedido } from '../api/usePedido';
 import { EstadoPedido } from '../componentes/Estado';
@@ -177,7 +177,7 @@ export function IdeiasLista({ modo }: { modo: Modo }) {
             </span>
             <span className="forte">{i.autores}</span>
             <span className="forte">{formatarData(i.data)}</span>
-            {comEstado && <span className={`etiqueta ${classeEstado[i.estado]}`}>{nomeEstado[i.estado]}</span>}
+            {comEstado && <span className={`etiqueta ${estadoIdeia(i).classe}`}>{estadoIdeia(i).nome}</span>}
             <span className="contador">
               <Coracao /> {i.likes}
             </span>

@@ -13,8 +13,17 @@ public class ExecucaoVigilancia : BaseAuditableEntity
 
     public string? Resultado { get; set; }
 
-    /// <summary>Link OneDrive para o relatório da vigilância.</summary>
+    /// <summary>Link para o relatório da vigilância (OneDrive ou o ficheiro carregado na plataforma).</summary>
     public string? LinkResultado { get; set; }
+
+    /// <summary>Relatório carregado na plataforma (gerado pela tarefa automática da vigilância).</summary>
+    public string? NomeFicheiro { get; set; }
+
+    public string? TipoConteudo { get; set; }
+
+    public long? TamanhoBytes { get; set; }
+
+    public string? ChaveArmazenamento { get; set; }
 
     /// <summary>Realizada até à data prevista (KPI 24 — % de vigilâncias no prazo).</summary>
     public bool NoPrazo => DataRealizada.HasValue && DataRealizada.Value <= DataPrevista;

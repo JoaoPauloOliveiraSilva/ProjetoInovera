@@ -11,14 +11,42 @@ public class Kpis : IEndpointGroup
         groupBuilder.RequireAuthorization();
 
         groupBuilder.MapGet(ObterIndicadores, "indicadores");
+        groupBuilder.MapGet(ObterPlanoKpi, "{numero:int}/plano/{ano:int}");
+        groupBuilder.MapPut(GuardarObjetivoKpi, "{numero:int}/plano/{ano:int}/objetivo");
+        groupBuilder.MapPost(CriarAcaoKpi, "{numero:int}/plano/{ano:int}/acoes");
+        groupBuilder.MapPut(EditarAcaoKpi, "{numero:int}/plano/{ano:int}/acoes/{id:int}");
+        groupBuilder.MapDelete(ApagarAcaoKpi, "{numero:int}/plano/{ano:int}/acoes/{id:int}");
         groupBuilder.MapGet(ListarValoresExternos, "valores-externos");
         groupBuilder.MapPost(CriarValorExterno, "valores-externos");
         groupBuilder.MapPut(EditarValorExterno, "valores-externos/{id:int}");
         groupBuilder.MapDelete(ApagarValorExterno, "valores-externos/{id:int}");
     }
 
-    public static async Task<Ok<IndicadoresDto>> ObterIndicadores(ISender sender, int? ano)
-        => TypedResults.Ok(await sender.Send(new ObterIndicadoresQuery(ano ?? DateTime.Today.Year)));
+    public static async Task<Ok<IndicadoresDto>> ObterIndicadores(ISender sender, int? ano, Domain.Enums.PeriodoKpi? periodo)
+        => TypedResults.Ok(await sender.Send(new ObterIndicadoresQuery(ano ?? DateTime.Today.Year, periodo ?? Domain.Enums.PeriodoKpi.Anual)));
+
+    public static async Task<Ok<PlanoKpiDto>> ObterPlanoKpi(ISender sender, int numero, int ano)
+        => TypedResults.Ok(await sender.Send(new ObterPlanoKpiQuery(numero, ano)));
+
+    public record ObjetivoPedido(string? Objetivo);
+
+    public static async Task<NoContent> GuardarObjetivoKpi(ISender sender, int numero, int ano, ObjetivoPedido pedido)
+    {
+        await sender.Send(new GuardarObjetivoKpiCommand(numero, ano, pedido.Objetivo));
+        return TypedResults.NoContent();
+    }
+
+    public static async Task<Ok<int>> CriarAcaoKpi(ISender sender, int numero, int ano, AcaoKpiDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarAcaoKpiCommand(numero, ano, null, dados)));
+
+    public static async Task<Ok<int>> EditarAcaoKpi(ISender sender, int numero, int ano, int id, AcaoKpiDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarAcaoKpiCommand(numero, ano, id, dados)));
+
+    public static async Task<NoContent> ApagarAcaoKpi(ISender sender, int numero, int ano, int id)
+    {
+        await sender.Send(new ApagarAcaoKpiCommand(numero, ano, id));
+        return TypedResults.NoContent();
+    }
 
     public static async Task<Ok<IReadOnlyList<ValorExternoDto>>> ListarValoresExternos(ISender sender)
         => TypedResults.Ok(await sender.Send(new ListarValoresExternosQuery()));

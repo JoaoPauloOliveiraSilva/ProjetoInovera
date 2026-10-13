@@ -1,4 +1,5 @@
 using Innovera.Application.Charters;
+using Innovera.Application.Ideias.Queries;
 
 namespace Innovera.Application.Iniciativas;
 
@@ -6,7 +7,7 @@ namespace Innovera.Application.Iniciativas;
 // resultado entra automaticamente no repositório de conhecimento codificado (Mod.237, RF10).
 
 public record ExecucaoDto(int Id, DateOnly DataPrevista, DateOnly? DataRealizada, string? Resultado, string? LinkResultado, bool NoPrazo,
-    bool Atrasada, int? ConhecimentoId);
+    bool Atrasada, int? ConhecimentoId, string? NomeFicheiro = null, long? TamanhoBytes = null);
 
 public record ExecucaoDados(DateOnly DataPrevista, DateOnly? DataRealizada, string? Resultado, string? LinkResultado);
 
@@ -19,6 +20,26 @@ internal static class Vigilancias
         Guard.Against.NotFound(id, iniciativa);
         return iniciativa as Vigilancia ?? throw new RegraDeNegocioException("Só as vigilâncias têm execuções.");
     }
+
+    public const long TamanhoMaximoBytes = 25 * 1024 * 1024;
+
+    public static string LinkFicheiro(int vigilanciaId, int execucaoId) => $"/api/Iniciativas/{vigilanciaId}/execucoes/{execucaoId}/ficheiro";
+
+    public static ExecucaoDto ParaDto(ExecucaoVigilancia e, DateOnly hoje, IReadOnlyDictionary<int, int> conhecimentoPorExecucao)
+        => new(e.Id, e.DataPrevista, e.DataRealizada, e.Resultado, e.LinkResultado, e.NoPrazo,
+            e.DataRealizada is null && e.DataPrevista < hoje,
+            conhecimentoPorExecucao.TryGetValue(e.Id, out var c) ? c : null, e.NomeFicheiro, e.TamanhoBytes);
+
+    /// <summary>Entrada do conhecimento codificado de cada execução (para mostrar "no conhecimento codificado").</summary>
+    public static async Task<Dictionary<int, int>> ConhecimentoPorExecucaoAsync(IApplicationDbContext context, IReadOnlyCollection<int> ids,
+        CancellationToken cancellationToken)
+        => await context.ConhecimentosCodificados.AsNoTracking()
+            .Where(c => c.ExecucaoVigilanciaId != null && ids.Contains(c.ExecucaoVigilanciaId.Value))
+            .GroupBy(c => c.ExecucaoVigilanciaId!.Value)
+            .Select(g => new { ExecucaoId = g.Key, Id = g.Min(c => c.Id) })
+            .ToDictionaryAsync(x => x.ExecucaoId, x => x.Id, cancellationToken);
+
+    public static bool Ativa(Vigilancia v) => v.Estado is not (EstadoIniciativa.Concluida or EstadoIniciativa.Cancelada or EstadoIniciativa.Rejeitada);
 
     /// <summary>Data da execução seguinte, conforme a periodicidade (null se não se repete).</summary>
     public static DateOnly? Seguinte(DateOnly data, Periodicidade periodicidade) => periodicidade switch
@@ -41,18 +62,12 @@ public class ListarExecucoesQueryHandler(IApplicationDbContext context, TimeProv
     public async Task<IReadOnlyList<ExecucaoDto>> Handle(ListarExecucoesQuery request, CancellationToken cancellationToken)
     {
         var vigilancia = await Vigilancias.ObterAsync(context, request.VigilanciaId, cancellationToken);
-        var ids = vigilancia.Execucoes.Select(e => e.Id).ToList();
-        var conhecimento = await context.ConhecimentosCodificados.AsNoTracking()
-            .Where(c => c.ExecucaoVigilanciaId != null && ids.Contains(c.ExecucaoVigilanciaId.Value))
-            .Select(c => new { c.Id, ExecucaoId = c.ExecucaoVigilanciaId!.Value })
-            .ToListAsync(cancellationToken);
+        var conhecimento = await Vigilancias.ConhecimentoPorExecucaoAsync(context, vigilancia.Execucoes.Select(e => e.Id).ToList(), cancellationToken);
         var hoje = DateOnly.FromDateTime(relogio.GetUtcNow().UtcDateTime);
 
         return vigilancia.Execucoes
             .OrderByDescending(e => e.DataPrevista)
-            .Select(e => new ExecucaoDto(e.Id, e.DataPrevista, e.DataRealizada, e.Resultado, e.LinkResultado, e.NoPrazo,
-                e.DataRealizada is null && e.DataPrevista < hoje,
-                conhecimento.FirstOrDefault(c => c.ExecucaoId == e.Id)?.Id))
+            .Select(e => Vigilancias.ParaDto(e, hoje, conhecimento))
             .ToList();
     }
 }
@@ -179,3 +194,135 @@ public class ResultadoVigilanciaParaConhecimentoCodificado(IApplicationDbContext
         }
     }
 }
+
+// ---------- Página das vigilâncias: lista, relatórios carregados e retirar/repor ----------
+
+public record VigilanciaPainelDto(int Id, string Codigo, string Titulo, EstadoIniciativa Estado, string? Responsavel, string? Descritivo,
+    Periodicidade Periodicidade, DateOnly? DataInicio, DateOnly? ProximaExecucao, bool Ativa, IReadOnlyList<ExecucaoDto> Execucoes);
+
+/// <summary>As vigilâncias com a informação e os relatórios de cada uma (as retiradas só se pedidas).</summary>
+[Authorize]
+public record ListarVigilanciasQuery(bool IncluirRetiradas = false) : IRequest<IReadOnlyList<VigilanciaPainelDto>>;
+
+public class ListarVigilanciasQueryHandler(IApplicationDbContext context, TimeProvider relogio)
+    : IRequestHandler<ListarVigilanciasQuery, IReadOnlyList<VigilanciaPainelDto>>
+{
+    public async Task<IReadOnlyList<VigilanciaPainelDto>> Handle(ListarVigilanciasQuery request, CancellationToken cancellationToken)
+    {
+        var vigilancias = await context.Iniciativas.OfType<Vigilancia>().AsNoTracking()
+            .Include(v => v.Responsavel)
+            .Include(v => v.Execucoes)
+            .OrderBy(v => v.Titulo)
+            .ToListAsync(cancellationToken);
+        var conhecimento = await Vigilancias.ConhecimentoPorExecucaoAsync(context,
+            vigilancias.SelectMany(v => v.Execucoes).Select(e => e.Id).ToList(), cancellationToken);
+        var hoje = DateOnly.FromDateTime(relogio.GetUtcNow().UtcDateTime);
+
+        return vigilancias
+            .Select(v => new VigilanciaPainelDto(v.Id, v.Codigo, v.Titulo, v.Estado, v.Responsavel?.Nome ?? v.ResponsavelNome, v.Descritivo,
+                v.Periodicidade, v.DataInicio,
+                v.Execucoes.Where(e => e.DataRealizada is null).OrderBy(e => e.DataPrevista).Select(e => (DateOnly?)e.DataPrevista).FirstOrDefault(),
+                Vigilancias.Ativa(v),
+                v.Execucoes.OrderByDescending(e => e.DataRealizada ?? e.DataPrevista).Select(e => Vigilancias.ParaDto(e, hoje, conhecimento)).ToList()))
+            .Where(v => request.IncluirRetiradas || v.Ativa)
+            .ToList();
+    }
+}
+
+/// <summary>
+/// Carrega o relatório de uma vigilância (o ficheiro gerado pela tarefa automática): fica na execução por fazer mais antiga
+/// (ou numa nova, se não houver), conta como feita nessa data e entra no conhecimento codificado (Mod.237).
+/// </summary>
+[Authorize(Permissao = Permissoes.Iniciativas.Gerir)]
+public record CarregarRelatorioVigilanciaCommand(int VigilanciaId, string NomeFicheiro, string TipoConteudo, long TamanhoBytes, Stream Conteudo,
+    string? Descricao, DateOnly? Data) : IRequest<int>;
+
+public class CarregarRelatorioVigilanciaCommandValidator : AbstractValidator<CarregarRelatorioVigilanciaCommand>
+{
+    public CarregarRelatorioVigilanciaCommandValidator()
+    {
+        RuleFor(c => c.NomeFicheiro).NotEmpty().MaximumLength(260);
+        RuleFor(c => c.TamanhoBytes).GreaterThan(0).LessThanOrEqualTo(Vigilancias.TamanhoMaximoBytes)
+            .WithMessage("O relatório tem de ter no máximo 25 MB.");
+        RuleFor(c => c.Descricao).MaximumLength(4000);
+    }
+}
+
+public class CarregarRelatorioVigilanciaCommandHandler(IApplicationDbContext context, IArmazenamentoFicheiros armazenamento, TimeProvider relogio)
+    : IRequestHandler<CarregarRelatorioVigilanciaCommand, int>
+{
+    public async Task<int> Handle(CarregarRelatorioVigilanciaCommand request, CancellationToken cancellationToken)
+    {
+        var vigilancia = await Vigilancias.ObterAsync(context, request.VigilanciaId, cancellationToken);
+        var data = request.Data ?? DateOnly.FromDateTime(relogio.GetUtcNow().UtcDateTime);
+
+        var execucao = vigilancia.Execucoes.Where(e => e.DataRealizada is null).OrderBy(e => e.DataPrevista).FirstOrDefault();
+        if (execucao is null)
+        {
+            execucao = new ExecucaoVigilancia { Vigilancia = vigilancia, DataPrevista = data };
+            vigilancia.Execucoes.Add(execucao);
+        }
+
+        var nome = Path.GetFileName(request.NomeFicheiro);
+        execucao.ChaveArmazenamento = await armazenamento.GuardarAsync(request.Conteudo, $"vigilancias/{vigilancia.Codigo}", nome, cancellationToken);
+        execucao.NomeFicheiro = nome;
+        execucao.TipoConteudo = string.IsNullOrWhiteSpace(request.TipoConteudo) ? "application/octet-stream" : request.TipoConteudo;
+        execucao.TamanhoBytes = request.TamanhoBytes;
+        await context.SaveChangesAsync(cancellationToken);
+
+        // Já com o número da execução, para o link do ficheiro.
+        var resultado = string.IsNullOrWhiteSpace(request.Descricao) ? $"Relatório {nome}" : request.Descricao.Trim();
+        execucao.RegistarResultado(resultado, data, Vigilancias.LinkFicheiro(vigilancia.Id, execucao.Id));
+        if (Vigilancias.Seguinte(execucao.DataPrevista, vigilancia.Periodicidade) is { } seguinte
+            && !vigilancia.Execucoes.Any(e => e != execucao && e.DataRealizada is null))
+        {
+            vigilancia.Execucoes.Add(new ExecucaoVigilancia { Vigilancia = vigilancia, DataPrevista = seguinte });
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+        return execucao.Id;
+    }
+}
+
+/// <summary>O relatório carregado numa execução (para descarregar).</summary>
+[Authorize]
+public record ObterRelatorioVigilanciaQuery(int VigilanciaId, int ExecucaoId) : IRequest<FicheiroDto>;
+
+public class ObterRelatorioVigilanciaQueryHandler(IApplicationDbContext context, IArmazenamentoFicheiros armazenamento)
+    : IRequestHandler<ObterRelatorioVigilanciaQuery, FicheiroDto>
+{
+    public async Task<FicheiroDto> Handle(ObterRelatorioVigilanciaQuery request, CancellationToken cancellationToken)
+    {
+        var ficheiro = await context.Iniciativas.OfType<Vigilancia>().AsNoTracking()
+            .Where(v => v.Id == request.VigilanciaId)
+            .SelectMany(v => v.Execucoes)
+            .Where(e => e.Id == request.ExecucaoId && e.ChaveArmazenamento != null)
+            .Select(e => new { e.ChaveArmazenamento, e.NomeFicheiro, e.TipoConteudo })
+            .FirstOrDefaultAsync(cancellationToken);
+        Guard.Against.NotFound(request.ExecucaoId, ficheiro);
+
+        var conteudo = await armazenamento.AbrirAsync(ficheiro.ChaveArmazenamento!, cancellationToken);
+        Guard.Against.NotFound(ficheiro.ChaveArmazenamento!, conteudo);
+        return new FicheiroDto(conteudo, ficheiro.NomeFicheiro ?? "relatorio", ficheiro.TipoConteudo ?? "application/octet-stream");
+    }
+}
+
+/// <summary>Retira uma vigilância da página (fica terminada, com o histórico) ou volta a pô-la ativa.</summary>
+[Authorize(Permissao = Permissoes.Iniciativas.Gerir)]
+public record AlterarVigilanciaAtivaCommand(int VigilanciaId, bool Ativa) : IRequest;
+
+public class AlterarVigilanciaAtivaCommandHandler(IApplicationDbContext context, TimeProvider relogio) : IRequestHandler<AlterarVigilanciaAtivaCommand>
+{
+    public async Task Handle(AlterarVigilanciaAtivaCommand request, CancellationToken cancellationToken)
+    {
+        var vigilancia = await Vigilancias.ObterAsync(context, request.VigilanciaId, cancellationToken);
+        vigilancia.Estado = request.Ativa ? EstadoIniciativa.EmCurso : EstadoIniciativa.Concluida;
+        if (!request.Ativa)
+        {
+            vigilancia.DataFim ??= DateOnly.FromDateTime(relogio.GetUtcNow().UtcDateTime);
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+    }
+}
+

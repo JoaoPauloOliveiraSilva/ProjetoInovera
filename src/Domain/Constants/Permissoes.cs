@@ -42,6 +42,7 @@ public static class Permissoes
     public static class Kpis
     {
         public const string ValoresExternos = "kpis.valores-externos";
+        public const string Objetivos = "kpis.objetivos";
     }
 
     /// <summary>Orçamento dos projetos: por omissão só o Administrador (pode dar a outros perfis no backoffice).</summary>
@@ -67,6 +68,7 @@ public static class Permissoes
         new(Registos.Gerir, "Gerir parcerias, ativos intangíveis, conhecimento codificado e tácito, ferramentas e métodos e a estratégia (Mod.52)", "Registos"),
         new(Registos.GerirPlano, "Gerir o plano anual de atividades (Mod.69)", "Registos"),
         new(Kpis.ValoresExternos, "Introduzir os valores externos dos KPIs (n.º de trabalhadores, receitas…)", "Indicadores"),
+        new(Kpis.Objetivos, "Definir os objetivos anuais e os planos de ação dos KPIs", "Indicadores"),
         new(Orcamento.Ver, "Ver o orçamento dos projetos e desafios", "Orçamento"),
         new(Orcamento.Gerir, "Introduzir e alterar o orçamento dos projetos e desafios", "Orçamento"),
         new(Administracao.GerirUtilizadores, "Adicionar e gerir utilizadores", "Administração"),
@@ -79,7 +81,7 @@ public static class Permissoes
     /// <summary>Permissões dadas a cada perfil quando é criado pela primeira vez (depois o Administrador pode mudar).</summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> PorOmissao = new Dictionary<string, IReadOnlyList<string>>
     {
-        [Roles.EquipaInovacao] = [Ideias.VerTodas, Ideias.Validar, Ideias.Avaliar, Iniciativas.Gerir, Registos.Gerir, Registos.GerirPlano],
+        [Roles.EquipaInovacao] = [Ideias.VerTodas, Ideias.Validar, Ideias.Avaliar, Iniciativas.Gerir, Registos.Gerir, Registos.GerirPlano, Kpis.Objetivos],
         [Roles.Trabalhador] = [],
     };
 }

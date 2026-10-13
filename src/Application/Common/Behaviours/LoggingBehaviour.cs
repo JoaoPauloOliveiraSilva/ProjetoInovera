@@ -1,10 +1,10 @@
 ﻿using Innovera.Application.Common.Interfaces;
-using MediatR.Pipeline;
 using Microsoft.Extensions.Logging;
 
 namespace Innovera.Application.Common.Behaviours;
 
-public class LoggingBehaviour<TRequest> : IRequestPreProcessor<TRequest>
+/// <summary>Regista no log cada pedido (quem e o quê) antes de o executar.</summary>
+public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     private readonly ILogger _logger;
@@ -18,7 +18,7 @@ public class LoggingBehaviour<TRequest> : IRequestPreProcessor<TRequest>
         _identityService = identityService;
     }
 
-    public async Task Process(TRequest request, CancellationToken cancellationToken)
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         var requestName = typeof(TRequest).Name;
         var userId = _user.Id ?? string.Empty;
@@ -31,5 +31,7 @@ public class LoggingBehaviour<TRequest> : IRequestPreProcessor<TRequest>
 
         _logger.LogInformation("Innovera Request: {Name} {@UserId} {@UserName} {@Request}",
             requestName, userId, userName, request);
+
+        return await next();
     }
 }

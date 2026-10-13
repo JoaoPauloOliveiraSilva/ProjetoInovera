@@ -97,6 +97,7 @@ public static class DependencyInjection
         builder.Services.AddSingleton<ILeitorFolhas, LeitorXlsx>();
         builder.Services.AddScoped<IGeradorNumeroIdeia, GeradorNumeroIdeia>();
         builder.Services.AddSingleton<IArmazenamentoFicheiros, ArmazenamentoLocal>();
+        builder.Services.AddSingleton<IGeradorExcel, GeradorExcel>();
 
         if (builder.Configuration.GetValue("Tarefas:FecharDiscussoes", true))
         {

@@ -78,6 +78,9 @@ public class ExecucaoVigilanciaConfiguration : IEntityTypeConfiguration<Execucao
     public void Configure(EntityTypeBuilder<ExecucaoVigilancia> builder)
     {
         builder.Property(e => e.LinkResultado).HasMaxLength(2000);
+        builder.Property(e => e.NomeFicheiro).HasMaxLength(260);
+        builder.Property(e => e.TipoConteudo).HasMaxLength(200);
+        builder.Property(e => e.ChaveArmazenamento).HasMaxLength(500);
     }
 }
 

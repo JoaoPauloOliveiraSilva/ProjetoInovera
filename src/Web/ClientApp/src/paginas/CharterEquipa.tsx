@@ -7,27 +7,30 @@ import type { DefTabela } from '../componentes/TabelaEditavel';
 import { formatarData } from '../dados/regras';
 
 const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-/** Como no modelo Excel da dst: 8 h × 21 dias úteis por mês a 100 %. */
-const horasPorMes = 8 * 21;
+const pct = (n: number) => `${Math.round(n).toLocaleString('pt-PT')} %`;
 
-const horas = (n: number) => `${Math.round(n).toLocaleString('pt-PT')} h`;
-const totalHoras = (m: MembroEquipa, ano?: number) =>
-  m.alocacoes.filter((a) => ano === undefined || a.ano === ano).reduce((t, a) => t + a.horas, 0);
+/** Resumo da dedicação (a dst só quer a %, 0 = nada, 100 = dedicação máxima): média dos meses com alocação. */
+function resumoAlocacao(percentagens: number[]) {
+  const comAlocacao = percentagens.filter((p) => p > 0);
+  if (comAlocacao.length === 0) return '—';
+  const media = comAlocacao.reduce((t, p) => t + p, 0) / comAlocacao.length;
+  return `${pct(media)} · ${comAlocacao.length} ${comAlocacao.length === 1 ? 'mês' : 'meses'}`;
+}
 
 // ---------- Equipa de trabalho ----------
 
 const defEquipa: DefTabela<MembroEquipa> = {
   titulo: 'equipa de trabalho',
   singular: 'membro',
-  colunas: 'minmax(200px, 1fr) minmax(160px, 1fr) 140px',
-  cabecalhos: ['Nome', 'Função no projeto', 'Horas alocadas'],
+  colunas: 'minmax(200px, 1fr) minmax(160px, 1fr) 160px',
+  cabecalhos: ['Nome', 'Função no projeto', 'Dedicação média'],
   celulas: (m) => [
     <span className="forte">
       {m.nome}
       {m.utilizadorId === null && <span className="cinzento-escuro"> · sem conta</span>}
     </span>,
     m.funcao || '—',
-    <span className="num">{horas(totalHoras(m))}</span>,
+    <span className="num">{resumoAlocacao(m.alocacoes.map((a) => a.percentagem))}</span>,
   ],
   campos: [
     {
@@ -101,7 +104,7 @@ function Alocacao({ charter, aoMudar }: { charter: Charter; aoMudar: () => void 
         </label>
       </div>
       <p className="cinzento-escuro charter-nota">
-        Dedicação de cada pessoa em % por mês. As horas contam 8 h × 21 dias ({horasPorMes} h) a 100 %.
+        Dedicação de cada pessoa em % por mês: 0 = não trabalhou no projeto, 100 = dedicação máxima.
       </p>
       <div className="alocacao">
         <div className="alocacao-linha alocacao-cabecalho">
@@ -109,7 +112,7 @@ function Alocacao({ charter, aoMudar }: { charter: Charter; aoMudar: () => void 
           {meses.map((m) => (
             <span key={m}>{m}</span>
           ))}
-          <span>Horas {ano}</span>
+          <span>Média {ano}</span>
           <span />
         </div>
         {charter.equipa.map((m) => (
@@ -119,16 +122,16 @@ function Alocacao({ charter, aoMudar }: { charter: Charter; aoMudar: () => void 
           <span>Total da equipa</span>
           {meses.map((nome, i) => {
             const soma = charter.equipa.reduce(
-              (t, m) => t + (m.alocacoes.find((a) => a.ano === ano && a.mes === i + 1)?.horas ?? 0),
+              (t, m) => t + (m.alocacoes.find((a) => a.ano === ano && a.mes === i + 1)?.percentagem ?? 0),
               0,
             );
             return (
-              <span key={nome} className="num" title={`${meses[i]} ${ano}: ${horas(soma)}`}>
-                {soma ? Math.round(soma) : ''}
+              <span key={nome} className="num" title={`${meses[i]} ${ano}: soma das dedicações da equipa`}>
+                {soma ? `${Math.round(soma)}%` : ''}
               </span>
             );
           })}
-          <span className="num">{horas(charter.equipa.reduce((t, m) => t + totalHoras(m, ano), 0))}</span>
+          <span />
           <span />
         </div>
       </div>
@@ -147,7 +150,7 @@ function LinhaAlocacao({ charter, membro, ano, aoMudar }: { charter: Charter; me
   const alterado = valores.some((v, i) => v !== original[i]);
   const numeros = valores.map((v) => (v.trim() ? Number(v.replace(',', '.')) : null));
   const invalido = numeros.some((n) => n !== null && (Number.isNaN(n) || n < 0 || n > 100));
-  const total = numeros.reduce<number>((t, n) => t + ((n ?? 0) * horasPorMes) / 100, 0);
+  const media = resumoAlocacao(numeros.map((n) => (n !== null && !Number.isNaN(n) ? n : 0)));
 
   const guardar = async () => {
     setErro('');
@@ -182,7 +185,7 @@ function LinhaAlocacao({ charter, membro, ano, aoMudar }: { charter: Charter; me
           )}
         </span>
       ))}
-      <span className="num">{horas(total)}</span>
+      <span className="num">{media}</span>
       <span>
         {charter.podeEditar && alterado && (
           <button className="botao-pequeno" disabled={aEnviar || invalido} onClick={() => void guardar()} title={invalido ? 'Use valores de 0 a 100.' : undefined}>

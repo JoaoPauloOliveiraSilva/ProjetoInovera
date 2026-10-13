@@ -2,7 +2,7 @@ import { Fragment, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { iniciativas as api } from '../api/servicos';
-import { classeEstadoIniciativa, nomeEstadoIniciativa, nomePeriodicidade, nomePilar, nomeTipoIniciativa, nomeTipoProjeto } from '../api/tipos';
+import { areasPilar, classeEstadoIniciativa, nomeEstadoIniciativa, nomePeriodicidade, nomePilar, nomeTipoIniciativa, nomeTipoProjeto } from '../api/tipos';
 import type {
   AmbitoProjeto,
   CamposTipo,
@@ -122,7 +122,7 @@ function Ficha({ detalhe, aoEditar, recarregar }: { detalhe: Detalhe; aoEditar: 
           {r.pilar && (
             <>
               <dt>pilar</dt>
-              <dd>{nomePilar[r.pilar]}</dd>
+              <dd title={areasPilar[r.pilar].join(' · ')}>{nomePilar[r.pilar]}</dd>
             </>
           )}
           {detalhe.detalhes.map((d) => (
@@ -304,6 +304,7 @@ function FormIniciativa({
               </option>
             ))}
           </select>
+          {dados.pilar && <small className="ajuda">{areasPilar[dados.pilar].join(' · ')}</small>}
         </label>
       </div>
       <label className="campo">

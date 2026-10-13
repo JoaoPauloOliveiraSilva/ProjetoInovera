@@ -1,5 +1,5 @@
 using Innovera.Application.Registos;
-using MediatR;
+using Innovera.Application.Common.Mediacao;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

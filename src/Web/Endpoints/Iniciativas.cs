@@ -52,6 +52,12 @@ public class Iniciativas : IEndpointGroup
         groupBuilder.MapPut(EditarExecucao, "{id:int}/execucoes/{execucaoId:int}");
         groupBuilder.MapDelete(ApagarExecucao, "{id:int}/execucoes/{execucaoId:int}");
         groupBuilder.MapPut(DefinirParceiros, "{id:int}/parceiros");
+
+        // Página das vigilâncias: relatórios carregados (→ conhecimento codificado) e retirar/repor
+        groupBuilder.MapGet(ListarVigilancias, "vigilancias");
+        groupBuilder.MapPost(CarregarRelatorioVigilancia, "{id:int}/relatorios").DisableAntiforgery();
+        groupBuilder.MapGet(ObterRelatorioVigilancia, "{id:int}/execucoes/{execucaoId:int}/ficheiro");
+        groupBuilder.MapPut(AlterarVigilanciaAtiva, "{id:int}/ativa");
     }
 
     public static async Task<Ok<IReadOnlyList<IniciativaResumoDto>>> ListarIniciativas(
@@ -206,6 +212,47 @@ public class Iniciativas : IEndpointGroup
     public static async Task<NoContent> DefinirParceiros(ISender sender, int id, ParceirosPedido pedido)
     {
         await sender.Send(new DefinirParceirosIniciativaCommand(id, pedido.ParceirosIds));
+        return TypedResults.NoContent();
+    }
+
+    public static async Task<Ok<IReadOnlyList<VigilanciaPainelDto>>> ListarVigilancias(ISender sender, bool? incluirRetiradas)
+        => TypedResults.Ok(await sender.Send(new ListarVigilanciasQuery(incluirRetiradas ?? false)));
+
+    public static async Task<Results<Ok<int>, BadRequest<string>>> CarregarRelatorioVigilancia(ISender sender, int id, IFormFile ficheiro,
+        [Microsoft.AspNetCore.Mvc.FromForm] string? descricao, [Microsoft.AspNetCore.Mvc.FromForm] string? data)
+    {
+        if (ficheiro.Length > 25 * 1024 * 1024)
+        {
+            return TypedResults.BadRequest("O relatório tem de ter no máximo 25 MB.");
+        }
+
+        DateOnly? dataRelatorio = null;
+        if (!string.IsNullOrWhiteSpace(data))
+        {
+            if (!DateOnly.TryParse(data, System.Globalization.CultureInfo.InvariantCulture, out var d))
+            {
+                return TypedResults.BadRequest("Data inválida.");
+            }
+
+            dataRelatorio = d;
+        }
+
+        await using var conteudo = ficheiro.OpenReadStream();
+        return TypedResults.Ok(await sender.Send(new CarregarRelatorioVigilanciaCommand(id, ficheiro.FileName, ficheiro.ContentType, ficheiro.Length,
+            conteudo, descricao, dataRelatorio)));
+    }
+
+    public static async Task<FileStreamHttpResult> ObterRelatorioVigilancia(ISender sender, int id, int execucaoId)
+    {
+        var ficheiro = await sender.Send(new ObterRelatorioVigilanciaQuery(id, execucaoId));
+        return TypedResults.File(ficheiro.Conteudo, ficheiro.TipoConteudo, ficheiro.NomeFicheiro);
+    }
+
+    public record AtivaPedido(bool Ativa);
+
+    public static async Task<NoContent> AlterarVigilanciaAtiva(ISender sender, int id, AtivaPedido pedido)
+    {
+        await sender.Send(new AlterarVigilanciaAtivaCommand(id, pedido.Ativa));
         return TypedResults.NoContent();
     }
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Permissoes } from '../api/permissoes';
-import { planoAnual as api } from '../api/servicos';
+import { planoAnual as api, urlExportacao } from '../api/servicos';
 import { nomePeriodicidade } from '../api/tipos';
 import type { AtividadePlano } from '../api/tipos';
 import { usePedido } from '../api/usePedido';
@@ -64,7 +64,7 @@ export function PlanoAnualPagina() {
 
   return (
     <>
-      <Cabecalho titulo="plano anual" corLampada="#7a5aa0" />
+      <Cabecalho titulo="plano anual" corLampada="#7a5aa0" exportar={urlExportacao('mod69', ano)} />
       <div className="filtros filtros-varios">
         <label>
           ano

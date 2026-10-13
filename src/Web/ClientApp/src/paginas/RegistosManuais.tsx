@@ -1,4 +1,4 @@
-import { registos as api } from '../api/servicos';
+import { registos as api, urlExportacao } from '../api/servicos';
 import type { TipoRegistoApi } from '../api/servicos';
 import { Permissoes } from '../api/permissoes';
 import {
@@ -141,7 +141,7 @@ export function Parcerias() {
 
   return (
     <>
-      <Cabecalho titulo="parcerias" corLampada="#3a6f9a" />
+      <Cabecalho titulo="parcerias" corLampada="#3a6f9a" exportar={urlExportacao('mod235')} />
       <p className="cinzento-escuro charter-nota pagina-nota">Acordos de parceria (Mod.235). Os parceiros académicos e empresariais contam para os KPIs.</p>
       <EstadoPedido aCarregar={parceiros.aCarregar} erro={parceiros.erro ?? acordos.erro} vazio={parceiros.dados === undefined} />
       {parceiros.dados && acordos.dados && (
@@ -232,7 +232,7 @@ export function AtivosIntangiveis() {
   const { dados, erro, aCarregar, recarregar } = usePedido(() => api.ativos(), []);
   return (
     <>
-      <Cabecalho titulo="ativos intangíveis" corLampada="#3a6f9a" />
+      <Cabecalho titulo="ativos intangíveis" corLampada="#3a6f9a" exportar={urlExportacao('mod236')} />
       <p className="cinzento-escuro charter-nota pagina-nota">Patentes, designs e marcas (Mod.236). As validades nos próximos 90 dias ficam a amarelo.</p>
       <EstadoPedido aCarregar={aCarregar} erro={erro} vazio={dados === undefined} />
       {dados && <Registo tipo="ativos" def={defAtivos} itens={dados} aoMudar={recarregar} semTitulo />}
@@ -245,8 +245,8 @@ export function AtivosIntangiveis() {
 const defTacito: DefTabela<ConhecimentoTacito> = {
   titulo: 'conhecimento tácito',
   singular: 'registo de conhecimento',
-  colunas: '100px 160px minmax(240px, 1fr) 130px 110px minmax(160px, 0.8fr)',
-  cabecalhos: ['Data', 'Detentor', 'Conhecimento', 'Empresa', 'Confidencial.', 'Disseminação'],
+  colunas: '100px 160px minmax(260px, 1fr) 140px 110px',
+  cabecalhos: ['Data', 'Detentor', 'Conhecimento', 'Empresa', 'Confidencial.'],
   celulas: (c) => [
     data(c.data),
     <span className="forte">{c.detentor}</span>,
@@ -255,7 +255,6 @@ const defTacito: DefTabela<ConhecimentoTacito> = {
     <span className={`etiqueta ${c.confidencialidade === 'Elevado' ? 'estado-em-discussao' : 'estado-aprovada'}`}>
       {nomeConfidencialidade[c.confidencialidade]}
     </span>,
-    proximaAtividade(c.atividades),
   ],
   campos: [
     { nome: 'detentor', rotulo: 'quem detém o conhecimento', obrigatorio: true, max: 200 },
@@ -270,13 +269,6 @@ const defTacito: DefTabela<ConhecimentoTacito> = {
       ajuda: 'Os registos de confidencialidade elevada só aparecem a quem gere os registos.',
     },
     { nome: 'data', rotulo: 'data', tipo: 'data' },
-    {
-      nome: 'atividades',
-      rotulo: 'disseminação: atividades · quem · quando',
-      tipo: 'lista',
-      subcampos: subcamposAtividades,
-      ajuda: 'Como passar este conhecimento a outros (sessões, manuais, vídeos…).',
-    },
   ],
   valores: (c) => ({
     detentor: texto(c?.detentor),
@@ -284,7 +276,6 @@ const defTacito: DefTabela<ConhecimentoTacito> = {
     empresa: texto(c?.empresa),
     confidencialidade: c?.confidencialidade ?? 'Baixo',
     data: c ? c.data : hoje(),
-    atividades: lista(c?.atividades),
   }),
   vazio: 'Ainda não há conhecimento tácito registado.',
 };
@@ -293,7 +284,7 @@ export function ConhecimentoTacitoPagina() {
   const { dados, erro, aCarregar, recarregar } = usePedido(() => api.conhecimentoTacito(), []);
   return (
     <>
-      <Cabecalho titulo="conhecimento tácito" corLampada="#3a6f9a" />
+      <Cabecalho titulo="conhecimento tácito" corLampada="#3a6f9a" exportar={urlExportacao('mod238')} />
       <p className="cinzento-escuro charter-nota pagina-nota">Quem sabe o quê dentro da empresa (Mod.238), para não se perder quando as pessoas mudam.</p>
       <EstadoPedido aCarregar={aCarregar} erro={erro} vazio={dados === undefined} />
       {dados && <Registo tipo="conhecimento-tacito" def={defTacito} itens={dados} aoMudar={recarregar} semTitulo />}
@@ -356,7 +347,7 @@ export function Ferramentas() {
   const { dados, erro, aCarregar, recarregar } = usePedido(() => api.ferramentas(), []);
   return (
     <>
-      <Cabecalho titulo="ferramentas e métodos" corLampada="#3a6f9a" />
+      <Cabecalho titulo="ferramentas e métodos" corLampada="#3a6f9a" exportar={urlExportacao('mod241')} />
       <p className="cinzento-escuro charter-nota pagina-nota">Portefólio de ferramentas e métodos de inovação (Mod.241).</p>
       <EstadoPedido aCarregar={aCarregar} erro={erro} vazio={dados === undefined} />
       {dados && <Registo tipo="ferramentas" def={defFerramentas} itens={dados} aoMudar={recarregar} semTitulo />}

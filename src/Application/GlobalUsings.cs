@@ -1,9 +1,7 @@
 ﻿global using Ardalis.GuardClauses;
-global using AutoMapper;
-global using AutoMapper.QueryableExtensions;
 global using Microsoft.EntityFrameworkCore;
 global using FluentValidation;
-global using MediatR;
+global using Innovera.Application.Common.Mediacao;
 global using Innovera.Application.Common.Interfaces;
 global using Innovera.Application.Common.Security;
 global using Innovera.Domain.Constants;
