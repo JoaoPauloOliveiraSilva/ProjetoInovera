@@ -46,9 +46,25 @@ const menu: ItemMenu[] = [
     filhos: [
       { nome: 'conhecimento codificado', para: '/inovacao/conhecimento' },
       { nome: 'lições aprendidas', para: '/inovacao/licoes' },
+      { nome: 'conhecimento tácito', para: '/inovacao/conhecimento-tacito' },
+      { nome: 'ferramentas e métodos', para: '/inovacao/ferramentas' },
     ],
   },
-  { nome: 'indicadores de desempenho', filhos: [{ nome: 'KPIs', para: '/inovacao/indicadores' }] },
+  {
+    nome: 'gestão da inovação',
+    filhos: [
+      { nome: 'plano anual de atividades', para: '/inovacao/plano-anual' },
+      { nome: 'parcerias', para: '/inovacao/parcerias' },
+      { nome: 'ativos intangíveis', para: '/inovacao/ativos' },
+    ],
+  },
+  {
+    nome: 'indicadores de desempenho',
+    filhos: [
+      { nome: 'KPIs', para: '/inovacao/indicadores' },
+      { nome: 'valores externos', para: '/inovacao/indicadores/valores-externos', permissao: Permissoes.valoresExternos },
+    ],
+  },
   {
     nome: 'administração',
     filhos: [

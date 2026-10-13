@@ -102,5 +102,10 @@ public static class DependencyInjection
         {
             builder.Services.AddHostedService<FecharDiscussoesJob>();
         }
+
+        if (builder.Configuration.GetValue("Tarefas:Alertas", true))
+        {
+            builder.Services.AddHostedService<AlertasJob>();
+        }
     }
 }

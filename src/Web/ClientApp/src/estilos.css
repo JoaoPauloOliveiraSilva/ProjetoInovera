@@ -388,3 +388,20 @@ a { color: inherit; }
 .link-novo { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; }
 .link-novo input { background: #fff; border: 1px solid var(--linha); padding: 8px 10px; font-weight: 400; }
 a.botao-pequeno { text-decoration: none; display: inline-block; }
+
+/* ---------- Registos manuais e plano anual ---------- */
+.pagina-nota { margin: -20px 0 20px; }
+.caixa-simples { display: flex; gap: 10px; align-items: center; font-weight: 600; cursor: pointer; }
+.caixa-simples input { width: 18px; height: 18px; accent-color: var(--preto); }
+.campo-cor { width: 64px; height: 36px; padding: 2px; background: #fff; border: 1px solid var(--linha); }
+.escolher-pessoas { display: flex; flex-direction: column; gap: 8px; }
+.escolher-pessoas input { background: #fff; border: 1px solid var(--linha); padding: 10px 12px; font-weight: 400; }
+.ponto-cor { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+.calendario { background: #fff; overflow-x: auto; }
+.calendario-linha { display: grid; grid-template-columns: minmax(200px, 1.4fr) repeat(12, minmax(56px, 1fr)); border-bottom: 1px solid #eee; min-width: 900px; }
+.calendario-linha > span { padding: 10px 6px; display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; border-left: 1px solid #f2f2f2; }
+.calendario-linha > span:first-child { border-left: 0; padding-left: 16px; }
+.calendario-cabecalho { color: #aaa; font-weight: 600; }
+.calendario-titulo { font-weight: 600; }
+.calendario .mes-atual { background: #fff8e6; }
+.calendario-dia { color: #fff; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 10px; white-space: nowrap; }

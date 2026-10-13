@@ -29,6 +29,13 @@ import type {
   ProjectCharter,
   RegistoAuditoria,
   SeccaoCharter,
+  Acordo,
+  AtividadePlano,
+  Ativo,
+  ConhecimentoTacito as ConhecimentoTacitoItem,
+  Ferramenta,
+  Parceiro,
+  ValorExterno,
 } from './tipos';
 
 // Contas (ASP.NET Core Identity com cookie). As contas são criadas pelo Administrador (convite por email).
@@ -174,4 +181,34 @@ export const conhecimento = {
 export const auditoria = {
   listar: (filtro: { entidade?: string; entidadeId?: string; texto?: string } = {}) =>
     obter<RegistoAuditoria[]>(consulta('/api/Administracao/auditoria', filtro)),
+};
+
+/** Registos manuais (RF14): parcerias, ativos intangíveis, conhecimento tácito e ferramentas. */
+export type TipoRegistoApi = 'parceiros' | 'acordos' | 'ativos' | 'conhecimento-tacito' | 'ferramentas';
+
+const baseRegistos = '/api/Registos';
+
+export const registos = {
+  parceiros: () => obter<Parceiro[]>(`${baseRegistos}/parceiros`),
+  acordos: (texto?: string) => obter<Acordo[]>(consulta(`${baseRegistos}/acordos`, { texto })),
+  ativos: () => obter<Ativo[]>(`${baseRegistos}/ativos`),
+  conhecimentoTacito: () => obter<ConhecimentoTacitoItem[]>(`${baseRegistos}/conhecimento-tacito`),
+  ferramentas: () => obter<Ferramenta[]>(`${baseRegistos}/ferramentas`),
+  guardar: (tipo: TipoRegistoApi, id: number | null, dados: unknown) =>
+    id === null ? enviar<number>(`${baseRegistos}/${tipo}`, dados) : pedido<number>('PUT', `${baseRegistos}/${tipo}/${id}`, dados),
+  apagar: (tipo: TipoRegistoApi, id: number) => pedido<void>('DELETE', `${baseRegistos}/${tipo}/${id}`),
+};
+
+export const planoAnual = {
+  listar: (ano: number) => obter<AtividadePlano[]>(`/api/PlanoAnual?ano=${ano}`),
+  guardar: (id: number | null, dados: unknown) =>
+    id === null ? enviar<number>('/api/PlanoAnual', dados) : pedido<number>('PUT', `/api/PlanoAnual/${id}`, dados),
+  apagar: (id: number) => pedido<void>('DELETE', `/api/PlanoAnual/${id}`),
+};
+
+export const kpis = {
+  valoresExternos: () => obter<ValorExterno[]>('/api/Kpis/valores-externos'),
+  guardarValorExterno: (id: number | null, dados: unknown) =>
+    id === null ? enviar<number>('/api/Kpis/valores-externos', dados) : pedido<number>('PUT', `/api/Kpis/valores-externos/${id}`, dados),
+  apagarValorExterno: (id: number) => pedido<void>('DELETE', `/api/Kpis/valores-externos/${id}`),
 };

@@ -7,6 +7,9 @@ export const Permissoes = {
   gerirUtilizadores: 'utilizadores.gerir',
   gerirPerfis: 'perfis.gerir',
   verAuditoria: 'auditoria.ver',
+  gerirRegistos: 'registos.gerir',
+  gerirPlano: 'plano.gerir',
+  valoresExternos: 'kpis.valores-externos',
   verOrcamento: 'orcamento.ver',
   gerirOrcamento: 'orcamento.gerir',
 } as const;

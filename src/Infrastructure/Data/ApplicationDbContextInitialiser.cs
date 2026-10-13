@@ -359,6 +359,7 @@ public class ApplicationDbContextInitialiser
         await GuardarAsync(pendente);
 
         await _context.SaveChangesAsync();
+        await CriarRegistosExemploAsync(DateOnly.FromDateTime(agora.UtcDateTime));
         _logger.LogInformation("Dados de exemplo criados (contas com a password {Password}).", PasswordExemplo);
     }
 
@@ -461,6 +462,82 @@ public class ApplicationDbContextInitialiser
             Charter = charter, Categoria = CategoriaLicao.Gestao, Licao = "Envolver o NOC desde o arranque",
             Descricao = "Os requisitos dos alertas mudaram a meio porque o NOC só foi ouvido no fim da recolha de dados.",
             Impacto = "Duas semanas de retrabalho",
+        });
+
+        await _context.SaveChangesAsync();
+    }
+
+    /// <summary>Plano anual, parcerias, ativos, conhecimento tácito e ferramentas de exemplo.</summary>
+    private async Task CriarRegistosExemploAsync(DateOnly hoje)
+    {
+        var sofia = await _context.Utilizadores.FirstAsync(u => u.Email == "sofia.martins@exemplo.pt");
+        var ano = hoje.Year;
+
+        _context.AtividadesPlanoAnual.AddRange(
+            new AtividadePlanoAnual
+            {
+                Titulo = "Avaliação de ideias com a CE", Descricao = "Reunião mensal com a Comissão Executiva.", Cor = "#c8102e",
+                DataInicio = new DateOnly(ano, 1, 13), Recorrencia = Periodicidade.Mensal, DiasAntecedenciaAviso = 7, Responsaveis = { sofia },
+            },
+            new AtividadePlanoAnual
+            {
+                Titulo = "GetTogether de inovação", Cor = "#3a6f9a", DataInicio = new DateOnly(ano, 6, 18), DataFim = new DateOnly(ano, 6, 19),
+                Recorrencia = Periodicidade.Anual, DiasAntecedenciaAviso = 30,
+            },
+            new AtividadePlanoAnual
+            {
+                Titulo = "Candidatura SIFIDE", Cor = "#7a9a3a", DataInicio = new DateOnly(ano, 5, 4), DataFim = new DateOnly(ano, 5, 29),
+                Recorrencia = Periodicidade.Anual, DiasAntecedenciaAviso = 21,
+            },
+            new AtividadePlanoAnual
+            {
+                Titulo = "Revisão do portefólio de iniciativas", Cor = "#7a5aa0", DataInicio = new DateOnly(ano, 3, 31),
+                Recorrencia = Periodicidade.Trimestral, DiasAntecedenciaAviso = 10,
+            });
+
+        var uminho = new Parceiro { Nome = "Universidade do Minho", Tipo = TipoParceiro.Academico };
+        uminho.Acordos.Add(new AcordoParceria
+        {
+            Descricao = "Protocolo de estágios e dissertações de mestrado", ProtocoloEstabelecido = true, TipoProtocolo = TipoProtocolo.Investigacao,
+            DataInicio = new DateOnly(ano - 1, 9, 1), IncluiGestaoPropriedadeIntelectual = true,
+        });
+        var fornecedor = new Parceiro { Nome = "Fibras do Norte, Lda.", Tipo = TipoParceiro.Empresarial, Nif = "509000000" };
+        fornecedor.Acordos.Add(new AcordoParceria
+        {
+            Descricao = "Acordo de confidencialidade para o piloto de sensores", ProtocoloEstabelecido = true,
+            TipoProtocolo = TipoProtocolo.Confidencialidade, DataInicio = new DateOnly(ano, 2, 1), DataFim = new DateOnly(ano + 1, 1, 31),
+        });
+        _context.Parceiros.AddRange(uminho, fornecedor);
+
+        _context.AtivosIntangiveis.AddRange(
+            new AtivoIntangivel
+            {
+                Data = hoje.AddYears(-2), Tipo = TipoAtivoIntangivel.Marca, EntidadeRegisto = "INPI", Designacao = "Innovera",
+                NumeroPedido = "712345", DataRegisto = hoje.AddYears(-2), DataValidade = hoje.AddDays(60), Ambito = "Nacional",
+                Situacao = "Concedida", Custo = 250m,
+            },
+            new AtivoIntangivel
+            {
+                Data = hoje.AddMonths(-6), Tipo = TipoAtivoIntangivel.Patente, EntidadeRegisto = "EPO", Designacao = "Sensor de esforço em postes",
+                Autores = "André Costa, Tiago Araújo", Situacao = "Pedido submetido", Custo = 4800m,
+            });
+
+        _context.ConhecimentosTacitos.AddRange(
+            new ConhecimentoTacito
+            {
+                Data = hoje.AddMonths(-3), Empresa = "dstelecom", Detentor = "Inês Correia",
+                Descricao = "Configuração das OLT antigas (firmware anterior à versão 5).",
+            },
+            new ConhecimentoTacito
+            {
+                Data = hoje.AddMonths(-1), Empresa = "dstelecom", Detentor = "André Costa",
+                Descricao = "Negociação dos contratos de manutenção com os operadores.", Confidencialidade = NivelConfidencialidade.Elevado,
+            });
+
+        _context.FerramentasMetodos.Add(new FerramentaMetodo
+        {
+            Data = hoje.AddMonths(-8), Nome = "Design Thinking", SumarioExecutivo = "Método de ideação centrado no utilizador.",
+            Potencial = "Workshops de ideação com as equipas de campo.", CustoAquisicao = 0m, Divulgacao = "Formação interna, GetTogether",
         });
 
         await _context.SaveChangesAsync();

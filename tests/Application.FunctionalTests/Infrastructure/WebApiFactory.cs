@@ -14,7 +14,8 @@ public class WebApiFactory(string connectionString) : WebApplicationFactory<Prog
         builder
             .UseSetting("ConnectionStrings:InnoveraDb", connectionString)
             .UseSetting("DadosExemplo", "false")
-            .UseSetting("Tarefas:FecharDiscussoes", "false");
+            .UseSetting("Tarefas:FecharDiscussoes", "false")
+            .UseSetting("Tarefas:Alertas", "false");
 
         builder.ConfigureTestServices(services =>
         {

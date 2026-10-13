@@ -28,11 +28,12 @@ import type {
   SeccaoCharter,
   Tarefa,
 } from '../api/tipos';
-import { useAtualizar, usePedido } from '../api/usePedido';
+import { usePedido } from '../api/usePedido';
 import { EstadoPedido } from '../componentes/Estado';
-import { Gaveta } from '../componentes/Gaveta';
 import { Cabecalho } from '../componentes/Layout';
-import { Mais, SetaContinuar } from '../componentes/Icones';
+import { SetaContinuar } from '../componentes/Icones';
+import { LinkExterno, TabelaEditavel, data, euros, hoje, opcoes, texto } from '../componentes/TabelaEditavel';
+import type { Campo, DefTabela } from '../componentes/TabelaEditavel';
 import { formatarData } from '../dados/regras';
 
 const separadores = [
@@ -228,51 +229,14 @@ function Linha({ rotulo, children }: { rotulo: string; children: ReactNode }) {
 
 // ---------- Tabelas editáveis (separadores 2 a 6) ----------
 
-type Valores = Record<string, string>;
-
-interface Campo {
-  nome: string;
-  rotulo: string;
-  tipo?: 'texto' | 'area' | 'data' | 'numero' | 'opcoes' | 'link';
-  opcoes?: [string, string][];
-  /** Converte o valor escolhido numa opção para número (ex.: id do milestone). */
-  numerico?: boolean;
-  obrigatorio?: boolean;
-  max?: number;
-  ajuda?: string;
-}
-
-interface DefSeccao<T extends { id: number }> {
+interface DefSeccao<T extends { id: number }> extends Omit<DefTabela<T>, 'campos'> {
   seccao: SeccaoCharter;
-  titulo: string;
-  singular: string;
-  /** Género do nome, para "novo"/"nova". */
-  feminino?: boolean;
-  /** grid-template-columns da tabela. */
-  colunas: string;
   /** Quem pode editar este separador (por omissão, quem pode editar o Charter). */
   podeEditar?: (charter: Charter) => boolean;
-  cabecalhos: string[];
-  celulas: (item: T) => ReactNode[];
   campos: (charter: Charter) => Campo[];
-  valores: (item: T | null) => Valores;
-  vazio: string;
 }
 
-const opcoes = (nomes: Record<string, string>): [string, string][] => Object.entries(nomes);
-const texto = (v: string | number | null | undefined) => (v === null || v === undefined ? '' : String(v));
-const data = (v: string | null) => (v ? formatarData(v) : '—');
-const euros = (v: number | null) => (v === null ? '—' : v.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' }));
-const hoje = () => new Date().toISOString().slice(0, 10);
-
-function Relatorio({ url }: { url: string | null }) {
-  if (!url) return <span className="cinzento-escuro">—</span>;
-  return (
-    <a className="ligacao" href={url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-      abrir ↗
-    </a>
-  );
-}
+const Relatorio = ({ url }: { url: string | null }) => <LinkExterno url={url} />;
 
 const defTarefas: DefSeccao<Tarefa> = {
   seccao: 'tarefas',
@@ -580,17 +544,6 @@ const defLicoes: DefSeccao<Licao> = {
 };
 
 /** Converte os valores do formulário (texto) no corpo do pedido: vazio → null, números → number. */
-function paraPedido(campos: Campo[], valores: Valores): Record<string, string | number | null> {
-  const corpo: Record<string, string | number | null> = {};
-  for (const c of campos) {
-    const v = (valores[c.nome] ?? '').trim();
-    if (!v) corpo[c.nome] = null;
-    else if (c.tipo === 'numero' || c.numerico) corpo[c.nome] = Number(v.replace(',', '.'));
-    else corpo[c.nome] = v;
-  }
-  return corpo;
-}
-
 function SeccaoTabela<T extends { id: number }>({
   def,
   charter,
@@ -602,168 +555,15 @@ function SeccaoTabela<T extends { id: number }>({
   itens: T[];
   aoMudar: () => void;
 }) {
-  const [aberto, setAberto] = useState<T | 'novo' | null>(null);
-  const estilo = { gridTemplateColumns: def.colunas };
-  const podeEditar = def.podeEditar ? def.podeEditar(charter) : charter.podeEditar;
-
   return (
-    <section className="charter-seccao">
-      <div className="charter-seccao-topo">
-        <h3 className="secao">{def.titulo}</h3>
-        {podeEditar && (
-          <button className="botao-pequeno com-icone" onClick={() => setAberto('novo')}>
-            <Mais /> {def.feminino ? 'nova' : 'novo'} {def.singular}
-          </button>
-        )}
-      </div>
-      <div className="tabela charter-tabela">
-        <div className="tabela-linha tabela-cabecalho" style={estilo}>
-          {def.cabecalhos.map((c) => (
-            <span key={c}>{c}</span>
-          ))}
-        </div>
-        {itens.map((item) => (
-          <div
-            key={item.id}
-            className={`tabela-linha${podeEditar ? '' : ' so-leitura'}`}
-            style={estilo}
-            onClick={podeEditar ? () => setAberto(item) : undefined}
-          >
-            {def.celulas(item).map((celula, i) => (
-              <span key={i}>{celula}</span>
-            ))}
-          </div>
-        ))}
-        {itens.length === 0 && <div className="vazio">{def.vazio}</div>}
-      </div>
-      <Gaveta aberta={aberto !== null} aoFechar={() => setAberto(null)}>
-        {aberto !== null && (
-          <FormItem
-            key={aberto === 'novo' ? 'novo' : aberto.id}
-            def={def}
-            charter={charter}
-            item={aberto === 'novo' ? null : aberto}
-            aoTerminar={() => {
-              setAberto(null);
-              aoMudar();
-            }}
-          />
-        )}
-      </Gaveta>
-    </section>
+    <TabelaEditavel
+      def={{ ...def, campos: def.campos(charter) }}
+      itens={itens}
+      podeEditar={def.podeEditar ? def.podeEditar(charter) : charter.podeEditar}
+      guardar={(id, corpo) => api.guardarItem(charter.iniciativaId, def.seccao, id, corpo)}
+      apagar={(id) => api.apagarItem(charter.iniciativaId, def.seccao, id)}
+      aoMudar={aoMudar}
+      sobretitulo={`PROJECT CHARTER · ${charter.codigo}`}
+    />
   );
-}
-
-function FormItem<T extends { id: number }>({
-  def,
-  charter,
-  item,
-  aoTerminar,
-}: {
-  def: DefSeccao<T>;
-  charter: Charter;
-  item: T | null;
-  aoTerminar: () => void;
-}) {
-  const atualizarListas = useAtualizar();
-  const campos = def.campos(charter);
-  const [valores, setValores] = useState<Valores>(() => def.valores(item));
-  const [erro, setErro] = useState('');
-  const [aEnviar, setAEnviar] = useState(false);
-  const [confirmarApagar, setConfirmarApagar] = useState(false);
-
-  const executar = async (acao: () => Promise<unknown>) => {
-    setErro('');
-    setAEnviar(true);
-    try {
-      await acao();
-      atualizarListas();
-      aoTerminar();
-    } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : String(falha));
-      setAEnviar(false);
-    }
-  };
-
-  const submeter = (e: FormEvent) => {
-    e.preventDefault();
-    void executar(() => api.guardarItem(charter.iniciativaId, def.seccao, item?.id ?? null, paraPedido(campos, valores)));
-  };
-
-  const mudar = (nome: string, valor: string) => setValores((v) => ({ ...v, [nome]: valor }));
-
-  return (
-    <form className="form-gaveta" onSubmit={submeter}>
-      <div className="sobretitulo">PROJECT CHARTER · {charter.codigo}</div>
-      <h2 className="detalhe-titulo">{item ? `editar ${def.singular}` : `${def.feminino ? 'nova' : 'novo'} ${def.singular}`}</h2>
-      {campos.map((c) => (
-        <label key={c.nome} className="campo">
-          <span>
-            {c.rotulo}
-            {c.obrigatorio && ' *'}
-          </span>
-          <Entrada campo={c} valor={valores[c.nome] ?? ''} aoMudar={(v) => mudar(c.nome, v)} />
-          {c.ajuda && <small className="ajuda">{c.ajuda}</small>}
-        </label>
-      ))}
-      {erro && <div className="erro">{erro}</div>}
-      <div className="botoes">
-        {item &&
-          (confirmarApagar ? (
-            <button
-              type="button"
-              className="botao-largo curto perigo"
-              disabled={aEnviar}
-              onClick={() => void executar(() => api.apagarItem(charter.iniciativaId, def.seccao, item.id))}
-            >
-              confirmar apagar
-            </button>
-          ) : (
-            <button type="button" className="botao-largo curto" onClick={() => setConfirmarApagar(true)}>
-              apagar
-            </button>
-          ))}
-        <button type="submit" className="botao-largo" disabled={aEnviar}>
-          {aEnviar ? 'a guardar…' : 'guardar'} <SetaContinuar className="seta-vermelha" />
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function Entrada({ campo, valor, aoMudar }: { campo: Campo; valor: string; aoMudar: (v: string) => void }) {
-  switch (campo.tipo) {
-    case 'area':
-      return (
-        <textarea rows={3} value={valor} maxLength={campo.max} required={campo.obrigatorio} onChange={(e) => aoMudar(e.target.value)} />
-      );
-    case 'data':
-      return <input type="date" value={valor} required={campo.obrigatorio} onChange={(e) => aoMudar(e.target.value)} />;
-    case 'numero':
-      return <input type="number" step="any" value={valor} required={campo.obrigatorio} onChange={(e) => aoMudar(e.target.value)} />;
-    case 'link':
-      return (
-        <input
-          type="url"
-          value={valor}
-          maxLength={campo.max}
-          placeholder="https://…"
-          required={campo.obrigatorio}
-          onChange={(e) => aoMudar(e.target.value)}
-        />
-      );
-    case 'opcoes':
-      return (
-        <select value={valor} required={campo.obrigatorio} onChange={(e) => aoMudar(e.target.value)}>
-          {!campo.obrigatorio && <option value="">—</option>}
-          {(campo.opcoes ?? []).map(([v, nome]) => (
-            <option key={v} value={v}>
-              {nome}
-            </option>
-          ))}
-        </select>
-      );
-    default:
-      return <input value={valor} maxLength={campo.max} required={campo.obrigatorio} onChange={(e) => aoMudar(e.target.value)} />;
-  }
 }

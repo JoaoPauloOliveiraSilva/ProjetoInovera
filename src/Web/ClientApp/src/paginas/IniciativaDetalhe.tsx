@@ -2,8 +2,19 @@ import { Fragment, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { iniciativas as api } from '../api/servicos';
-import { classeEstadoIniciativa, nomeEstadoIniciativa, nomeTipoIniciativa } from '../api/tipos';
-import type { DadosIniciativa, EstadoIniciativa, Horizonte, IniciativaDetalhe as Detalhe, TipoIniciativa } from '../api/tipos';
+import { classeEstadoIniciativa, nomeEstadoIniciativa, nomePeriodicidade, nomeTipoIniciativa, nomeTipoProjeto } from '../api/tipos';
+import type {
+  AmbitoProjeto,
+  CamposTipo,
+  DadosIniciativa,
+  EstadoIniciativa,
+  Horizonte,
+  IniciativaDetalhe as Detalhe,
+  Periodicidade,
+  TipoAcaoInovacao,
+  TipoIniciativa,
+  TipoProjeto,
+} from '../api/tipos';
 import { useAtualizar, usePedido } from '../api/usePedido';
 import { EstadoPedido } from '../componentes/Estado';
 import { Gaveta } from '../componentes/Gaveta';
@@ -199,6 +210,7 @@ function FormIniciativa({
     dataFim: r?.dataFim ?? null,
     origem: r?.origem ?? null,
     horizonte: existente?.horizonte ?? null,
+    campos: existente?.campos ?? camposVazios,
   });
   const [erro, setErro] = useState('');
   const [aEnviar, setAEnviar] = useState(false);
@@ -284,6 +296,7 @@ function FormIniciativa({
           <input type="date" value={dados.dataFim ?? ''} onChange={(e) => mudar({ dataFim: e.target.value || null })} />
         </label>
       </div>
+      <CamposDoTipo tipo={tipo} campos={dados.campos ?? camposVazios} mudar={(c) => mudar({ campos: { ...(dados.campos ?? camposVazios), ...c } })} />
       <label className="campo">
         <span>origem / financiamento</span>
         <input value={dados.origem ?? ''} onChange={(e) => mudar({ origem: vazioANull(e.target.value) })} maxLength={200} />
@@ -369,4 +382,111 @@ function LinksDocumentos({ detalhe, recarregar }: { detalhe: Detalhe; recarregar
       {erro && <div className="erro">{erro}</div>}
     </>
   );
+}
+
+const camposVazios: CamposTipo = {
+  tipoProjeto: null,
+  ambito: null,
+  resultado: null,
+  descritivo: null,
+  periodicidade: null,
+  nomeAluno: null,
+  curso: null,
+  tipoAcao: null,
+  numeroParticipantes: null,
+};
+
+/** Campos próprios de cada tipo (como nas folhas do Mod.246). */
+function CamposDoTipo({ tipo, campos, mudar }: { tipo: TipoIniciativa; campos: CamposTipo; mudar: (c: Partial<CamposTipo>) => void }) {
+  const nulo = (v: string) => (v.trim() ? v : null);
+  switch (tipo) {
+    case 'Projeto':
+      return (
+        <div className="campos-lado">
+          <label className="campo">
+            <span>tipo de projeto</span>
+            <select value={campos.tipoProjeto ?? ''} onChange={(e) => mudar({ tipoProjeto: (e.target.value || null) as TipoProjeto | null })}>
+              <option value="">—</option>
+              {(Object.keys(nomeTipoProjeto) as TipoProjeto[]).map((t) => (
+                <option key={t} value={t}>
+                  {nomeTipoProjeto[t]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="campo">
+            <span>âmbito</span>
+            <select value={campos.ambito ?? 'Interno'} onChange={(e) => mudar({ ambito: e.target.value as AmbitoProjeto })}>
+              <option value="Interno">interno</option>
+              <option value="Externo">externo</option>
+            </select>
+          </label>
+        </div>
+      );
+    case 'MelhoriaContinua':
+    case 'Oportunidade':
+      return (
+        <label className="campo">
+          <span>resultado</span>
+          <textarea rows={2} maxLength={2000} value={campos.resultado ?? ''} onChange={(e) => mudar({ resultado: nulo(e.target.value) })} />
+        </label>
+      );
+    case 'Vigilancia':
+      return (
+        <>
+          <label className="campo">
+            <span>descritivo (o que se vigia)</span>
+            <textarea rows={2} maxLength={4000} value={campos.descritivo ?? ''} onChange={(e) => mudar({ descritivo: nulo(e.target.value) })} />
+          </label>
+          <label className="campo">
+            <span>periodicidade</span>
+            <select value={campos.periodicidade ?? 'Mensal'} onChange={(e) => mudar({ periodicidade: e.target.value as Periodicidade })}>
+              {(Object.keys(nomePeriodicidade) as Periodicidade[])
+                .filter((p) => p !== 'Nenhuma')
+                .map((p) => (
+                  <option key={p} value={p}>
+                    {nomePeriodicidade[p]}
+                  </option>
+                ))}
+            </select>
+          </label>
+        </>
+      );
+    case 'Mestrado':
+      return (
+        <div className="campos-lado">
+          <label className="campo">
+            <span>aluno</span>
+            <input maxLength={200} value={campos.nomeAluno ?? ''} onChange={(e) => mudar({ nomeAluno: nulo(e.target.value) })} />
+          </label>
+          <label className="campo">
+            <span>curso</span>
+            <input maxLength={200} value={campos.curso ?? ''} onChange={(e) => mudar({ curso: nulo(e.target.value) })} />
+          </label>
+        </div>
+      );
+    case 'AcaoInovacao':
+      return (
+        <div className="campos-lado">
+          <label className="campo">
+            <span>tipo de ação</span>
+            <select value={campos.tipoAcao ?? 'Criada'} onChange={(e) => mudar({ tipoAcao: e.target.value as TipoAcaoInovacao })}>
+              <option value="Criada">criada pela equipa</option>
+              <option value="Externa">externa (participação)</option>
+            </select>
+          </label>
+          <label className="campo">
+            <span>n.º de participantes</span>
+            <input
+              type="number"
+              min={0}
+              value={campos.numeroParticipantes ?? ''}
+              onChange={(e) => mudar({ numeroParticipantes: e.target.value === '' ? null : Number(e.target.value) })}
+            />
+          </label>
+        </div>
+      );
+    default:
+      return null;
+  }
 }

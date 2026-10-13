@@ -26,7 +26,32 @@ public record IniciativaDetalheDto(
     IReadOnlyList<NotaPontoSituacaoDto> Historico,
     IReadOnlyList<LinkDto> Links,
     bool TemCharter,
+    CamposTipoDto Campos,
     bool PodeEditar);
+
+/// <summary>Campos próprios de cada tipo de iniciativa (só os do tipo em causa interessam).</summary>
+public record CamposTipoDto(
+    TipoProjeto? TipoProjeto = null,
+    AmbitoProjeto? Ambito = null,
+    string? Resultado = null,
+    string? Descritivo = null,
+    Periodicidade? Periodicidade = null,
+    string? NomeAluno = null,
+    string? Curso = null,
+    TipoAcaoInovacao? TipoAcao = null,
+    int? NumeroParticipantes = null)
+{
+    public static CamposTipoDto De(Iniciativa iniciativa) => iniciativa switch
+    {
+        Projeto p => new CamposTipoDto(TipoProjeto: p.TipoProjeto, Ambito: p.Ambito),
+        MelhoriaContinua m => new CamposTipoDto(Resultado: m.Resultado),
+        Oportunidade o => new CamposTipoDto(Resultado: o.Resultado),
+        Vigilancia v => new CamposTipoDto(Descritivo: v.Descritivo, Periodicidade: v.Periodicidade),
+        Mestrado m => new CamposTipoDto(NomeAluno: m.NomeAluno, Curso: m.Curso),
+        AcaoInovacao a => new CamposTipoDto(TipoAcao: a.TipoAcao, NumeroParticipantes: a.NumeroParticipantes),
+        _ => new CamposTipoDto(),
+    };
+}
 
 /// <summary>Link para um documento no OneDrive (RF15).</summary>
 public record LinkDto(int Id, string Titulo, string Url);
@@ -120,6 +145,7 @@ public class ObterIniciativaQueryHandler(IApplicationDbContext context, IUtiliza
         var links = i.Links.OrderBy(l => l.Titulo).Select(l => new LinkDto(l.Id, l.Titulo, l.Url)).ToList();
 
         return new IniciativaDetalheDto(resumo, i.Descricao, i.Horizonte, Detalhes(i), historico, links, i is IniciativaComCharter,
+            CamposTipoDto.De(i),
             await utilizadores.TemPermissaoAsync(Permissoes.Iniciativas.Gerir, cancellationToken));
     }
 
@@ -184,6 +210,9 @@ public record DadosIniciativa
     public DateOnly? DataFim { get; init; }
     public string? Origem { get; init; }
     public Horizonte? Horizonte { get; init; }
+
+    /// <summary>Campos próprios do tipo (opcional: se vier vazio, não se mexe neles).</summary>
+    public CamposTipoDto? Campos { get; init; }
 }
 
 public class DadosIniciativaValidator : AbstractValidator<DadosIniciativa>
@@ -197,6 +226,18 @@ public class DadosIniciativaValidator : AbstractValidator<DadosIniciativa>
         RuleFor(d => d.DataFim).GreaterThanOrEqualTo(d => d.DataInicio)
             .When(d => d.DataInicio is not null && d.DataFim is not null)
             .WithMessage("A data de fim não pode ser anterior à de início.");
+        When(d => d.Campos is not null, () =>
+        {
+            RuleFor(d => d.Campos!.Resultado).MaximumLength(2000);
+            RuleFor(d => d.Campos!.Descritivo).MaximumLength(4000);
+            RuleFor(d => d.Campos!.NomeAluno).MaximumLength(200);
+            RuleFor(d => d.Campos!.Curso).MaximumLength(200);
+            RuleFor(d => d.Campos!.NumeroParticipantes).GreaterThanOrEqualTo(0).When(d => d.Campos!.NumeroParticipantes is not null);
+            RuleFor(d => d.Campos!.TipoProjeto).IsInEnum().When(d => d.Campos!.TipoProjeto is not null);
+            RuleFor(d => d.Campos!.Ambito).IsInEnum().When(d => d.Campos!.Ambito is not null);
+            RuleFor(d => d.Campos!.Periodicidade).IsInEnum().When(d => d.Campos!.Periodicidade is not null);
+            RuleFor(d => d.Campos!.TipoAcao).IsInEnum().When(d => d.Campos!.TipoAcao is not null);
+        });
     }
 }
 
@@ -211,6 +252,36 @@ internal static class AplicarDados
         iniciativa.DataFim = dados.DataFim;
         iniciativa.Origem = string.IsNullOrWhiteSpace(dados.Origem) ? null : dados.Origem.Trim();
         iniciativa.Horizonte = dados.Horizonte;
+
+        if (dados.Campos is { } c)
+        {
+            static string? Limpo(string? t) => string.IsNullOrWhiteSpace(t) ? null : t.Trim();
+            switch (iniciativa)
+            {
+                case Projeto p:
+                    p.TipoProjeto = c.TipoProjeto;
+                    p.Ambito = c.Ambito ?? p.Ambito;
+                    break;
+                case MelhoriaContinua m:
+                    m.Resultado = Limpo(c.Resultado);
+                    break;
+                case Oportunidade o:
+                    o.Resultado = Limpo(c.Resultado);
+                    break;
+                case Vigilancia v:
+                    v.Descritivo = Limpo(c.Descritivo);
+                    v.Periodicidade = c.Periodicidade ?? v.Periodicidade;
+                    break;
+                case Mestrado m:
+                    m.NomeAluno = Limpo(c.NomeAluno) ?? string.Empty;
+                    m.Curso = Limpo(c.Curso);
+                    break;
+                case AcaoInovacao a:
+                    a.TipoAcao = c.TipoAcao ?? a.TipoAcao;
+                    a.NumeroParticipantes = c.NumeroParticipantes;
+                    break;
+            }
+        }
 
         // Se o nome do responsável não mudou, mantém-se a ligação ao utilizador (ex.: autor da ideia de origem).
         var nome = string.IsNullOrWhiteSpace(dados.Responsavel) ? null : dados.Responsavel.Trim();

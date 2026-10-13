@@ -31,6 +31,19 @@ public static class Permissoes
         public const string Gerir = "iniciativas.gerir";
     }
 
+    /// <summary>Registos manuais (Mod.235, 236, 238, 241) e plano anual de atividades (Mod.69).</summary>
+    public static class Registos
+    {
+        public const string Gerir = "registos.gerir";
+        public const string GerirPlano = "plano.gerir";
+    }
+
+    /// <summary>Valores introduzidos à mão para os KPIs (n.º de trabalhadores, receitas…). Por omissão, só o Administrador.</summary>
+    public static class Kpis
+    {
+        public const string ValoresExternos = "kpis.valores-externos";
+    }
+
     /// <summary>Orçamento dos projetos: por omissão só o Administrador (pode dar a outros perfis no backoffice).</summary>
     public static class Orcamento
     {
@@ -51,6 +64,9 @@ public static class Permissoes
         new(Ideias.Validar, "Validar ideias e fechar discussões", "Ideias"),
         new(Ideias.Avaliar, "Registar a avaliação da CE, a decisão dst e a classe", "Ideias"),
         new(Iniciativas.Gerir, "Gerir projetos, desafios e outras iniciativas e importar o portefólio (Mod.246)", "Iniciativas"),
+        new(Registos.Gerir, "Gerir parcerias, ativos intangíveis, conhecimento tácito e ferramentas e métodos", "Registos"),
+        new(Registos.GerirPlano, "Gerir o plano anual de atividades (Mod.69)", "Registos"),
+        new(Kpis.ValoresExternos, "Introduzir os valores externos dos KPIs (n.º de trabalhadores, receitas…)", "Indicadores"),
         new(Orcamento.Ver, "Ver o orçamento dos projetos e desafios", "Orçamento"),
         new(Orcamento.Gerir, "Introduzir e alterar o orçamento dos projetos e desafios", "Orçamento"),
         new(Administracao.GerirUtilizadores, "Adicionar e gerir utilizadores", "Administração"),
@@ -63,7 +79,7 @@ public static class Permissoes
     /// <summary>Permissões dadas a cada perfil quando é criado pela primeira vez (depois o Administrador pode mudar).</summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> PorOmissao = new Dictionary<string, IReadOnlyList<string>>
     {
-        [Roles.EquipaInovacao] = [Ideias.VerTodas, Ideias.Validar, Ideias.Avaliar, Iniciativas.Gerir],
+        [Roles.EquipaInovacao] = [Ideias.VerTodas, Ideias.Validar, Ideias.Avaliar, Iniciativas.Gerir, Registos.Gerir, Registos.GerirPlano],
         [Roles.Trabalhador] = [],
     };
 }

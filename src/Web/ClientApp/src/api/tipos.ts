@@ -208,8 +208,44 @@ export interface IniciativaDetalhe {
   historico: { data: string; texto: string; autor: string | null }[];
   links: LinkDocumento[];
   temCharter: boolean;
+  campos: CamposTipo;
   podeEditar: boolean;
 }
+
+export type TipoProjeto = 'Investigacao' | 'DesenvolvimentoInovacao' | 'Inovacao' | 'InvestigacaoDesenvolvimento' | 'InvestigacaoDesenvolvimentoInovacao';
+export type AmbitoProjeto = 'Interno' | 'Externo';
+export type Periodicidade = 'Nenhuma' | 'Semanal' | 'Mensal' | 'Trimestral' | 'Semestral' | 'Anual';
+export type TipoAcaoInovacao = 'Criada' | 'Externa';
+
+/** Campos próprios de cada tipo de iniciativa. */
+export interface CamposTipo {
+  tipoProjeto: TipoProjeto | null;
+  ambito: AmbitoProjeto | null;
+  resultado: string | null;
+  descritivo: string | null;
+  periodicidade: Periodicidade | null;
+  nomeAluno: string | null;
+  curso: string | null;
+  tipoAcao: TipoAcaoInovacao | null;
+  numeroParticipantes: number | null;
+}
+
+export const nomeTipoProjeto: Record<TipoProjeto, string> = {
+  Investigacao: 'investigação',
+  DesenvolvimentoInovacao: 'desenvolvimento e inovação',
+  Inovacao: 'inovação',
+  InvestigacaoDesenvolvimento: 'investigação e desenvolvimento',
+  InvestigacaoDesenvolvimentoInovacao: 'investigação, desenvolvimento e inovação',
+};
+
+export const nomePeriodicidade: Record<Periodicidade, string> = {
+  Nenhuma: 'não se repete',
+  Semanal: 'semanal',
+  Mensal: 'mensal',
+  Trimestral: 'trimestral',
+  Semestral: 'semestral',
+  Anual: 'anual',
+};
 
 /** Link para um documento no OneDrive (RF15). */
 export interface LinkDocumento {
@@ -227,6 +263,7 @@ export interface DadosIniciativa {
   dataFim: string | null;
   origem: string | null;
   horizonte: Horizonte | null;
+  campos?: CamposTipo | null;
 }
 
 export interface ResultadoImportacao {
@@ -575,3 +612,126 @@ export const nomeOrigemConhecimento: Record<OrigemConhecimento, string> = {
 };
 
 export const nomeAcaoAuditoria: Record<AcaoAuditoria, string> = { Criar: 'criou', Alterar: 'alterou', Eliminar: 'eliminou' };
+
+// Registos manuais (RF14) e plano anual (Mod.69)
+
+export type TipoParceiro = 'Empresarial' | 'Academico';
+export type TipoProtocolo = 'InvestigacaoPartilhada' | 'CoPromocao' | 'Confidencialidade' | 'Inovacao' | 'Investigacao';
+export type EstadoAcordo = 'EmCurso' | 'Terminado';
+export type TipoAtivo = 'Patente' | 'Design' | 'Marca';
+export type Confidencialidade = 'Baixo' | 'Elevado';
+export type TipoValorExterno = 'NumeroTrabalhadores' | 'Receitas' | 'ProveitosIdi';
+export type PeriodoKpi = 'Anual' | 'PrimeiroSemestre' | 'AnoAteData';
+
+export interface Parceiro {
+  id: number;
+  nome: string;
+  nif: string | null;
+  tipo: TipoParceiro;
+  descricao: string | null;
+  acordos: number;
+  acordosEmCurso: number;
+}
+
+export interface Acordo {
+  id: number;
+  parceiroId: number;
+  parceiro: string;
+  tipoParceiro: TipoParceiro;
+  descricao: string;
+  protocoloEstabelecido: boolean;
+  tipoProtocolo: TipoProtocolo | null;
+  dataInicio: string | null;
+  dataFim: string | null;
+  incluiGestaoPropriedadeIntelectual: boolean;
+  estado: EstadoAcordo;
+  observacoes: string | null;
+  linkDocumento: string | null;
+}
+
+export interface Ativo {
+  id: number;
+  data: string;
+  tipo: TipoAtivo;
+  entidadeRegisto: string;
+  designacao: string;
+  descricao: string | null;
+  numeroPedido: string | null;
+  autores: string | null;
+  dataRegisto: string | null;
+  dataValidade: string | null;
+  ambito: string | null;
+  situacao: string | null;
+  custo: number | null;
+  perspetivaValor: string | null;
+  numeroProcesso: string | null;
+  observacoes: string | null;
+  diasParaValidade: number | null;
+}
+
+export interface ConhecimentoTacito {
+  id: number;
+  data: string;
+  empresa: string | null;
+  detentor: string;
+  descricao: string;
+  confidencialidade: Confidencialidade;
+}
+
+export interface Ferramenta {
+  id: number;
+  data: string;
+  nome: string;
+  sumarioExecutivo: string | null;
+  potencial: string | null;
+  custoAquisicao: number | null;
+  divulgacao: string | null;
+}
+
+export interface AtividadePlano {
+  id: number;
+  titulo: string;
+  descricao: string | null;
+  cor: string | null;
+  dataInicio: string;
+  dataFim: string | null;
+  recorrencia: Periodicidade;
+  diasAntecedenciaAviso: number;
+  responsaveis: UtilizadorResumo[];
+  ocorrencias: string[];
+  duracaoDias: number;
+  proximaOcorrencia: string | null;
+}
+
+export interface ValorExterno {
+  id: number;
+  tipo: TipoValorExterno;
+  ano: number;
+  periodo: PeriodoKpi;
+  valor: number;
+  observacoes: string | null;
+}
+
+export const nomeTipoParceiro: Record<TipoParceiro, string> = { Empresarial: 'empresarial', Academico: 'académico (ENESI)' };
+
+export const nomeTipoProtocolo: Record<TipoProtocolo, string> = {
+  InvestigacaoPartilhada: 'investigação partilhada',
+  CoPromocao: 'co-promoção',
+  Confidencialidade: 'confidencialidade (NDA)',
+  Inovacao: 'inovação',
+  Investigacao: 'investigação',
+};
+
+export const nomeEstadoAcordo: Record<EstadoAcordo, string> = { EmCurso: 'em curso', Terminado: 'terminado' };
+
+export const nomeTipoAtivo: Record<TipoAtivo, string> = { Patente: 'patente', Design: 'design', Marca: 'marca' };
+
+export const nomeConfidencialidade: Record<Confidencialidade, string> = { Baixo: 'baixa', Elevado: 'elevada' };
+
+export const nomeTipoValorExterno: Record<TipoValorExterno, string> = {
+  NumeroTrabalhadores: 'n.º de trabalhadores',
+  Receitas: 'receitas (€)',
+  ProveitosIdi: 'proveitos de IDI (€)',
+};
+
+export const nomePeriodoKpi: Record<PeriodoKpi, string> = { Anual: 'anual', PrimeiroSemestre: '1.º semestre', AnoAteData: 'ano até à data' };

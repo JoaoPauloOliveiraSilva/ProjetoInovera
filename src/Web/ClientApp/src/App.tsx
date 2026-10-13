@@ -16,6 +16,9 @@ import { IdeiasLista } from './paginas/IdeiasLista';
 import { ImportarMod246 } from './paginas/ImportarMod246';
 import { IniciativasLista } from './paginas/IniciativasLista';
 import { Landing } from './paginas/Landing';
+import { PlanoAnualPagina } from './paginas/PlanoAnual';
+import { AtivosIntangiveis, ConhecimentoTacitoPagina, Ferramentas, Parcerias } from './paginas/RegistosManuais';
+import { ValoresExternos } from './paginas/ValoresExternos';
 import { RepositorioConhecimento, RepositorioLicoes } from './paginas/Repositorios';
 import { Validacao } from './paginas/Validacao';
 import { Protegido, SessaoProvider } from './sessao/Sessao';
@@ -58,6 +61,19 @@ export function App() {
               <Route path="iniciativas/:id/charter" element={<CharterPagina />} />
               <Route path="licoes" element={<RepositorioLicoes />} />
               <Route path="conhecimento" element={<RepositorioConhecimento />} />
+              <Route path="conhecimento-tacito" element={<ConhecimentoTacitoPagina />} />
+              <Route path="ferramentas" element={<Ferramentas />} />
+              <Route path="parcerias" element={<Parcerias />} />
+              <Route path="ativos" element={<AtivosIntangiveis />} />
+              <Route path="plano-anual" element={<PlanoAnualPagina />} />
+              <Route
+                path="indicadores/valores-externos"
+                element={
+                  <Protegido permissao={Permissoes.valoresExternos}>
+                    <ValoresExternos />
+                  </Protegido>
+                }
+              />
               <Route path="projetos" element={<IniciativasLista titulo="projetos" tipo="Projeto" />} />
               <Route path="desafios" element={<IniciativasLista titulo="desafios" tipo="Desafio" />} />
               <Route path="vigilancias" element={<IniciativasLista titulo="vigilâncias" tipo="Vigilancia" />} />
