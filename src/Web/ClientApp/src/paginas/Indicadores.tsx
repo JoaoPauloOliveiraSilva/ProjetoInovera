@@ -119,7 +119,7 @@ export function IndicadoresPagina() {
 
 // ---------- Dashboard: iniciativas por estado, próximas atividades e alertas ----------
 
-const nomeAlerta: Record<string, string> = { validade: 'validade', atraso: 'atraso', risco: 'risco' };
+const nomeAlerta: Record<string, string> = { validade: 'validade', atraso: 'atraso', risco: 'risco', vigilancia: 'vigilância' };
 
 /** Resumo do dia a dia (também na homepage). */
 export function PainelResumo({ dados }: { dados: Indicadores }) {

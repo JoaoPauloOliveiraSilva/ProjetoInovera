@@ -21,6 +21,7 @@ import { EstadoPedido } from '../componentes/Estado';
 import { Gaveta } from '../componentes/Gaveta';
 import { SetaContinuar } from '../componentes/Icones';
 import { formatarData, haQuantoTempo } from '../dados/regras';
+import { ExecucoesVigilancia, ParceirosIniciativa } from './IniciativaExtras';
 
 const estados = Object.keys(nomeEstadoIniciativa) as EstadoIniciativa[];
 
@@ -149,6 +150,10 @@ function Ficha({ detalhe, aoEditar, recarregar }: { detalhe: Detalhe; aoEditar: 
           <p className="texto">{detalhe.descricao}</p>
         </>
       )}
+
+      {r.tipo === 'Vigilancia' && <ExecucoesVigilancia detalhe={detalhe} />}
+
+      <ParceirosIniciativa detalhe={detalhe} recarregar={recarregar} />
 
       <LinksDocumentos detalhe={detalhe} recarregar={recarregar} />
 

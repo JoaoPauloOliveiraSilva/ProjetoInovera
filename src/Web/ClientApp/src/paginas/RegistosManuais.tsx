@@ -12,7 +12,8 @@ import type { Acordo, Ativo, ConhecimentoTacito, Ferramenta, Parceiro } from '..
 import { usePedido } from '../api/usePedido';
 import { EstadoPedido } from '../componentes/Estado';
 import { Cabecalho } from '../componentes/Layout';
-import { LinkExterno, TabelaEditavel, data, euros, hoje, opcoes, texto } from '../componentes/TabelaEditavel';
+import { Link } from 'react-router-dom';
+import { LinkExterno, TabelaEditavel, data, euros, hoje, lista, opcoes, proximaAtividade, subcamposAtividades, texto } from '../componentes/TabelaEditavel';
 import type { DefTabela } from '../componentes/TabelaEditavel';
 import { usePermissao } from '../sessao/Sessao';
 
@@ -50,9 +51,25 @@ function Registo<T extends { id: number }>({
 const defParceiros: DefTabela<Parceiro> = {
   titulo: 'parceiros',
   singular: 'parceiro',
-  colunas: 'minmax(200px, 1fr) 160px 120px 140px',
-  cabecalhos: ['Parceiro', 'Tipo', 'NIF', 'Acordos (em curso)'],
-  celulas: (p) => [<span className="forte">{p.nome}</span>, nomeTipoParceiro[p.tipo], p.nif ?? '—', `${p.acordos} (${p.acordosEmCurso})`],
+  colunas: 'minmax(200px, 1fr) 160px 120px 140px minmax(160px, 1fr)',
+  cabecalhos: ['Parceiro', 'Tipo', 'NIF', 'Acordos (em curso)', 'Iniciativas'],
+  celulas: (p) => [
+    <span className="forte">{p.nome}</span>,
+    nomeTipoParceiro[p.tipo],
+    p.nif ?? '—',
+    `${p.acordos} (${p.acordosEmCurso})`,
+    p.iniciativas.length === 0 ? (
+      <span className="cinzento-escuro">—</span>
+    ) : (
+      <span className="lista-ligacoes">
+        {p.iniciativas.map((i) => (
+          <Link key={i.id} className="ligacao" to={`/inovacao/iniciativas/${i.id}`} title={i.titulo} onClick={(e) => e.stopPropagation()}>
+            {i.codigo}
+          </Link>
+        ))}
+      </span>
+    ),
+  ],
   campos: [
     { nome: 'nome', rotulo: 'nome', obrigatorio: true, max: 200 },
     { nome: 'tipo', rotulo: 'tipo', tipo: 'opcoes', opcoes: opcoes(nomeTipoParceiro), obrigatorio: true, ajuda: 'Conta para os KPIs 26 e 27.' },
@@ -149,8 +166,8 @@ function Validade({ a }: { a: Ativo }) {
 const defAtivos: DefTabela<Ativo> = {
   titulo: 'ativos intangíveis',
   singular: 'ativo intangível',
-  colunas: '90px minmax(200px, 1fr) 100px 130px 160px 120px 110px',
-  cabecalhos: ['Tipo', 'Designação', 'Entidade', 'N.º pedido', 'Validade', 'Situação', 'Custo'],
+  colunas: '90px minmax(200px, 1fr) 100px 130px 160px 120px 110px minmax(160px, 1fr)',
+  cabecalhos: ['Tipo', 'Designação', 'Entidade', 'N.º pedido', 'Validade', 'Situação', 'Custo', 'Próxima atividade'],
   celulas: (a) => [
     nomeTipoAtivo[a.tipo],
     <span className="forte">{a.designacao}</span>,
@@ -159,6 +176,7 @@ const defAtivos: DefTabela<Ativo> = {
     <Validade a={a} />,
     a.situacao ?? '—',
     euros(a.custo),
+    proximaAtividade(a.atividades),
   ],
   campos: [
     { nome: 'tipo', rotulo: 'tipo', tipo: 'opcoes', opcoes: opcoes(nomeTipoAtivo), obrigatorio: true, ajuda: 'Patentes, designs e marcas contam para os KPIs 29 a 31.' },
@@ -181,6 +199,13 @@ const defAtivos: DefTabela<Ativo> = {
     { nome: 'custo', rotulo: 'custo (€)', tipo: 'numero' },
     { nome: 'perspetivaValor', rotulo: 'perspetiva de valor', tipo: 'area' },
     { nome: 'observacoes', rotulo: 'observações', tipo: 'area' },
+    {
+      nome: 'atividades',
+      rotulo: 'modelo de gestão: atividades · quem · quando',
+      tipo: 'lista',
+      subcampos: subcamposAtividades,
+      ajuda: 'Ex.: converter a patente provisória (365 dias). Avisa 7 dias antes.',
+    },
   ],
   valores: (a) => ({
     tipo: a?.tipo ?? 'Marca',
@@ -198,6 +223,7 @@ const defAtivos: DefTabela<Ativo> = {
     custo: texto(a?.custo),
     perspetivaValor: texto(a?.perspetivaValor),
     observacoes: texto(a?.observacoes),
+    atividades: lista(a?.atividades),
   }),
   vazio: 'Ainda não há ativos intangíveis.',
 };
@@ -219,8 +245,8 @@ export function AtivosIntangiveis() {
 const defTacito: DefTabela<ConhecimentoTacito> = {
   titulo: 'conhecimento tácito',
   singular: 'registo de conhecimento',
-  colunas: '100px 160px minmax(260px, 1fr) 140px 110px',
-  cabecalhos: ['Data', 'Detentor', 'Conhecimento', 'Empresa', 'Confidencial.'],
+  colunas: '100px 160px minmax(240px, 1fr) 130px 110px minmax(160px, 0.8fr)',
+  cabecalhos: ['Data', 'Detentor', 'Conhecimento', 'Empresa', 'Confidencial.', 'Disseminação'],
   celulas: (c) => [
     data(c.data),
     <span className="forte">{c.detentor}</span>,
@@ -229,6 +255,7 @@ const defTacito: DefTabela<ConhecimentoTacito> = {
     <span className={`etiqueta ${c.confidencialidade === 'Elevado' ? 'estado-em-discussao' : 'estado-aprovada'}`}>
       {nomeConfidencialidade[c.confidencialidade]}
     </span>,
+    proximaAtividade(c.atividades),
   ],
   campos: [
     { nome: 'detentor', rotulo: 'quem detém o conhecimento', obrigatorio: true, max: 200 },
@@ -243,6 +270,13 @@ const defTacito: DefTabela<ConhecimentoTacito> = {
       ajuda: 'Os registos de confidencialidade elevada só aparecem a quem gere os registos.',
     },
     { nome: 'data', rotulo: 'data', tipo: 'data' },
+    {
+      nome: 'atividades',
+      rotulo: 'disseminação: atividades · quem · quando',
+      tipo: 'lista',
+      subcampos: subcamposAtividades,
+      ajuda: 'Como passar este conhecimento a outros (sessões, manuais, vídeos…).',
+    },
   ],
   valores: (c) => ({
     detentor: texto(c?.detentor),
@@ -250,6 +284,7 @@ const defTacito: DefTabela<ConhecimentoTacito> = {
     empresa: texto(c?.empresa),
     confidencialidade: c?.confidencialidade ?? 'Baixo',
     data: c ? c.data : hoje(),
+    atividades: lista(c?.atividades),
   }),
   vazio: 'Ainda não há conhecimento tácito registado.',
 };
@@ -272,9 +307,21 @@ const defFerramentas: DefTabela<Ferramenta> = {
   titulo: 'ferramentas e métodos',
   singular: 'ferramenta ou método',
   feminino: true,
-  colunas: '100px minmax(180px, 0.7fr) minmax(240px, 1fr) 120px',
-  cabecalhos: ['Data', 'Ferramenta / método', 'Sumário', 'Custo'],
-  celulas: (f) => [data(f.data), <span className="forte">{f.nome}</span>, f.sumarioExecutivo ?? '—', euros(f.custoAquisicao)],
+  colunas: '100px minmax(180px, 0.7fr) minmax(220px, 1fr) 110px minmax(200px, 1fr)',
+  cabecalhos: ['Data', 'Ferramenta / método', 'Sumário', 'Custo', 'Última análise'],
+  celulas: (f) => [
+    data(f.data),
+    <span className="forte">{f.nome}</span>,
+    f.sumarioExecutivo ?? '—',
+    euros(f.custoAquisicao),
+    f.analises.length === 0 ? (
+      <span className="cinzento-escuro">—</span>
+    ) : (
+      <span title={f.analises.map((a) => `${a.ano}: ${a.analise}`).join('\n')}>
+        <span className="num">{f.analises[0].ano}</span> · {f.analises[0].analise}
+      </span>
+    ),
+  ],
   campos: [
     { nome: 'nome', rotulo: 'nome', obrigatorio: true, max: 200 },
     { nome: 'sumarioExecutivo', rotulo: 'sumário executivo', tipo: 'area' },
@@ -282,6 +329,16 @@ const defFerramentas: DefTabela<Ferramenta> = {
     { nome: 'custoAquisicao', rotulo: 'custo de aquisição (€)', tipo: 'numero' },
     { nome: 'divulgacao', rotulo: 'divulgação (onde e a quem)', tipo: 'area' },
     { nome: 'data', rotulo: 'data', tipo: 'data' },
+    {
+      nome: 'analises',
+      rotulo: 'análise anual (como correu a utilização)',
+      tipo: 'lista',
+      subcampos: [
+        { nome: 'ano', rotulo: 'ano', tipo: 'numero', obrigatorio: true, largura: '80px' },
+        { nome: 'analise', rotulo: 'análise', obrigatorio: true, largura: '1fr' },
+      ],
+      ajuda: 'Uma linha por ano, como as colunas "Análise <ano>" do Mod.241.',
+    },
   ],
   valores: (f) => ({
     nome: texto(f?.nome),
@@ -290,6 +347,7 @@ const defFerramentas: DefTabela<Ferramenta> = {
     custoAquisicao: texto(f?.custoAquisicao),
     divulgacao: texto(f?.divulgacao),
     data: f ? f.data : hoje(),
+    analises: lista(f?.analises),
   }),
   vazio: 'Ainda não há ferramentas nem métodos registados.',
 };

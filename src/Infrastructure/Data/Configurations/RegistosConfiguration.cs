@@ -72,7 +72,9 @@ public class LinhaEstrategiaConfiguration : IEntityTypeConfiguration<LinhaEstrat
         builder.Property(l => l.AreaAtuacao).HasMaxLength(200);
         builder.Property(l => l.HorasMesPorRecurso).HasPrecision(8, 2);
         builder.HasOne(l => l.Iniciativa).WithMany().HasForeignKey(l => l.IniciativaId).OnDelete(DeleteBehavior.SetNull);
-        builder.HasMany(l => l.Kpis).WithMany().UsingEntity(j => j.ToTable("LinhaEstrategiaKpis"));
+        builder.Property(l => l.Abordagem).HasMaxLength(500);
+        builder.Property(l => l.RecursosExtra).HasMaxLength(500);
+        builder.Ignore(l => l.DedicacaoTotalHoras);
     }
 }
 

@@ -98,6 +98,16 @@ public class ObterIndicadoresQueryHandler(IApplicationDbContext context, IUtiliz
         alertas.AddRange(riscos.Select(r => new AlertaDashboardDto("risco", $"{r.Codigo} · {r.Descricao}", "Risco elevado sem plano de ação.", null,
             $"/inovacao/iniciativas/{r.IniciativaId}/charter?separador=riscos")));
 
+        var vigilancias = await context.Iniciativas.OfType<Vigilancia>().AsNoTracking()
+            .Where(v => v.Estado != EstadoIniciativa.Cancelada && v.Estado != EstadoIniciativa.Concluida)
+            .SelectMany(v => v.Execucoes.Where(e => e.DataRealizada == null && e.DataPrevista < hoje)
+                .Select(e => new { e.DataPrevista, v.Id, v.Codigo, v.Titulo }))
+            .OrderBy(e => e.DataPrevista)
+            .Take(10)
+            .ToListAsync(cancellationToken);
+        alertas.AddRange(vigilancias.Select(v => new AlertaDashboardDto("vigilancia", $"{v.Codigo} · {v.Titulo}",
+            $"Vigilância prevista para {v.DataPrevista:dd/MM/yyyy} ainda sem resultado.", v.DataPrevista, $"/inovacao/iniciativas/{v.Id}")));
+
         return alertas;
     }
 }

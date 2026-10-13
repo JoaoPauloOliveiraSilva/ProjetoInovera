@@ -13,13 +13,25 @@ export type Valores = Record<string, string>;
 export interface Campo {
   nome: string;
   rotulo: string;
-  tipo?: 'texto' | 'area' | 'data' | 'numero' | 'opcoes' | 'link' | 'booleano' | 'cor' | 'pessoas';
+  tipo?: 'texto' | 'area' | 'data' | 'numero' | 'opcoes' | 'link' | 'booleano' | 'cor' | 'pessoas' | 'lista';
+  /** Colunas de cada linha de um campo 'lista' (ex.: Atividades · Quem · Quando). */
+  subcampos?: SubCampo[];
   opcoes?: [string, string][];
   /** Converte o valor escolhido numa opção para número (ex.: id do parceiro). */
   numerico?: boolean;
   obrigatorio?: boolean;
   max?: number;
   ajuda?: string;
+}
+
+/** Coluna de um campo 'lista'. */
+export interface SubCampo {
+  nome: string;
+  rotulo: string;
+  tipo?: 'texto' | 'data' | 'numero' | 'booleano';
+  /** grid-template-columns desta coluna (por omissão 1fr). */
+  largura?: string;
+  obrigatorio?: boolean;
 }
 
 /** Definição de uma tabela editável: colunas, células e o formulário da gaveta. */
@@ -35,6 +47,8 @@ export interface DefTabela<T extends { id: number }> {
   campos: Campo[];
   valores: (item: T | null) => Valores;
   vazio: string;
+  /** Linhas que não se podem apagar (por omissão, todas se podem). */
+  podeApagar?: (item: T) => boolean;
 }
 
 // Ajudas para as definições
@@ -45,6 +59,33 @@ export const data = (v: string | null) => (v ? formatarData(v) : '—');
 export const euros = (v: number | null) => (v === null ? '—' : v.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' }));
 export const hoje = () => new Date().toISOString().slice(0, 10);
 export const pessoas = (lista: UtilizadorResumo[]) => JSON.stringify(lista.map((u) => ({ id: u.id, nome: u.nome })));
+/** Valor inicial de um campo 'lista': cada objeto passa a texto (como os inputs). */
+export const lista = (itens: object[] | null | undefined) =>
+  JSON.stringify(
+    (itens ?? []).map((o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v === null || v === undefined ? '' : String(v)]))),
+  );
+
+/** Campos de "Atividades · Quem · Quando" (Mod.236, 237, 238). */
+export const subcamposAtividades: SubCampo[] = [
+  { nome: 'descricao', rotulo: 'atividade', obrigatorio: true, largura: 'minmax(140px, 2fr)' },
+  { nome: 'responsavel', rotulo: 'quem', largura: 'minmax(90px, 1fr)' },
+  { nome: 'data', rotulo: 'quando', tipo: 'data', largura: '130px' },
+  { nome: 'concluida', rotulo: 'feita', tipo: 'booleano', largura: '44px' },
+];
+
+/** Próxima atividade por fazer (para mostrar na tabela). */
+export function proximaAtividade(atividades: { descricao: string; data: string | null; concluida: boolean }[] | null | undefined) {
+  const porFazer = (atividades ?? []).filter((a) => !a.concluida);
+  if (porFazer.length === 0) return (atividades ?? []).length > 0 ? <span className="cinzento-escuro">todas feitas</span> : '—';
+  const a = [...porFazer].sort((x, y) => (x.data ?? '9999').localeCompare(y.data ?? '9999'))[0];
+  return (
+    <span title={porFazer.map((x) => `${x.descricao}${x.data ? ` (${formatarData(x.data)})` : ''}`).join('\n')}>
+      {a.data ? `${formatarData(a.data)} · ` : ''}
+      {a.descricao}
+      {porFazer.length > 1 && <span className="cinzento-escuro"> +{porFazer.length - 1}</span>}
+    </span>
+  );
+}
 
 export function LinkExterno({ url, texto: rotulo = 'abrir ↗' }: { url: string | null; texto?: string }) {
   if (!url) return <span className="cinzento-escuro">—</span>;
@@ -62,9 +103,31 @@ export function paraPedido(campos: Campo[], valores: Valores): Record<string, un
     const v = (valores[c.nome] ?? '').trim();
     if (c.tipo === 'booleano') corpo[c.nome] = v === 'true';
     else if (c.tipo === 'pessoas') corpo[c.nome] = lerPessoas(v).map((p) => p.id);
+    else if (c.tipo === 'lista') corpo[c.nome] = lerLista(v).filter((l) => Object.values(l).some((x) => x.trim() && x !== 'false')).map((l) => linhaParaPedido(c.subcampos ?? [], l));
     else if (!v) corpo[c.nome] = null;
     else if (c.tipo === 'numero' || c.numerico) corpo[c.nome] = Number(v.replace(',', '.'));
     else corpo[c.nome] = v;
+  }
+  return corpo;
+}
+
+function lerLista(v: string): Record<string, string>[] {
+  if (!v) return [];
+  try {
+    return JSON.parse(v) as Record<string, string>[];
+  } catch {
+    return [];
+  }
+}
+
+function linhaParaPedido(subcampos: SubCampo[], linha: Record<string, string>) {
+  const corpo: Record<string, unknown> = {};
+  for (const s of subcampos) {
+    const v = (linha[s.nome] ?? '').trim();
+    if (s.tipo === 'booleano') corpo[s.nome] = v === 'true';
+    else if (!v) corpo[s.nome] = null;
+    else if (s.tipo === 'numero') corpo[s.nome] = Number(v.replace(',', '.'));
+    else corpo[s.nome] = v;
   }
   return corpo;
 }
@@ -199,7 +262,13 @@ function FormItem<T extends { id: number }>({
       <div className="sobretitulo">{sobretitulo}</div>
       <h2 className="detalhe-titulo">{item ? `editar ${def.singular}` : `${def.feminino ? 'nova' : 'novo'} ${def.singular}`}</h2>
       {def.campos.map((c) =>
-        c.tipo === 'booleano' ? (
+        c.tipo === 'lista' ? (
+          <div key={c.nome} className="campo">
+            <span>{c.rotulo}</span>
+            <EditarLista subcampos={c.subcampos ?? []} valor={valores[c.nome] ?? ''} aoMudar={(v) => mudar(c.nome, v)} />
+            {c.ajuda && <small className="ajuda">{c.ajuda}</small>}
+          </div>
+        ) : c.tipo === 'booleano' ? (
           <label key={c.nome} className="caixa-simples">
             <input type="checkbox" checked={valores[c.nome] === 'true'} onChange={(e) => mudar(c.nome, e.target.checked ? 'true' : '')} />
             <span>{c.rotulo}</span>
@@ -218,6 +287,7 @@ function FormItem<T extends { id: number }>({
       {erro && <div className="erro">{erro}</div>}
       <div className="botoes">
         {item &&
+          (def.podeApagar?.(item) ?? true) &&
           (confirmarApagar ? (
             <button type="button" className="botao-largo curto perigo" disabled={aEnviar} onClick={() => void executar(() => apagar(item.id))}>
               confirmar apagar
@@ -337,6 +407,57 @@ function EscolherPessoas({ valor, aoMudar }: { valor: string; aoMudar: (v: strin
             ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Tabela pequena dentro do formulário (ex.: Atividades · Quem · Quando); guarda as linhas em JSON. */
+function EditarLista({ subcampos, valor, aoMudar }: { subcampos: SubCampo[]; valor: string; aoMudar: (v: string) => void }) {
+  const linhas = lerLista(valor);
+  const colunas = { gridTemplateColumns: `${subcampos.map((s) => s.largura ?? '1fr').join(' ')} 28px` };
+  const guardar = (novas: Record<string, string>[]) => aoMudar(JSON.stringify(novas));
+  const mudar = (i: number, nome: string, v: string) => guardar(linhas.map((l, j) => (j === i ? { ...l, [nome]: v } : l)));
+
+  return (
+    <div className="lista-campo">
+      {linhas.length > 0 && (
+        <div className="lista-linha lista-cabecalho" style={colunas}>
+          {subcampos.map((s) => (
+            <span key={s.nome}>{s.rotulo}</span>
+          ))}
+          <span />
+        </div>
+      )}
+      {linhas.map((l, i) => (
+        <div key={i} className="lista-linha" style={colunas}>
+          {subcampos.map((s) =>
+            s.tipo === 'booleano' ? (
+              <input
+                key={s.nome}
+                type="checkbox"
+                aria-label={s.rotulo}
+                checked={l[s.nome] === 'true'}
+                onChange={(e) => mudar(i, s.nome, e.target.checked ? 'true' : 'false')}
+              />
+            ) : (
+              <input
+                key={s.nome}
+                aria-label={s.rotulo}
+                type={s.tipo === 'data' ? 'date' : s.tipo === 'numero' ? 'number' : 'text'}
+                required={s.obrigatorio}
+                value={l[s.nome] ?? ''}
+                onChange={(e) => mudar(i, s.nome, e.target.value)}
+              />
+            ),
+          )}
+          <button type="button" className="lista-tirar" aria-label="Tirar esta linha" onClick={() => guardar(linhas.filter((_, j) => j !== i))}>
+            <Fechar />
+          </button>
+        </div>
+      ))}
+      <button type="button" className="botao-pequeno com-icone lista-mais" onClick={() => guardar([...linhas, {}])}>
+        <Mais /> acrescentar
+      </button>
     </div>
   );
 }

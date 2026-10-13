@@ -45,6 +45,13 @@ public class Iniciativas : IEndpointGroup
         groupBuilder.MapPut(EditarMembro, "{id:int}/equipa/{membroId:int}");
         groupBuilder.MapDelete(ApagarMembro, "{id:int}/equipa/{membroId:int}");
         groupBuilder.MapPut(GuardarAlocacoes, "{id:int}/equipa/{membroId:int}/alocacoes/{ano:int}");
+
+        // Vigilâncias: execuções (prevista/realizada, resultado → Mod.237) e parceiros da iniciativa
+        groupBuilder.MapGet(ListarExecucoes, "{id:int}/execucoes");
+        groupBuilder.MapPost(CriarExecucao, "{id:int}/execucoes");
+        groupBuilder.MapPut(EditarExecucao, "{id:int}/execucoes/{execucaoId:int}");
+        groupBuilder.MapDelete(ApagarExecucao, "{id:int}/execucoes/{execucaoId:int}");
+        groupBuilder.MapPut(DefinirParceiros, "{id:int}/parceiros");
     }
 
     public static async Task<Ok<IReadOnlyList<IniciativaResumoDto>>> ListarIniciativas(
@@ -176,6 +183,29 @@ public class Iniciativas : IEndpointGroup
     public static async Task<NoContent> GuardarAlocacoes(ISender sender, int id, int membroId, int ano, AlocacoesPedido pedido)
     {
         await sender.Send(new GuardarAlocacoesCommand(id, membroId, ano, pedido.Meses));
+        return TypedResults.NoContent();
+    }
+
+    public static async Task<Ok<IReadOnlyList<ExecucaoDto>>> ListarExecucoes(ISender sender, int id)
+        => TypedResults.Ok(await sender.Send(new ListarExecucoesQuery(id)));
+
+    public static async Task<Ok<int>> CriarExecucao(ISender sender, int id, ExecucaoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarExecucaoCommand(id, null, dados)));
+
+    public static async Task<Ok<int>> EditarExecucao(ISender sender, int id, int execucaoId, ExecucaoDados dados)
+        => TypedResults.Ok(await sender.Send(new GuardarExecucaoCommand(id, execucaoId, dados)));
+
+    public static async Task<NoContent> ApagarExecucao(ISender sender, int id, int execucaoId)
+    {
+        await sender.Send(new ApagarExecucaoCommand(id, execucaoId));
+        return TypedResults.NoContent();
+    }
+
+    public record ParceirosPedido(IReadOnlyList<int> ParceirosIds);
+
+    public static async Task<NoContent> DefinirParceiros(ISender sender, int id, ParceirosPedido pedido)
+    {
+        await sender.Send(new DefinirParceirosIniciativaCommand(id, pedido.ParceirosIds));
         return TypedResults.NoContent();
     }
 }

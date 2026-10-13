@@ -134,6 +134,9 @@ public class GerarAlertasCommandHandler(IApplicationDbContext context, INotifica
 {
     public const int DiasAvisoValidade = 90;
 
+    /// <summary>Antecedência dos avisos das vigilâncias e das atividades de gestão/partilha.</summary>
+    public const int DiasAvisoAtividades = 7;
+
     public async Task<int> Handle(GerarAlertasCommand request, CancellationToken cancellationToken)
     {
         var agora = relogio.GetUtcNow();
@@ -172,6 +175,53 @@ public class GerarAlertasCommandHandler(IApplicationDbContext context, INotifica
                     $"Validade a terminar: {a.Designacao}",
                     $"A validade de \"{a.Designacao}\" ({a.EntidadeRegisto}) termina a {validade:dd/MM/yyyy}. Veja se é preciso renovar.",
                     "/inovacao/ativos", agora, cancellationToken);
+            }
+        }
+
+        // 3. Vigilâncias: execuções previstas para os próximos dias (avisa quem gere as iniciativas)
+        var ateAtividades = hoje.AddDays(DiasAvisoAtividades);
+        var pendentes = await context.Iniciativas.OfType<Vigilancia>()
+            .SelectMany(v => v.Execucoes.Where(e => e.DataRealizada == null && e.DataPrevista >= hoje && e.DataPrevista <= ateAtividades)
+                .Select(e => new { e.Id, e.DataPrevista, v.Titulo, VigilanciaId = v.Id }))
+            .ToListAsync(cancellationToken);
+        if (pendentes.Count > 0)
+        {
+            var gestores = await UtilizadoresComPermissaoAsync(Permissoes.Iniciativas.Gerir, cancellationToken);
+            foreach (var e in pendentes)
+            {
+                criados += await AvisarAsync(TipoAlerta.Prazo, AlvoAlerta.ExecucaoVigilancia, e.Id, e.DataPrevista, gestores,
+                    $"Vigilância: {e.Titulo}", $"A vigilância \"{e.Titulo}\" está prevista para {e.DataPrevista:dd/MM/yyyy}.",
+                    $"/inovacao/iniciativas/{e.VigilanciaId}", agora, cancellationToken);
+            }
+        }
+
+        // 4. Atividades de gestão/partilha (Atividades · Quem · Quando) dos ativos, conhecimento codificado e tácito
+        var deGestao = new List<(AlvoAlerta Alvo, int Id, string Registo, AtividadeGestao Atividade, string Link)>();
+        foreach (var a in await context.AtivosIntangiveis.AsNoTracking().ToListAsync(cancellationToken))
+        {
+            deGestao.AddRange(a.Atividades.Select(x => (AlvoAlerta.AtivoIntangivel, a.Id, a.Designacao, x, "/inovacao/ativos")));
+        }
+
+        foreach (var c in await context.ConhecimentosCodificados.AsNoTracking().ToListAsync(cancellationToken))
+        {
+            deGestao.AddRange(c.Atividades.Select(x => (AlvoAlerta.ConhecimentoCodificado, c.Id, c.Documento, x, "/inovacao/conhecimento")));
+        }
+
+        foreach (var c in await context.ConhecimentosTacitos.AsNoTracking().ToListAsync(cancellationToken))
+        {
+            deGestao.AddRange(c.Atividades.Select(x => (AlvoAlerta.ConhecimentoTacito, c.Id, c.Detentor, x, "/inovacao/conhecimento-tacito")));
+        }
+
+        var proximas = deGestao.Where(x => !x.Atividade.Concluida && x.Atividade.Data is { } d && d >= hoje && d <= ateAtividades).ToList();
+        if (proximas.Count > 0)
+        {
+            var gestores = await UtilizadoresComPermissaoAsync(Permissoes.Registos.Gerir, cancellationToken);
+            foreach (var x in proximas)
+            {
+                var data = x.Atividade.Data!.Value;
+                var quem = x.Atividade.Responsavel is null ? string.Empty : $" ({x.Atividade.Responsavel})";
+                criados += await AvisarAsync(TipoAlerta.Prazo, x.Alvo, x.Id, data, gestores, $"Atividade: {x.Atividade.Descricao}",
+                    $"\"{x.Atividade.Descricao}\"{quem}, de \"{x.Registo}\", está marcada para {data:dd/MM/yyyy}.", x.Link, agora, cancellationToken);
             }
         }
 

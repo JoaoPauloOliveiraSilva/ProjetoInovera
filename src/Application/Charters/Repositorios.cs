@@ -1,3 +1,5 @@
+using Innovera.Application.Registos;
+
 namespace Innovera.Application.Charters;
 
 // ---------- Relatório de entregável/milestone → conhecimento codificado (Mod.237) ----------
@@ -81,7 +83,8 @@ public class ListarLicoesQueryHandler(IApplicationDbContext context) : IRequestH
 // ---------- Repositório de conhecimento codificado (Mod.237) ----------
 
 public record ConhecimentoCodificadoDto(int Id, DateOnly Data, string Documento, string? Url, string? ModoConsulta, string? Descricao,
-    string? Resultado, OrigemConhecimento Origem, int? IniciativaId, string? IniciativaCodigo, string? EntregaCodigo);
+    string? Resultado, OrigemConhecimento Origem, int? IniciativaId, string? IniciativaCodigo, string? EntregaCodigo,
+    DateOnly? ArquivadoEm = null, IReadOnlyList<AtividadeGestaoDto>? Atividades = null);
 
 /// <summary>Conhecimento codificado (Mod.237): relatórios de entregáveis/milestones, resultados de vigilâncias e entradas manuais.</summary>
 [Authorize]
@@ -109,7 +112,8 @@ public class ListarConhecimentoCodificadoQueryHandler(IApplicationDbContext cont
         return await consulta
             .OrderByDescending(c => c.Data).ThenByDescending(c => c.Id)
             .Select(c => new ConhecimentoCodificadoDto(c.Id, c.Data, c.Documento, c.Url, c.ModoConsulta, c.Descricao, c.Resultado, c.Origem,
-                c.IniciativaId, c.Iniciativa != null ? c.Iniciativa.Codigo : null, c.Entrega != null ? c.Entrega.Codigo : null))
+                c.IniciativaId, c.Iniciativa != null ? c.Iniciativa.Codigo : null, c.Entrega != null ? c.Entrega.Codigo : null,
+                c.ArquivadoEm, c.Atividades.Select(a => new AtividadeGestaoDto(a.Descricao, a.Responsavel, a.Data, a.Concluida)).ToList()))
             .ToListAsync(cancellationToken);
     }
 }

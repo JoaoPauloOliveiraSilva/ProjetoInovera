@@ -53,6 +53,7 @@ const menu: ItemMenu[] = [
   {
     nome: 'gestão da inovação',
     filhos: [
+      { nome: 'estratégia (Mod.52)', para: '/inovacao/estrategia' },
       { nome: 'plano anual de atividades', para: '/inovacao/plano-anual' },
       { nome: 'parcerias', para: '/inovacao/parcerias' },
       { nome: 'ativos intangíveis', para: '/inovacao/ativos' },

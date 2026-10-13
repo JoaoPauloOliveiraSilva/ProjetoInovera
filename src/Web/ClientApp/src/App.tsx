@@ -10,6 +10,7 @@ import { Avaliacao } from './paginas/Avaliacao';
 import { CharterPagina } from './paginas/Charter';
 import { DefinirPassword } from './paginas/DefinirPassword';
 import { EmConstrucao } from './paginas/EmConstrucao';
+import { EstrategiaPagina } from './paginas/Estrategia';
 import { Entrar } from './paginas/Entrar';
 import { Homepage } from './paginas/Homepage';
 import { IdeiasLista } from './paginas/IdeiasLista';
@@ -66,6 +67,7 @@ export function App() {
               <Route path="parcerias" element={<Parcerias />} />
               <Route path="ativos" element={<AtivosIntangiveis />} />
               <Route path="plano-anual" element={<PlanoAnualPagina />} />
+              <Route path="estrategia" element={<EstrategiaPagina />} />
               <Route path="indicadores" element={<IndicadoresPagina />} />
               <Route
                 path="indicadores/valores-externos"

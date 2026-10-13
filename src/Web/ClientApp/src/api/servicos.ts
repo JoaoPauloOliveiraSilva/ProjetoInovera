@@ -38,6 +38,8 @@ import type {
   ValorExterno,
   Indicadores,
   PilarEstrategico,
+  ExecucaoVigilancia,
+  LinhaEstrategia,
 } from './tipos';
 
 // Contas (ASP.NET Core Identity com cookie). As contas são criadas pelo Administrador (convite por email).
@@ -151,6 +153,13 @@ export const iniciativas = {
   },
   adicionarLink: (id: number, titulo: string, url: string) => enviar<number>(`${baseIniciativas}/${id}/links`, { titulo, url }),
   removerLink: (id: number, linkId: number) => pedido<void>('DELETE', `${baseIniciativas}/${id}/links/${linkId}`),
+  definirParceiros: (id: number, parceirosIds: number[]) => pedido<void>('PUT', `${baseIniciativas}/${id}/parceiros`, { parceirosIds }),
+  execucoes: (id: number) => obter<ExecucaoVigilancia[]>(`${baseIniciativas}/${id}/execucoes`),
+  guardarExecucao: (id: number, execucaoId: number | null, dados: unknown) =>
+    execucaoId === null
+      ? enviar<number>(`${baseIniciativas}/${id}/execucoes`, dados)
+      : pedido<number>('PUT', `${baseIniciativas}/${id}/execucoes/${execucaoId}`, dados),
+  apagarExecucao: (id: number, execucaoId: number) => pedido<void>('DELETE', `${baseIniciativas}/${id}/execucoes/${execucaoId}`),
 };
 
 /** Project Charter: um GET com os 6 separadores; cada linha grava-se sozinha. */
@@ -187,6 +196,18 @@ export const conhecimento = {
     obter<LicaoRepositorio[]>(consulta('/api/Conhecimento/licoes', filtro)),
   codificado: (filtro: { origem?: OrigemConhecimento; texto?: string } = {}) =>
     obter<ConhecimentoCodificado[]>(consulta('/api/Conhecimento/codificado', filtro)),
+  guardarCodificado: (id: number | null, dados: unknown) =>
+    id === null ? enviar<number>('/api/Conhecimento/codificado', dados) : pedido<number>('PUT', `/api/Conhecimento/codificado/${id}`, dados),
+  apagarCodificado: (id: number) => pedido<void>('DELETE', `/api/Conhecimento/codificado/${id}`),
+};
+
+/** Estratégia de inovação (Mod.52). */
+export const estrategia = {
+  listar: (ano: number) => obter<LinhaEstrategia[]>(`/api/Estrategia?ano=${ano}`),
+  guardar: (id: number | null, dados: unknown) =>
+    id === null ? enviar<number>('/api/Estrategia', dados) : pedido<number>('PUT', `/api/Estrategia/${id}`, dados),
+  apagar: (id: number) => pedido<void>('DELETE', `/api/Estrategia/${id}`),
+  copiar: (deAno: number, paraAno: number) => enviar<number>('/api/Estrategia/copiar', { deAno, paraAno }),
 };
 
 export const auditoria = {

@@ -557,7 +557,55 @@ public class ApplicationDbContextInitialiser
         {
             Data = hoje.AddMonths(-8), Nome = "Design Thinking", SumarioExecutivo = "Método de ideação centrado no utilizador.",
             Potencial = "Workshops de ideação com as equipas de campo.", CustoAquisicao = 0m, Divulgacao = "Formação interna, GetTogether",
+            Analises = { new AnaliseAnual { Ano = ano - 1, Analise = "Usado em 3 workshops; gerou 11 ideias, 2 aprovadas." } },
         });
+
+        // Atividades de partilha (Atividades · Quem · Quando)
+        var tacitoOlt = _context.ConhecimentosTacitos.Local.First(c => c.Detentor == "Inês Correia");
+        tacitoOlt.Atividades.Add(new AtividadeGestao
+        {
+            Descricao = "Sessão de partilha com as equipas de campo", Responsavel = "Inês Correia", Data = hoje.AddDays(5),
+        });
+
+        // O projeto OLT trabalha com a Universidade do Minho.
+        var projetoOlt = await _context.Iniciativas.OfType<Projeto>().FirstAsync(p => p.Titulo.StartsWith("Manutenção preditiva"));
+        projetoOlt.Parceiros.Add(uminho);
+
+        // Vigilância com uma execução feita (o resultado entra no conhecimento codificado) e a seguinte planeada.
+        var vigilancia = new Vigilancia
+        {
+            Codigo = "VIG-001", Titulo = "Fibra ótica de alta densidade", Estado = EstadoIniciativa.EmCurso, Origem = "Reunião interna",
+            Descritivo = "Vigilância automática de fabricantes e normas de cabos de alta densidade.", Periodicidade = Periodicidade.Mensal,
+            DataInicio = hoje.AddMonths(-2), ResponsavelNome = "Sofia Martins",
+        };
+        var feita = new ExecucaoVigilancia { Vigilancia = vigilancia, DataPrevista = hoje.AddMonths(-1) };
+        vigilancia.Execucoes.Add(feita);
+        vigilancia.Execucoes.Add(new ExecucaoVigilancia { Vigilancia = vigilancia, DataPrevista = hoje.AddDays(3) });
+        _context.Iniciativas.Add(vigilancia);
+        feita.RegistarResultado("Dois fabricantes lançaram cabos de 6912 fibras; a norma IEC 60794 foi revista.", hoje.AddMonths(-1),
+            "https://dstelecom.sharepoint.com/sites/inovacao/vigilancia-fibra.pdf");
+
+        // Estratégia de inovação do ano (Mod.52)
+        _context.LinhasEstrategia.AddRange(
+            new LinhaEstrategia
+            {
+                Ano = ano, AreaAtuacao = "Automatização", Abordagem = "Manutenção preditiva da rede",
+                PlanoAcao = "Desenvolver o projeto de manutenção preditiva das OLT com IA", Kpis = [14, 36], DuracaoMeses = 10,
+                NumeroRecursosHumanos = 3, HorasMesPorRecurso = 50m, RecursosExtra = "Cloud para treino - 3k€", Horizonte = Horizonte.H2,
+                IniciativaId = projetoOlt.Id,
+            },
+            new LinhaEstrategia
+            {
+                Ano = ano, AreaAtuacao = "Tecnologia de Fibra Ótica", Abordagem = "Novos cabos e normas",
+                PlanoAcao = "Realizar periodicamente as vigilâncias", Kpis = [23, 24], DuracaoMeses = 12, NumeroRecursosHumanos = 1,
+                HorasMesPorRecurso = 8m, Horizonte = Horizonte.H1, Iniciativa = vigilancia,
+            },
+            new LinhaEstrategia
+            {
+                Ano = ano, AreaAtuacao = "Cultura", Abordagem = "Envolver os trabalhadores na inovação",
+                PlanoAcao = "Avaliar as ideias mensalmente com a CE e divulgar os resultados", Kpis = [1, 2, 8], DuracaoMeses = 12,
+                NumeroRecursosHumanos = 2, HorasMesPorRecurso = 6m, Horizonte = Horizonte.H1,
+            });
 
         await _context.SaveChangesAsync();
     }

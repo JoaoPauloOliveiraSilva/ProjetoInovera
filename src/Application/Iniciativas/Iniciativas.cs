@@ -28,7 +28,11 @@ public record IniciativaDetalheDto(
     IReadOnlyList<LinkDto> Links,
     bool TemCharter,
     CamposTipoDto Campos,
-    bool PodeEditar);
+    bool PodeEditar,
+    IReadOnlyList<ParceiroLigadoDto> Parceiros);
+
+/// <summary>Parceiro (Mod.235) que participa na iniciativa.</summary>
+public record ParceiroLigadoDto(int Id, string Nome, TipoParceiro Tipo);
 
 /// <summary>Campos próprios de cada tipo de iniciativa (só os do tipo em causa interessam).</summary>
 public record CamposTipoDto(
@@ -148,6 +152,7 @@ public class ObterIniciativaQueryHandler(IApplicationDbContext context, IUtiliza
             .Include(x => x.IdeiaOrigem)
             .Include(x => x.NotasPontoSituacao).ThenInclude(n => n.Autor)
             .Include(x => x.Links)
+            .Include(x => x.Parceiros)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
         Guard.Against.NotFound(request.Id, i);
 
@@ -163,7 +168,8 @@ public class ObterIniciativaQueryHandler(IApplicationDbContext context, IUtiliza
 
         return new IniciativaDetalheDto(resumo, i.Descricao, i.Horizonte, Detalhes(i), historico, links, i is IniciativaComCharter,
             CamposTipoDto.De(i),
-            await utilizadores.TemPermissaoAsync(Permissoes.Iniciativas.Gerir, cancellationToken));
+            await utilizadores.TemPermissaoAsync(Permissoes.Iniciativas.Gerir, cancellationToken),
+            i.Parceiros.OrderBy(p => p.Nome).Select(p => new ParceiroLigadoDto(p.Id, p.Nome, p.Tipo)).ToList());
     }
 
     /// <summary>Campos próprios de cada tipo (como nas folhas do Mod.246).</summary>
@@ -395,6 +401,39 @@ public class RegistarPontoSituacaoCommandHandler(IApplicationDbContext context, 
 
         var eu = await utilizadores.AtualAsync(cancellationToken);
         iniciativa.RegistarPontoSituacao(request.Texto, eu.Id, relogio.GetUtcNow());
+        await context.SaveChangesAsync(cancellationToken);
+    }
+}
+
+/// <summary>Parceiros que participam na iniciativa (substitui a lista toda).</summary>
+[Authorize(Permissao = Permissoes.Iniciativas.Gerir)]
+public record DefinirParceirosIniciativaCommand(int IniciativaId, IReadOnlyList<int> ParceirosIds) : IRequest;
+
+public class DefinirParceirosIniciativaCommandHandler(IApplicationDbContext context) : IRequestHandler<DefinirParceirosIniciativaCommand>
+{
+    public async Task Handle(DefinirParceirosIniciativaCommand request, CancellationToken cancellationToken)
+    {
+        var iniciativa = await context.Iniciativas.Include(i => i.Parceiros)
+            .FirstOrDefaultAsync(i => i.Id == request.IniciativaId, cancellationToken);
+        Guard.Against.NotFound(request.IniciativaId, iniciativa);
+
+        var ids = request.ParceirosIds.Distinct().ToList();
+        var parceiros = await context.Parceiros.Where(p => ids.Contains(p.Id)).ToListAsync(cancellationToken);
+        if (parceiros.Count != ids.Count)
+        {
+            throw new RegraDeNegocioException("Algum dos parceiros escolhidos já não existe.");
+        }
+
+        foreach (var p in iniciativa.Parceiros.Where(p => !ids.Contains(p.Id)).ToList())
+        {
+            iniciativa.Parceiros.Remove(p);
+        }
+
+        foreach (var p in parceiros.Where(p => iniciativa.Parceiros.All(x => x.Id != p.Id)))
+        {
+            iniciativa.Parceiros.Add(p);
+        }
+
         await context.SaveChangesAsync(cancellationToken);
     }
 }

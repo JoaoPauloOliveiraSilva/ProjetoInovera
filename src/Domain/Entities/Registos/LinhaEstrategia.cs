@@ -16,7 +16,8 @@ public class LinhaEstrategia : BaseAuditableEntity
     public string? PlanoAcao { get; set; }
 
     /// <summary>KPIs associados (Mod.239).</summary>
-    public ICollection<KpiDefinicao> Kpis { get; set; } = new List<KpiDefinicao>();
+    /// <summary>Números dos KPIs (1–41), às vezes dois (ex.: "14 e 36").</summary>
+    public List<int> Kpis { get; set; } = [];
 
     public int? DuracaoMeses { get; set; }
 

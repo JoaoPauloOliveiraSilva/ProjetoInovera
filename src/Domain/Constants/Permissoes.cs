@@ -31,7 +31,7 @@ public static class Permissoes
         public const string Gerir = "iniciativas.gerir";
     }
 
-    /// <summary>Registos manuais (Mod.235, 236, 238, 241) e plano anual de atividades (Mod.69).</summary>
+    /// <summary>Registos manuais (Mod.52, 235, 236, 237, 238, 241) e plano anual de atividades (Mod.69).</summary>
     public static class Registos
     {
         public const string Gerir = "registos.gerir";
@@ -64,7 +64,7 @@ public static class Permissoes
         new(Ideias.Validar, "Validar ideias e fechar discussões", "Ideias"),
         new(Ideias.Avaliar, "Registar a avaliação da CE, a decisão dst e a classe", "Ideias"),
         new(Iniciativas.Gerir, "Gerir projetos, desafios e outras iniciativas e importar o portefólio (Mod.246)", "Iniciativas"),
-        new(Registos.Gerir, "Gerir parcerias, ativos intangíveis, conhecimento tácito e ferramentas e métodos", "Registos"),
+        new(Registos.Gerir, "Gerir parcerias, ativos intangíveis, conhecimento codificado e tácito, ferramentas e métodos e a estratégia (Mod.52)", "Registos"),
         new(Registos.GerirPlano, "Gerir o plano anual de atividades (Mod.69)", "Registos"),
         new(Kpis.ValoresExternos, "Introduzir os valores externos dos KPIs (n.º de trabalhadores, receitas…)", "Indicadores"),
         new(Orcamento.Ver, "Ver o orçamento dos projetos e desafios", "Orçamento"),

@@ -9,5 +9,8 @@ public enum AlvoAlerta
     Tarefa,
     Entrega,
     AtivoIntangivel,
-    AtividadePlanoAnual
+    AtividadePlanoAnual,
+    ExecucaoVigilancia,
+    ConhecimentoCodificado,
+    ConhecimentoTacito
 }

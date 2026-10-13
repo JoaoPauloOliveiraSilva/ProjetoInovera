@@ -32,11 +32,46 @@ internal static class Registo
     }
 
     public static string? Limpar(string? texto) => string.IsNullOrWhiteSpace(texto) ? null : texto.Trim();
+
+    public static List<AtividadeGestaoDto> Atividades(IEnumerable<AtividadeGestao> atividades)
+        => atividades.OrderBy(a => a.Data == null).ThenBy(a => a.Data)
+            .Select(a => new AtividadeGestaoDto(a.Descricao, a.Responsavel, a.Data, a.Concluida)).ToList();
+
+    /// <summary>Substitui as atividades (Atividades · Quem · Quando). Null = não mexer.</summary>
+    public static void DefinirAtividades(ICollection<AtividadeGestao> atuais, IReadOnlyList<AtividadeGestaoDto>? novas)
+    {
+        if (novas is null)
+        {
+            return;
+        }
+
+        atuais.Clear();
+        foreach (var a in novas)
+        {
+            atuais.Add(new AtividadeGestao { Descricao = a.Descricao.Trim(), Responsavel = Limpar(a.Responsavel), Data = a.Data, Concluida = a.Concluida });
+        }
+    }
 }
+
+/// <summary>Uma linha do modelo de gestão/partilha (Atividades · Quem · Quando) dos Mod.236, 237 e 238.</summary>
+public record AtividadeGestaoDto(string Descricao, string? Responsavel, DateOnly? Data, bool Concluida);
+
+public class AtividadeGestaoValidator : AbstractValidator<AtividadeGestaoDto>
+{
+    public AtividadeGestaoValidator()
+    {
+        RuleFor(a => a.Descricao).NotEmpty().WithMessage("Cada atividade precisa de uma descrição.").MaximumLength(500);
+        RuleFor(a => a.Responsavel).MaximumLength(200);
+    }
+}
+
+/// <summary>Iniciativa ligada a um parceiro.</summary>
+public record IniciativaDoParceiroDto(int Id, string Codigo, string Titulo);
 
 // ---------- Parceiros e acordos de parceria (Mod.235) ----------
 
-public record ParceiroDto(int Id, string Nome, string? Nif, TipoParceiro Tipo, string? Descricao, int Acordos, int AcordosEmCurso);
+public record ParceiroDto(int Id, string Nome, string? Nif, TipoParceiro Tipo, string? Descricao, int Acordos, int AcordosEmCurso,
+    IReadOnlyList<IniciativaDoParceiroDto> Iniciativas);
 
 public record ParceiroDados(string Nome, string? Nif, TipoParceiro Tipo, string? Descricao);
 
@@ -56,7 +91,8 @@ public class ListarParceirosQueryHandler(IApplicationDbContext context) : IReque
         => await context.Parceiros.AsNoTracking()
             .OrderBy(p => p.Nome)
             .Select(p => new ParceiroDto(p.Id, p.Nome, p.Nif, p.Tipo, p.Descricao, p.Acordos.Count,
-                p.Acordos.Count(a => a.Estado == EstadoAcordo.EmCurso)))
+                p.Acordos.Count(a => a.Estado == EstadoAcordo.EmCurso),
+                p.Iniciativas.OrderBy(i => i.Codigo).Select(i => new IniciativaDoParceiroDto(i.Id, i.Codigo, i.Titulo)).ToList()))
             .ToListAsync(cancellationToken);
 }
 
@@ -158,11 +194,11 @@ public class GuardarAcordoCommandHandler(IApplicationDbContext context) : IReque
 
 public record AtivoDto(int Id, DateOnly Data, TipoAtivoIntangivel Tipo, string EntidadeRegisto, string Designacao, string? Descricao,
     string? NumeroPedido, string? Autores, DateOnly? DataRegisto, DateOnly? DataValidade, string? Ambito, string? Situacao, decimal? Custo,
-    string? PerspetivaValor, string? NumeroProcesso, string? Observacoes, int? DiasParaValidade);
+    string? PerspetivaValor, string? NumeroProcesso, string? Observacoes, int? DiasParaValidade, IReadOnlyList<AtividadeGestaoDto> Atividades);
 
 public record AtivoDados(DateOnly? Data, TipoAtivoIntangivel Tipo, string EntidadeRegisto, string Designacao, string? Descricao,
     string? NumeroPedido, string? Autores, DateOnly? DataRegisto, DateOnly? DataValidade, string? Ambito, string? Situacao, decimal? Custo,
-    string? PerspetivaValor, string? NumeroProcesso, string? Observacoes);
+    string? PerspetivaValor, string? NumeroProcesso, string? Observacoes, IReadOnlyList<AtividadeGestaoDto>? Atividades = null);
 
 [Authorize]
 public record ListarAtivosQuery : IRequest<IReadOnlyList<AtivoDto>>;
@@ -178,7 +214,7 @@ public class ListarAtivosQueryHandler(IApplicationDbContext context, TimeProvide
 
         return ativos.Select(a => new AtivoDto(a.Id, a.Data, a.Tipo, a.EntidadeRegisto, a.Designacao, a.Descricao, a.NumeroPedido, a.Autores,
                 a.DataRegisto, a.DataValidade, a.Ambito, a.Situacao, a.Custo, a.PerspetivaValor, a.NumeroProcesso, a.Observacoes,
-                a.DataValidade is { } v ? v.DayNumber - hoje.DayNumber : null))
+                a.DataValidade is { } v ? v.DayNumber - hoje.DayNumber : null, Registo.Atividades(a.Atividades)))
             .ToList();
     }
 }
@@ -197,6 +233,7 @@ public class GuardarAtivoCommandValidator : AbstractValidator<GuardarAtivoComman
         RuleFor(c => c.Dados.DataValidade).GreaterThanOrEqualTo(c => c.Dados.DataRegisto)
             .When(c => c.Dados.DataRegisto is not null && c.Dados.DataValidade is not null)
             .WithMessage("A validade não pode ser anterior à data de registo.");
+        RuleForEach(c => c.Dados.Atividades).SetValidator(new AtividadeGestaoValidator());
     }
 }
 
@@ -221,6 +258,7 @@ public class GuardarAtivoCommandHandler(IApplicationDbContext context, TimeProvi
         a.PerspetivaValor = Registo.Limpar(d.PerspetivaValor);
         a.NumeroProcesso = Registo.Limpar(d.NumeroProcesso);
         a.Observacoes = Registo.Limpar(d.Observacoes);
+        Registo.DefinirAtividades(a.Atividades, d.Atividades);
         await context.SaveChangesAsync(cancellationToken);
         return a.Id;
     }
@@ -228,9 +266,11 @@ public class GuardarAtivoCommandHandler(IApplicationDbContext context, TimeProvi
 
 // ---------- Conhecimento tácito (Mod.238) ----------
 
-public record ConhecimentoTacitoDto(int Id, DateOnly Data, string? Empresa, string Detentor, string Descricao, NivelConfidencialidade Confidencialidade);
+public record ConhecimentoTacitoDto(int Id, DateOnly Data, string? Empresa, string Detentor, string Descricao, NivelConfidencialidade Confidencialidade,
+    IReadOnlyList<AtividadeGestaoDto> Atividades);
 
-public record ConhecimentoTacitoDados(DateOnly? Data, string? Empresa, string Detentor, string Descricao, NivelConfidencialidade Confidencialidade);
+public record ConhecimentoTacitoDados(DateOnly? Data, string? Empresa, string Detentor, string Descricao, NivelConfidencialidade Confidencialidade,
+    IReadOnlyList<AtividadeGestaoDto>? Atividades = null);
 
 [Authorize]
 public record ListarConhecimentoTacitoQuery : IRequest<IReadOnlyList<ConhecimentoTacitoDto>>;
@@ -246,10 +286,12 @@ public class ListarConhecimentoTacitoQueryHandler(IApplicationDbContext context,
             consulta = consulta.Where(c => c.Confidencialidade != NivelConfidencialidade.Elevado);
         }
 
-        return await consulta
+        var lista = await consulta
             .OrderByDescending(c => c.Data).ThenBy(c => c.Detentor)
-            .Select(c => new ConhecimentoTacitoDto(c.Id, c.Data, c.Empresa, c.Detentor, c.Descricao, c.Confidencialidade))
             .ToListAsync(cancellationToken);
+        return lista.Select(c => new ConhecimentoTacitoDto(c.Id, c.Data, c.Empresa, c.Detentor, c.Descricao, c.Confidencialidade,
+                Registo.Atividades(c.Atividades)))
+            .ToList();
     }
 }
 
@@ -264,6 +306,7 @@ public class GuardarConhecimentoTacitoCommandValidator : AbstractValidator<Guard
         RuleFor(c => c.Dados.Descricao).NotEmpty().MaximumLength(4000);
         RuleFor(c => c.Dados.Empresa).MaximumLength(200);
         RuleFor(c => c.Dados.Confidencialidade).IsInEnum();
+        RuleForEach(c => c.Dados.Atividades).SetValidator(new AtividadeGestaoValidator());
     }
 }
 
@@ -279,6 +322,7 @@ public class GuardarConhecimentoTacitoCommandHandler(IApplicationDbContext conte
         c.Detentor = d.Detentor.Trim();
         c.Descricao = d.Descricao.Trim();
         c.Confidencialidade = d.Confidencialidade;
+        Registo.DefinirAtividades(c.Atividades, d.Atividades);
         await context.SaveChangesAsync(cancellationToken);
         return c.Id;
     }
@@ -287,9 +331,13 @@ public class GuardarConhecimentoTacitoCommandHandler(IApplicationDbContext conte
 // ---------- Ferramentas e métodos (Mod.241) ----------
 
 public record FerramentaDto(int Id, DateOnly Data, string Nome, string? SumarioExecutivo, string? Potencial, decimal? CustoAquisicao,
-    string? Divulgacao);
+    string? Divulgacao, IReadOnlyList<AnaliseAnualDto> Analises);
 
-public record FerramentaDados(DateOnly? Data, string Nome, string? SumarioExecutivo, string? Potencial, decimal? CustoAquisicao, string? Divulgacao);
+public record FerramentaDados(DateOnly? Data, string Nome, string? SumarioExecutivo, string? Potencial, decimal? CustoAquisicao, string? Divulgacao,
+    IReadOnlyList<AnaliseAnualDto>? Analises = null);
+
+/// <summary>Coluna "Análise &lt;ano&gt;" do Mod.241: como correu a utilização da ferramenta nesse ano.</summary>
+public record AnaliseAnualDto(int Ano, string Analise);
 
 [Authorize]
 public record ListarFerramentasQuery : IRequest<IReadOnlyList<FerramentaDto>>;
@@ -297,10 +345,14 @@ public record ListarFerramentasQuery : IRequest<IReadOnlyList<FerramentaDto>>;
 public class ListarFerramentasQueryHandler(IApplicationDbContext context) : IRequestHandler<ListarFerramentasQuery, IReadOnlyList<FerramentaDto>>
 {
     public async Task<IReadOnlyList<FerramentaDto>> Handle(ListarFerramentasQuery request, CancellationToken cancellationToken)
-        => await context.FerramentasMetodos.AsNoTracking()
+    {
+        var lista = await context.FerramentasMetodos.AsNoTracking()
             .OrderByDescending(f => f.Data).ThenBy(f => f.Nome)
-            .Select(f => new FerramentaDto(f.Id, f.Data, f.Nome, f.SumarioExecutivo, f.Potencial, f.CustoAquisicao, f.Divulgacao))
             .ToListAsync(cancellationToken);
+        return lista.Select(f => new FerramentaDto(f.Id, f.Data, f.Nome, f.SumarioExecutivo, f.Potencial, f.CustoAquisicao, f.Divulgacao,
+                f.Analises.OrderByDescending(a => a.Ano).Select(a => new AnaliseAnualDto(a.Ano, a.Analise)).ToList()))
+            .ToList();
+    }
 }
 
 [Authorize(Permissao = Permissoes.Registos.Gerir)]
@@ -312,6 +364,13 @@ public class GuardarFerramentaCommandValidator : AbstractValidator<GuardarFerram
     {
         RuleFor(c => c.Dados.Nome).NotEmpty().MaximumLength(200);
         RuleFor(c => c.Dados.CustoAquisicao).GreaterThanOrEqualTo(0).When(c => c.Dados.CustoAquisicao is not null);
+        RuleForEach(c => c.Dados.Analises).ChildRules(a =>
+        {
+            a.RuleFor(x => x.Ano).InclusiveBetween(2000, 2100);
+            a.RuleFor(x => x.Analise).NotEmpty().WithMessage("Escreva a análise do ano.").MaximumLength(4000);
+        });
+        RuleFor(c => c.Dados.Analises).Must(l => l!.Select(a => a.Ano).Distinct().Count() == l!.Count)
+            .When(c => c.Dados.Analises is not null).WithMessage("Só pode haver uma análise por ano.");
     }
 }
 
@@ -327,6 +386,15 @@ public class GuardarFerramentaCommandHandler(IApplicationDbContext context, Time
         f.Potencial = Registo.Limpar(d.Potencial);
         f.CustoAquisicao = d.CustoAquisicao;
         f.Divulgacao = Registo.Limpar(d.Divulgacao);
+        if (d.Analises is not null)
+        {
+            f.Analises.Clear();
+            foreach (var a in d.Analises)
+            {
+                f.Analises.Add(new AnaliseAnual { Ano = a.Ano, Analise = a.Analise.Trim() });
+            }
+        }
+
         await context.SaveChangesAsync(cancellationToken);
         return f.Id;
     }

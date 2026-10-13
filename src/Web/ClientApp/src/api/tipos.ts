@@ -220,6 +220,39 @@ export interface IniciativaDetalhe {
   temCharter: boolean;
   campos: CamposTipo;
   podeEditar: boolean;
+  parceiros: ParceiroLigado[];
+}
+
+export interface ParceiroLigado {
+  id: number;
+  nome: string;
+  tipo: TipoParceiro;
+}
+
+/** Execução de uma vigilância: data prevista e realizada (KPI 24); o resultado entra no conhecimento codificado (Mod.237). */
+export interface ExecucaoVigilancia {
+  id: number;
+  dataPrevista: string;
+  dataRealizada: string | null;
+  resultado: string | null;
+  linkResultado: string | null;
+  noPrazo: boolean;
+  atrasada: boolean;
+  conhecimentoId: number | null;
+}
+
+/** Modelo de gestão/partilha (Atividades · Quem · Quando) dos Mod.236, 237 e 238. */
+export interface AtividadeGestao {
+  descricao: string;
+  responsavel: string | null;
+  data: string | null;
+  concluida: boolean;
+}
+
+/** Coluna "Análise <ano>" do Mod.241. */
+export interface AnaliseAnual {
+  ano: number;
+  analise: string;
 }
 
 export type TipoProjeto = 'Investigacao' | 'DesenvolvimentoInovacao' | 'Inovacao' | 'InvestigacaoDesenvolvimento' | 'InvestigacaoDesenvolvimentoInovacao';
@@ -562,6 +595,8 @@ export interface ConhecimentoCodificado {
   iniciativaId: number | null;
   iniciativaCodigo: string | null;
   entregaCodigo: string | null;
+  arquivadoEm: string | null;
+  atividades: AtividadeGestao[] | null;
 }
 
 export interface RegistoAuditoria {
@@ -660,6 +695,7 @@ export interface Parceiro {
   descricao: string | null;
   acordos: number;
   acordosEmCurso: number;
+  iniciativas: { id: number; codigo: string; titulo: string }[];
 }
 
 export interface Acordo {
@@ -696,6 +732,7 @@ export interface Ativo {
   numeroProcesso: string | null;
   observacoes: string | null;
   diasParaValidade: number | null;
+  atividades: AtividadeGestao[];
 }
 
 export interface ConhecimentoTacito {
@@ -705,6 +742,7 @@ export interface ConhecimentoTacito {
   detentor: string;
   descricao: string;
   confidencialidade: Confidencialidade;
+  atividades: AtividadeGestao[];
 }
 
 export interface Ferramenta {
@@ -715,6 +753,7 @@ export interface Ferramenta {
   potencial: string | null;
   custoAquisicao: number | null;
   divulgacao: string | null;
+  analises: AnaliseAnual[];
 }
 
 export interface AtividadePlano {
@@ -787,3 +826,26 @@ export interface Indicadores {
   proximasAtividades: { id: number; titulo: string; data: string; cor: string | null }[];
   alertas: { tipo: 'validade' | 'atraso' | 'risco' | string; titulo: string; detalhe: string; data: string | null; link: string }[];
 }
+
+// Estratégia de inovação (Mod.52)
+
+export interface LinhaEstrategia {
+  id: number;
+  ano: number;
+  areaAtuacao: string;
+  abordagem: string | null;
+  planoAcao: string | null;
+  kpis: { numero: number; nome: string }[];
+  duracaoMeses: number | null;
+  numeroRecursosHumanos: number | null;
+  horasMesPorRecurso: number | null;
+  dedicacaoTotalHoras: number | null;
+  recursosExtra: string | null;
+  horizonte: Horizonte | null;
+  iniciativaId: number | null;
+  iniciativaCodigo: string | null;
+  iniciativaTitulo: string | null;
+}
+
+/** Áreas de atuação do Mod.52 (sugestões; pode escrever-se outra). */
+export const areasAtuacao = ['Tecnologia de Fibra Ótica', 'Automatização', 'Novas áreas de Negócio', 'Planeta e Prosperidade', 'Cultura'];
