@@ -28,8 +28,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<AnexoIdeia> AnexosIdeia => Set<AnexoIdeia>();
 
     // Iniciativas e Project Charter
-    public DbSet<Iniciativa> Iniciativas => Set<Iniciativa>();
-    public DbSet<ProjectCharter> ProjectCharters => Set<ProjectCharter>();
+    // Iniciativas e Project Charter
+public DbSet<Iniciativa> Iniciativas => Set<Iniciativa>();
+public DbSet<ExecucaoVigilancia> ExecucaoVigilancias
+    => Set<ExecucaoVigilancia>();
+public DbSet<ProjectCharter> ProjectCharters => Set<ProjectCharter>();
 
     public DbSet<TarefaWbs> TarefasWbs => Set<TarefaWbs>();
 
