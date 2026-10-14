@@ -220,8 +220,90 @@ public class GerarAlertasCommandHandler(IApplicationDbContext context, INotifica
             }
         }
 
+        // 5. Project Charter: tarefas e entregas/milestones a chegar ao prazo ou atrasadas
+        criados += await PrazosDoCharterAsync(hoje, agora, cancellationToken);
+
         return criados;
     }
+
+    /// <summary>Atrasos de há mais tempo que isto já não geram aviso (só aparecem no dashboard), para não encher a caixa de emails.</summary>
+    public const int DiasMaximoAtraso = 30;
+
+    private async Task<int> PrazosDoCharterAsync(DateOnly hoje, DateTimeOffset agora, CancellationToken cancellationToken)
+    {
+        var de = hoje.AddDays(-DiasMaximoAtraso);
+        var ate = hoje.AddDays(DiasAvisoAtividades);
+        EstadoIniciativa[] fechadas = [EstadoIniciativa.Concluida, EstadoIniciativa.Cancelada, EstadoIniciativa.Rejeitada];
+        EstadoTrabalho[] terminadas = [EstadoTrabalho.Concluido, EstadoTrabalho.Cancelado];
+
+        var tarefas = await context.TarefasWbs.AsNoTracking()
+            .Where(t => t.FimReal == null && t.FimPlaneado != null && t.FimPlaneado >= de && t.FimPlaneado <= ate)
+            .Where(t => !terminadas.Contains(t.Estado) && !fechadas.Contains(t.Charter.Iniciativa.Estado))
+            .Select(t => new PrazoCharter(AlvoAlerta.Tarefa, t.Id, string.IsNullOrEmpty(t.CodigoWbs) ? t.Nome : t.CodigoWbs + " " + t.Nome, "A tarefa",
+                t.FimPlaneado!.Value, t.ResponsavelId, t.ResponsavelNome, t.Charter.IniciativaId, t.Charter.Iniciativa.Codigo,
+                t.Charter.Iniciativa.Titulo, t.Charter.Iniciativa.ResponsavelId))
+            .ToListAsync(cancellationToken);
+        var entregas = await context.Entregas.AsNoTracking()
+            .Where(e => e.DataConclusao == null && e.Prazo != null && e.Prazo >= de && e.Prazo <= ate)
+            .Where(e => !terminadas.Contains(e.Estado) && !fechadas.Contains(e.Charter.Iniciativa.Estado))
+            .Select(e => new PrazoCharter(AlvoAlerta.Entrega, e.Id, e.Codigo + " " + e.Descricao,
+                e.Tipo == TipoEntrega.Milestone ? "O milestone" : "O entregável", e.Prazo!.Value, null, null, e.Charter.IniciativaId,
+                e.Charter.Iniciativa.Codigo, e.Charter.Iniciativa.Titulo, e.Charter.Iniciativa.ResponsavelId))
+            .ToListAsync(cancellationToken);
+        if (tarefas.Count == 0 && entregas.Count == 0)
+        {
+            return 0;
+        }
+
+        var ativos = await context.Utilizadores.Where(u => u.Ativo).Select(u => new { u.Id, u.Nome }).ToListAsync(cancellationToken);
+        var porNome = ativos
+            .GroupBy(u => Innovera.Application.Iniciativas.ImportarPortefolioCommandHandler.Normalizar(u.Nome))
+            .ToDictionary(g => g.Key, g => g.First().Id);
+        var idsAtivos = ativos.Select(u => u.Id).ToHashSet();
+        List<int>? gestores = null;
+        var criados = 0;
+
+        foreach (var p in tarefas.Concat(entregas))
+        {
+            // Avisa o responsável da tarefa (utilizador ou nome igual ao de um utilizador) e o responsável da iniciativa;
+            // se não houver nenhum, quem gere as iniciativas.
+            var destinatarios = new HashSet<int>();
+            if (p.ResponsavelId is int r && idsAtivos.Contains(r))
+            {
+                destinatarios.Add(r);
+            }
+            else if (p.ResponsavelNome is not null
+                && porNome.TryGetValue(Innovera.Application.Iniciativas.ImportarPortefolioCommandHandler.Normalizar(p.ResponsavelNome), out var porNomeId))
+            {
+                destinatarios.Add(porNomeId);
+            }
+
+            if (p.ResponsavelIniciativa is int ri && idsAtivos.Contains(ri))
+            {
+                destinatarios.Add(ri);
+            }
+
+            if (destinatarios.Count == 0)
+            {
+                destinatarios.UnionWith(gestores ??= await UtilizadoresComPermissaoAsync(Permissoes.Iniciativas.Gerir, cancellationToken));
+            }
+
+            var atrasada = p.Prazo < hoje;
+            var dias = p.Prazo.DayNumber - hoje.DayNumber;
+            var quando = atrasada ? $"devia ter terminado a {p.Prazo:dd/MM/yyyy}"
+                : dias == 0 ? "termina hoje" : dias == 1 ? "termina amanhã" : $"termina a {p.Prazo:dd/MM/yyyy}";
+            var quem = p.ResponsavelNome is null ? string.Empty : $" (responsável: {p.ResponsavelNome})";
+            criados += await AvisarAsync(atrasada ? TipoAlerta.Atraso : TipoAlerta.Prazo, p.Alvo, p.Id, p.Prazo, destinatarios,
+                atrasada ? $"Atrasado: {p.Nome}" : $"Prazo: {p.Nome}",
+                $"{p.Tipo} \"{p.Nome}\"{quem} de {p.IniciativaCodigo} {p.IniciativaTitulo} {quando}.",
+                $"/inovacao/iniciativas/{p.IniciativaId}/charter", agora, cancellationToken);
+        }
+
+        return criados;
+    }
+
+    private sealed record PrazoCharter(AlvoAlerta Alvo, int Id, string Nome, string Tipo, DateOnly Prazo, int? ResponsavelId, string? ResponsavelNome,
+        int IniciativaId, string IniciativaCodigo, string IniciativaTitulo, int? ResponsavelIniciativa);
 
     private async Task<List<int>> UtilizadoresComPermissaoAsync(string permissao, CancellationToken cancellationToken)
     {

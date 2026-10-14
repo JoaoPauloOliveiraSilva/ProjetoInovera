@@ -7,5 +7,8 @@ public enum TipoAlerta
 {
     Prazo,
     Validade,
-    PlanoAnual
+    PlanoAnual,
+
+    /// <summary>Prazo já passou (tarefa ou entrega do Project Charter atrasada).</summary>
+    Atraso
 }
