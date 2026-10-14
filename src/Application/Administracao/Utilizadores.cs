@@ -44,7 +44,7 @@ public class AdicionarUtilizadorCommandValidator : AbstractValidator<AdicionarUt
         RuleFor(c => c.Nome).NotEmpty().MaximumLength(200);
         RuleFor(c => c.Email).NotEmpty().EmailAddress().MaximumLength(256);
         RuleFor(c => c.Empresa).MaximumLength(150);
-        RuleFor(c => c.Perfis).NotEmpty().WithMessage("Escolha pelo menos um perfil.");
+        RuleFor(c => c.Perfis).Must(p => p is { Count: 1 }).WithMessage("Escolha um perfil (cada pessoa tem um só perfil).");
     }
 }
 
@@ -72,7 +72,7 @@ public class AdicionarUtilizadorCommandHandler(IApplicationDbContext context, IC
     }
 }
 
-/// <summary>Muda nome, empresa e perfis.</summary>
+/// <summary>Muda nome, empresa e perfil (cada pessoa tem um só perfil).</summary>
 [Authorize(Permissao = Permissoes.Administracao.GerirUtilizadores)]
 public record EditarUtilizadorCommand(int Id, string Nome, string? Empresa, IReadOnlyList<string> Perfis) : IRequest;
 
@@ -82,7 +82,7 @@ public class EditarUtilizadorCommandValidator : AbstractValidator<EditarUtilizad
     {
         RuleFor(c => c.Nome).NotEmpty().MaximumLength(200);
         RuleFor(c => c.Empresa).MaximumLength(150);
-        RuleFor(c => c.Perfis).NotEmpty().WithMessage("Escolha pelo menos um perfil.");
+        RuleFor(c => c.Perfis).Must(p => p is { Count: 1 }).WithMessage("Escolha um perfil (cada pessoa tem um só perfil).");
     }
 }
 

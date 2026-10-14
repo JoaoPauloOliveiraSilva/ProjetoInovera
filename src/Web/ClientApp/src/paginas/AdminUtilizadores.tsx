@@ -154,19 +154,17 @@ function FormUtilizador({
   const [nome, setNome] = useState(utilizador?.nome ?? '');
   const [email, setEmail] = useState(utilizador?.email ?? '');
   const [empresa, setEmpresa] = useState(utilizador?.empresa ?? 'dstelecom, s.a.');
-  const [escolhidos, setEscolhidos] = useState<string[]>(utilizador?.perfis ?? ['Trabalhador']);
+  // Cada pessoa tem um só perfil (se uma conta antiga tiver vários, fica escolhido o que dá mais acesso).
+  const [perfil, setPerfil] = useState<string>(perfilPrincipal(utilizador?.perfis ?? []));
   const [erro, setErro] = useState('');
   const [aEnviar, setAEnviar] = useState(false);
-
-  const alternar = (perfil: string) =>
-    setEscolhidos((atuais) => (atuais.includes(perfil) ? atuais.filter((p) => p !== perfil) : [...atuais, perfil]));
 
   const submeter = async (e: FormEvent) => {
     e.preventDefault();
     setErro('');
     setAEnviar(true);
     try {
-      const dados = { nome: nome.trim(), empresa: empresa.trim() || null, perfis: escolhidos };
+      const dados = { nome: nome.trim(), empresa: empresa.trim() || null, perfis: [perfil] };
       if (utilizador) {
         await administracao.editar(utilizador.id, dados);
         aoGuardar(`${dados.nome} foi atualizado.`);
@@ -200,20 +198,26 @@ function FormUtilizador({
         <span>empresa</span>
         <input value={empresa} onChange={(e) => setEmpresa(e.target.value)} maxLength={150} />
       </label>
-      <div className="rotulo">perfis</div>
-      <div className="opcoes">
+      <div className="rotulo">perfil</div>
+      <div className="opcoes" role="radiogroup" aria-label="Perfil">
         {perfis.map((p) => (
           <label key={p.nome} className="caixa">
-            <input type="checkbox" checked={escolhidos.includes(p.nome)} onChange={() => alternar(p.nome)} />
-            <span className="caixa-quadrado">{escolhidos.includes(p.nome) && <Visto />}</span>
+            <input type="radio" name="perfil" checked={perfil === p.nome} onChange={() => setPerfil(p.nome)} />
+            <span className="caixa-quadrado redondo">{perfil === p.nome && <Visto />}</span>
             {nomePerfil(p.nome)}
           </label>
         ))}
       </div>
       {erro && <div className="erro">{erro}</div>}
-      <button type="submit" className="botao-largo" disabled={aEnviar || escolhidos.length === 0}>
+      <button type="submit" className="botao-largo" disabled={aEnviar || !perfil}>
         {aEnviar ? 'a guardar…' : utilizador ? 'guardar' : 'adicionar e enviar convite'} <SetaContinuar className="seta-vermelha" />
       </button>
     </form>
   );
+}
+
+/** O perfil que dá mais acesso: Administrador, Equipa de Inovação, um perfil criado no backoffice, Trabalhador. */
+function perfilPrincipal(perfis: string[]): string {
+  const ordem = (p: string) => (p === 'Administrador' ? 0 : p === 'EquipaInovacao' ? 1 : p === 'Trabalhador' ? 3 : 2);
+  return [...perfis].sort((a, b) => ordem(a) - ordem(b))[0] ?? 'Trabalhador';
 }

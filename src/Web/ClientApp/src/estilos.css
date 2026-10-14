@@ -208,6 +208,7 @@ a { color: inherit; }
 .caixa input { position: absolute; opacity: 0; pointer-events: none; }
 .caixa-quadrado { width: 22px; height: 22px; background: #fff; border: 1px solid #bbb; display: inline-flex; align-items: center; justify-content: center; }
 .caixa input:checked + .caixa-quadrado { background: var(--preto); color: #fff; border-color: var(--preto); }
+.caixa-quadrado.redondo { border-radius: 50%; }
 .rotulo { font-weight: 600; margin-top: 8px; }
 .anexos {
   border: 1px dashed #ccc; padding: 44px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;

@@ -80,6 +80,7 @@ public class ApplicationDbContextInitialiser
     public async Task TrySeedAsync()
     {
         await GarantirPerfisAsync();
+        await UmPerfilPorPessoaAsync();
 
         // Conta inicial da equipa de Inovação. Fora do desenvolvimento, a password tem de vir da configuração.
         var emailAdmin = _configuration["ContaAdministrador:Email"] ?? "admin@innovera.local";
@@ -96,6 +97,34 @@ public class ApplicationDbContextInitialiser
         if (_configuration.GetValue("DadosExemplo", false) && !await _context.Ideias.AnyAsync())
         {
             await CriarDadosExemploAsync();
+        }
+    }
+
+    /// <summary>
+    /// Cada pessoa tem um só perfil. Quem ficou com vários (antes desta regra) fica com o que dá mais acesso:
+    /// Administrador, depois Equipa de Inovação, depois um perfil criado no backoffice e por fim Trabalhador.
+    /// </summary>
+    private async Task UmPerfilPorPessoaAsync()
+    {
+        static int Ordem(string perfil) => perfil switch
+        {
+            Roles.Administrador => 0,
+            Roles.EquipaInovacao => 1,
+            Roles.Trabalhador => 3,
+            _ => 2,
+        };
+
+        foreach (var conta in await _userManager.Users.ToListAsync())
+        {
+            var perfis = await _userManager.GetRolesAsync(conta);
+            if (perfis.Count <= 1)
+            {
+                continue;
+            }
+
+            var manter = perfis.OrderBy(Ordem).ThenBy(p => p, StringComparer.Ordinal).First();
+            await _userManager.RemoveFromRolesAsync(conta, perfis.Where(p => p != manter));
+            _logger.LogInformation("A conta {Email} tinha {Quantos} perfis: ficou só com {Perfil}.", conta.Email, perfis.Count, manter);
         }
     }
 

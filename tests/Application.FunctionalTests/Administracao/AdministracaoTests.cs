@@ -163,4 +163,21 @@ public class AdministracaoTests : TestBase
         await TestApp.SendAsync(new RecuperarPasswordCommand("rita@local"));
         EmailFalso.Enviados.ShouldBeEmpty();
     }
+
+    [Test]
+    public async Task CadaPessoaTemUmSoPerfil()
+    {
+        await TestApp.RunAsAdministratorAsync();
+        await Should.ThrowAsync<ValidationException>(() =>
+            TestApp.SendAsync(NovoUtilizador("dois@local", Roles.EquipaInovacao, Roles.Trabalhador)));
+
+        var id = await TestApp.SendAsync(NovoUtilizador("um@local", Roles.Trabalhador));
+        await Should.ThrowAsync<ValidationException>(() =>
+            TestApp.SendAsync(new EditarUtilizadorCommand(id, "Rita Gomes", null, [Roles.Administrador, Roles.EquipaInovacao])));
+        await Should.ThrowAsync<ValidationException>(() => TestApp.SendAsync(new EditarUtilizadorCommand(id, "Rita Gomes", null, [])));
+
+        await TestApp.SendAsync(new EditarUtilizadorCommand(id, "Rita Gomes", null, [Roles.EquipaInovacao]));
+        var rita = (await TestApp.SendAsync(new ListarUtilizadoresQuery(null))).Single(u => u.Id == id);
+        rita.Perfis.ShouldBe(new[] { Roles.EquipaInovacao });
+    }
 }
