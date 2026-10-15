@@ -17,10 +17,10 @@ test('os KPIs abrem por semestre e cada KPI tem a evolução por ano e o objetiv
   // Um valor diferente em cada tentativa (numa repetição o anterior já ficou guardado e o botão não aparece).
   const novo = `≥ ${5 + info.retry}`;
   await page.getByLabel('Objetivo anual').fill(novo);
-  const guardar = page.getByRole('button', { name: 'guardar' });
-  await guardar.click();
-  // O botão desaparece quando o objetivo fica guardado e a página o volta a ler.
-  await expect(guardar).toBeHidden();
+  // Espera pela resposta do servidor antes de recarregar a página (senão a leitura pode chegar antes da gravação).
+  const gravado = page.waitForResponse((r) => r.request().method() === 'PUT' && r.url().endsWith('/objetivo'));
+  await page.getByRole('button', { name: 'guardar' }).click();
+  expect((await gravado).ok()).toBeTruthy();
   await page.reload();
   await expect(page.getByLabel('Objetivo anual')).toHaveValue(novo);
 });
