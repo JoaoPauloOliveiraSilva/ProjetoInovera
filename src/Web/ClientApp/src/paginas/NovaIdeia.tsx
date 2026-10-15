@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { contas, ideias as apiIdeias } from '../api/servicos';
-import { nomeTipo } from '../api/tipos';
-import type { IdeiaCriada, TipoIdeia, UtilizadorResumo } from '../api/tipos';
+import { estadoIdeia, nomeTipo } from '../api/tipos';
+import type { IdeiaCriada, IdeiaParecida, TipoIdeia, UtilizadorResumo } from '../api/tipos';
 import { useAtualizar } from '../api/usePedido';
 import { Gaveta } from '../componentes/Gaveta';
 import { Camara, Fechar, SetaContinuar, Upload, Visto } from '../componentes/Icones';
@@ -120,6 +120,45 @@ export function NovaIdeiaGaveta({ aberta, aoFechar }: { aberta: boolean; aoFecha
     <Gaveta aberta={aberta} aoFechar={aoFechar}>
       {aberta && <NovaIdeia aoTerminar={aoFechar} />}
     </Gaveta>
+  );
+}
+
+/** Avisa quando já há ideias com título parecido (para não submeter uma ideia repetida); pode-se continuar na mesma. */
+function IdeiasParecidas({ titulo, descricao }: { titulo: string; descricao: string }) {
+  const [parecidas, setParecidas] = useState<IdeiaParecida[]>([]);
+  const procurar = titulo.trim().length >= 8;
+
+  useEffect(() => {
+    if (!procurar) return;
+    let ativo = true;
+    // Espera que se pare de escrever antes de perguntar ao servidor.
+    const espera = setTimeout(() => {
+      apiIdeias
+        .parecidas(titulo.trim(), descricao.trim() || undefined)
+        .then((r) => ativo && setParecidas(r))
+        .catch(() => ativo && setParecidas([]));
+    }, 600);
+    return () => {
+      ativo = false;
+      clearTimeout(espera);
+    };
+  }, [procurar, titulo, descricao]);
+
+  if (!procurar || parecidas.length === 0) return null;
+  return (
+    <div className="ideias-parecidas" role="status">
+      <strong>Já há ideias parecidas.</strong> Veja se a sua não é igual a uma destas (pode continuar na mesma):
+      <ul>
+        {parecidas.map((p) => (
+          <li key={p.id}>
+            <a className="ligacao" href={`/inovacao/ideias/${p.id}`} target="_blank" rel="noreferrer">
+              <span className="num">{p.codigo}</span> {p.titulo}
+            </a>{' '}
+            <span className="cinzento-escuro">· {estadoIdeia(p).nome}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -244,6 +283,7 @@ function NovaIdeia({ aoTerminar }: { aoTerminar: () => void }) {
       <Passo n={2} titulo="informação geral" estado={estado(2)}>
         <Campo nome="título" valor={titulo} mudar={setTitulo} linhas={1} />
         <Campo nome="descrição" valor={descricao} mudar={setDescricao} />
+        <IdeiasParecidas titulo={titulo} descricao={descricao} />
         <label className="caixa">
           <input type="checkbox" checked={visivel} onChange={(e) => setVisivel(e.target.checked)} />
           <span className="caixa-quadrado">{visivel && <Visto />}</span>

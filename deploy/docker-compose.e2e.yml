@@ -1,0 +1,14 @@
+# Testes E2E (tests/e2e): a imagem de produção a correr no PC com uma base de dados descartável e os dados de exemplo.
+#   docker compose -p innovera-e2e -f deploy/docker-compose.producao.yml -f deploy/docker-compose.e2e.yml \
+#     --env-file deploy/e2e.env --profile bd-local up -d app bd
+#   (no fim: ... down -v, que apaga a base de dados de teste)
+services:
+  app:
+    image: innovera:e2e
+    restart: "no"
+    environment:
+      DadosExemplo: "true"
+    ports:
+      - "18080:8080"
+  bd:
+    restart: "no"

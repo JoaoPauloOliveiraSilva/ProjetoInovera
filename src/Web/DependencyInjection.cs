@@ -19,6 +19,9 @@ public static class DependencyInjection
 
         builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
 
+        // /saude: a aplicação responde e chega à base de dados (usado pelo monitor externo que avisa por email se o site for abaixo).
+        builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>("base-dados");
+
         // Customise default API behaviour
         builder.Services.Configure<ApiBehaviorOptions>(options =>
             options.SuppressModelStateInvalidFilter = true);

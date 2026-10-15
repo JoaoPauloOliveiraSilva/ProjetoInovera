@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Permissoes } from '../api/permissoes';
 import type { Permissao } from '../api/permissoes';
+import { seccaoDaPagina } from '../ajuda/seccoes';
 import { primeiroNome } from '../dados/regras';
 import { usePermissao, useSessao, useUtilizador } from '../sessao/Sessao';
 import { Avisos } from './Avisos';
@@ -130,6 +131,7 @@ export function Layout() {
   const { sair } = useSessao();
   const tem = usePermissao();
   const navegar = useNavigate();
+  const { pathname } = useLocation();
 
   return (
     <div className="app">
@@ -153,10 +155,10 @@ export function Layout() {
           <IconeMinhaArea />
           <span>minha área</span>
         </span>
-        <span className="barra-ajuda" title="Ajuda">
+        <Link className="barra-ajuda" title="Ajuda: manual do utilizador" to={`/inovacao/ajuda?seccao=${seccaoDaPagina(pathname)}`}>
           <IconeAjuda />
           <span>ajuda</span>
-        </span>
+        </Link>
         <button
           className="barra-sair"
           title="Terminar sessão"

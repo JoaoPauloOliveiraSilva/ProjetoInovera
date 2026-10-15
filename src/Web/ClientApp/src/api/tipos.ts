@@ -70,6 +70,17 @@ export interface UtilizadorResumo {
   empresa: string | null;
 }
 
+/** Ideia com título parecido com o de uma ideia nova (aviso de ideia repetida). */
+export interface IdeiaParecida {
+  id: number;
+  codigo: string;
+  titulo: string;
+  estado: EstadoIdeia;
+  classe: ClasseIdeia | null;
+  /** 0 a 100. */
+  semelhanca: number;
+}
+
 export interface IdeiaResumo {
   id: number;
   codigo: string;
@@ -848,6 +859,24 @@ export const nomePeriodoKpi: Record<PeriodoKpi, string> = { PrimeiroSemestre: '1
 // Indicadores (Mod.239) e dashboard inicial
 
 export type UnidadeKpi = 'Numero' | 'Percentagem' | 'Euros' | 'Media';
+
+/** Valor de um KPI num ano (oficial = importado do Mod.239; parcial = ano em curso, até hoje). */
+export interface PontoEvolucao {
+  ano: number;
+  valor: number | null;
+  objetivo: string | null;
+  atingido: boolean | null;
+  oficial: boolean;
+  parcial: boolean;
+}
+
+export interface EvolucaoKpi {
+  numero: number;
+  nome: string;
+  unidade: UnidadeKpi;
+  pontos: PontoEvolucao[];
+  nota: string | null;
+}
 
 export interface Kpi {
   numero: number;

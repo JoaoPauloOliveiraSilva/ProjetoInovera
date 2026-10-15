@@ -6,6 +6,7 @@ import { Permissoes } from './api/permissoes';
 import { AdminAuditoria } from './paginas/AdminAuditoria';
 import { AdminPerfis } from './paginas/AdminPerfis';
 import { AdminUtilizadores } from './paginas/AdminUtilizadores';
+import { Ajuda } from './paginas/Ajuda';
 import { Avaliacao } from './paginas/Avaliacao';
 import { CharterPagina } from './paginas/Charter';
 import { DefinirPassword } from './paginas/DefinirPassword';
@@ -55,6 +56,7 @@ export function App() {
               }
             >
               <Route index element={<Homepage />} />
+              <Route path="ajuda" element={<Ajuda />} />
               <Route path="minha-caixa" element={<IdeiasLista modo="minhas" />} />
               <Route path="ideias" element={<IdeiasLista modo="todas" />} />
               <Route path="ideias/discussao" element={<IdeiasLista modo="discussao" />} />

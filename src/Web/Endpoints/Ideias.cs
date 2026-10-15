@@ -14,6 +14,7 @@ public class Ideias : IEndpointGroup
 
         groupBuilder.MapGet(ListarIdeias);
         groupBuilder.MapGet(ObterIdeia, "{id:int}");
+        groupBuilder.MapGet(ProcurarIdeiasParecidas, "parecidas");
         groupBuilder.MapPost(CriarIdeia);
         groupBuilder.MapPost(ConfirmarAutoria, "{id:int}/confirmar-autoria");
         groupBuilder.MapPost(ValidarIdeia, "{id:int}/validar");
@@ -27,6 +28,9 @@ public class Ideias : IEndpointGroup
         groupBuilder.MapPost(AdicionarAnexo, "{id:int}/anexos").DisableAntiforgery();
         groupBuilder.MapGet(ObterAnexo, "anexos/{anexoId:int}");
     }
+
+    public static async Task<Ok<IReadOnlyList<IdeiaParecidaDto>>> ProcurarIdeiasParecidas(ISender sender, string titulo, string? descricao)
+        => TypedResults.Ok(await sender.Send(new ProcurarIdeiasParecidasQuery(titulo, descricao)));
 
     public static async Task<Ok<IReadOnlyList<IdeiaResumoDto>>> ListarIdeias(ISender sender, EstadoIdeia? estado, bool? soMinhas,
         bool? soDecididas, string? texto, ClasseIdeia? classe, Responsabilidade? responsabilidade, int? ano)

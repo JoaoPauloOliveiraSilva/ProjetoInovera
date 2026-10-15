@@ -52,6 +52,9 @@ app.UseExceptionHandler(options => { });
 
 
 app.MapDefaultEndpoints();
+
+// Estado da aplicação para a monitorização: 200 "Healthy" ou 503 "Unhealthy" (sem mais detalhes, é público).
+app.MapHealthChecks("/saude");
 app.MapEndpoints(typeof(Program).Assembly);
 
 app.MapFallbackToFile("index.html");

@@ -1,0 +1,13 @@
+{
+  "name": "innovera-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Testes E2E da Innovera no browser (Playwright) contra a imagem de produção a correr localmente com dados de exemplo.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.15.0"
+  }
+}

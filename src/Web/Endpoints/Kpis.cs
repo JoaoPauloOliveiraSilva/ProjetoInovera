@@ -12,6 +12,7 @@ public class Kpis : IEndpointGroup
 
         groupBuilder.MapGet(ObterIndicadores, "indicadores");
         groupBuilder.MapGet(ObterPlanoKpi, "{numero:int}/plano/{ano:int}");
+        groupBuilder.MapGet(ObterEvolucaoKpi, "{numero:int}/evolucao");
         groupBuilder.MapPut(GuardarObjetivoKpi, "{numero:int}/plano/{ano:int}/objetivo");
         groupBuilder.MapPost(CriarAcaoKpi, "{numero:int}/plano/{ano:int}/acoes");
         groupBuilder.MapPut(EditarAcaoKpi, "{numero:int}/plano/{ano:int}/acoes/{id:int}");
@@ -27,6 +28,9 @@ public class Kpis : IEndpointGroup
 
     public static async Task<Ok<PlanoKpiDto>> ObterPlanoKpi(ISender sender, int numero, int ano)
         => TypedResults.Ok(await sender.Send(new ObterPlanoKpiQuery(numero, ano)));
+
+    public static async Task<Ok<EvolucaoKpiDto>> ObterEvolucaoKpi(ISender sender, int numero)
+        => TypedResults.Ok(await sender.Send(new ObterEvolucaoKpiQuery(numero)));
 
     public record ObjetivoPedido(string? Objetivo);
 

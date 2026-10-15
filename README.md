@@ -2,15 +2,18 @@
 
 Plataforma de gestão da inovação da **dstelecom** (Projeto de Informática, Universidade do Minho, 2026/27).
 
-- **Backend:** .NET 10, Clean Architecture (Domain / Application / Infrastructure / Web), MediatR, FluentValidation, EF Core 10
+- **Backend:** .NET 10, Clean Architecture (Domain / Application / Infrastructure / Web), mediador próprio (sem MediatR), FluentValidation, EF Core 10
 - **Base de dados:** PostgreSQL (Npgsql)
 - **Frontend:** React 19 + TypeScript + Vite (`src/Web/ClientApp`), com o aspeto do site de inovação atual da intranet
 - **Contas:** ASP.NET Core Identity com cookie (contas próprias, sem ligação aos sistemas da dst); o Administrador
   adiciona as pessoas e elas recebem um email para definir a password
 - **Perfis e permissões:** Administrador, Equipa de Inovação e Trabalhador, configuráveis no backoffice
-- **Email:** SMTP (Mailpit em desenvolvimento, Amazon SES na AWS)
+- **Email:** SMTP (Mailpit em desenvolvimento, Gmail do projeto no servidor)
 - **Orquestração em desenvolvimento:** .NET Aspire (`src/AppHost`)
-- **Alojamento previsto:** AWS (Lightsail + PostgreSQL gerido), ainda por configurar
+- **Alojamento:** servidor Lightsail da dst com Docker Compose + Caddy (HTTPS) e PostgreSQL no próprio servidor — https://63.181.134.124.nip.io
+
+A documentação técnica completa (arquitetura, segurança, configuração, testes, publicação e monitorização) está em
+[docs/documentacao-tecnica.md](docs/documentacao-tecnica.md).
 
 ## O que é preciso instalar
 
@@ -125,6 +128,7 @@ Para começar com a base de dados vazia: `docker compose down -v` (opção B) ou
 dotnet test tests/Domain.UnitTests           # regras de negócio (código AA01, fluxo da ideia, nota do Mod.246, riscos…)
 dotnet test tests/Application.UnitTests
 dotnet test tests/Application.FunctionalTests # casos de uso contra um PostgreSQL real (precisa do Docker)
+# testes no browser (Playwright) contra a imagem de produção: ver docs/documentacao-tecnica.md, secção 10
 cd src/Web/ClientApp && npm run build         # verificação de tipos do frontend
 ```
 
@@ -135,12 +139,12 @@ O GitHub Actions (`.github/workflows/ci.yml`) corre o mesmo em cada push para `m
 ```
 src/
   Domain/          entidades e regras de negócio (Ideias, Iniciativas, ProjectCharter, Registos, Kpis, Transversais)
-  Application/     casos de uso (comandos e consultas MediatR) — Ideias/, Utilizadores/, Administracao/, Contas/
+  Application/     casos de uso (comandos e consultas com o mediador próprio) — Ideias/, Iniciativas/, Charters/, Registos/, Kpis/, Importacoes/…
   Infrastructure/  EF Core + PostgreSQL, Identity (contas, perfis, permissões), email SMTP, ficheiros, tarefa dos 30 dias
   Web/             API (Endpoints/), arranque, e o frontend em ClientApp/
   AppHost/         Aspire (PostgreSQL + API + frontend)
-tests/             testes do domínio, da Application e funcionais
-docs/              modelo de domínio
+tests/             testes do domínio, da Application, funcionais e E2E (tests/e2e)
+docs/              documentação técnica, modelo de domínio, requisitos, publicação
 ```
 
 ### API (resumo)
@@ -159,7 +163,11 @@ docs/              modelo de domínio
 | `POST /api/Ideias/{id}/anexos` · `GET /api/Ideias/anexos/{id}` | anexos (até 25 MB) |
 | `GET /api/Ideias?texto=&classe=&responsabilidade=&ano=&soDecididas=` | portefólio de ideias com filtros |
 | `GET/POST /api/Iniciativas` · `GET/PUT /api/Iniciativas/{id}` · `POST …/{id}/ponto-situacao` | iniciativas |
-| `POST /api/Iniciativas/importar-mod246` | importar o Excel Mod.246 |
+| `POST /api/Importacoes` | importar qualquer modelo Excel (reconhecido pelo conteúdo) |
+| `GET /api/Exportacoes/{modelo}` | exportar um modelo em Excel |
+| `GET /api/Kpis/indicadores?ano=&periodo=` · `GET /api/Kpis/{n}/evolucao` | KPIs e evolução anual |
+| `GET /api/Ideias/parecidas?titulo=` | ideias com título parecido |
+| `GET /saude` | estado da aplicação (monitorização) |
 | `GET /api/Notificacoes` · `POST …/{id}/lida` · `POST …/lidas` | avisos |
 
 A documentação completa da API fica em `/scalar` com a API a correr.

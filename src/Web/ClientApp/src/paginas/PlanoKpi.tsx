@@ -5,6 +5,7 @@ import { nomeTipoAcaoKpi } from '../api/tipos';
 import type { AcaoKpi, PlanoKpi } from '../api/tipos';
 import { usePedido } from '../api/usePedido';
 import { EstadoPedido } from '../componentes/Estado';
+import { GraficoEvolucao } from '../componentes/GraficoEvolucao';
 import { Cabecalho } from '../componentes/Layout';
 import { TabelaEditavel, data, hoje, opcoes, pessoas, texto } from '../componentes/TabelaEditavel';
 import type { DefTabela } from '../componentes/TabelaEditavel';
@@ -76,6 +77,7 @@ export function PlanoKpiPagina() {
   const ano = Number(parametros.get('ano')) || new Date().getFullYear();
   const plano = usePedido(() => api.plano(n, ano), [n, ano]);
   const indicadores = usePedido(() => api.indicadores(ano), [ano]);
+  const evolucao = usePedido(() => api.evolucao(n), [n]);
   const kpi = indicadores.dados?.kpis.find((k) => k.numero === n);
 
   return (
@@ -118,8 +120,15 @@ export function PlanoKpiPagina() {
             <Objetivo plano={plano.dados} aoGuardar={() => {
               plano.recarregar();
               indicadores.recarregar();
+              evolucao.recarregar();
             }} />
           </section>
+          {evolucao.dados && (
+            <section className="painel evolucao-kpi">
+              <h3 className="secao">evolução por ano</h3>
+              <GraficoEvolucao evolucao={evolucao.dados} />
+            </section>
+          )}
           <TabelaEditavel
             def={defAcoes}
             itens={plano.dados.acoes}

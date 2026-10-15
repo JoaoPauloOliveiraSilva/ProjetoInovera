@@ -1,5 +1,7 @@
 import { enviar, obter, pedido } from './cliente';
 import type {
+  EvolucaoKpi,
+  IdeiaParecida,
   Anexo,
   ClasseIdeia,
   EstadoIdeia,
@@ -119,6 +121,8 @@ export const ideias = {
     return obter<IdeiaResumo[]>(q ? `${base}?${q}` : base);
   },
   obter: (id: number) => obter<IdeiaDetalhe>(`${base}/${id}`),
+  parecidas: (titulo: string, descricao?: string) =>
+    obter<IdeiaParecida[]>(`${base}/parecidas?${new URLSearchParams({ titulo, ...(descricao ? { descricao } : {}) })}`),
   criar: (dados: NovaIdeiaPedido) => enviar<IdeiaCriada>(base, dados),
   confirmarAutoria: (id: number) => enviar(`${base}/${id}/confirmar-autoria`),
   validar: (id: number) => enviar(`${base}/${id}/validar`),
@@ -275,6 +279,7 @@ export const planoAnual = {
 export const kpis = {
   indicadores: (ano: number, periodo: PeriodoKpi = 'Anual') => obter<Indicadores>(`/api/Kpis/indicadores?ano=${ano}&periodo=${periodo}`),
   plano: (numero: number, ano: number) => obter<PlanoKpi>(`/api/Kpis/${numero}/plano/${ano}`),
+  evolucao: (numero: number) => obter<EvolucaoKpi>(`/api/Kpis/${numero}/evolucao`),
   guardarObjetivo: (numero: number, ano: number, objetivo: string | null) =>
     pedido<void>('PUT', `/api/Kpis/${numero}/plano/${ano}/objetivo`, { objetivo }),
   guardarAcao: (numero: number, ano: number, id: number | null, dados: unknown) =>
